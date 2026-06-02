@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; background: #222; color: #fff; }
+  .frame-container { display: inline-block; margin: 10px; text-align: center; }
+  canvas { width: 300px; border: 1px solid #555; }
+</style>
+</head>
+<body>
+  <h1>Video Frames</h1>
+  <div id="frames"></div>
+  <video id="vid" src="sistema.mp4" style="display:none;" muted></video>
+  
+  <script>
+    const vid = document.getElementById('vid');
+    const framesDiv = document.getElementById('frames');
+    const numFrames = 20;
+    
+    vid.addEventListener('loadedmetadata', () => {
+      const duration = vid.duration;
+      const interval = duration / numFrames;
+      let currentFrame = 0;
+      
+      const captureFrame = () => {
+        if (currentFrame >= numFrames) {
+            document.body.innerHTML += "<h2>Done extracting</h2>";
+            return;
+        }
+        
+        vid.currentTime = currentFrame * interval;
+      };
+      
+      vid.addEventListener('seeked', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = vid.videoWidth;
+        canvas.height = vid.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        
+        const container = document.createElement('div');
+        container.className = 'frame-container';
+        container.innerHTML = `<div>Time: ${vid.currentTime.toFixed(1)}s</div>`;
+        container.appendChild(canvas);
+        framesDiv.appendChild(container);
+        
+        currentFrame++;
+        captureFrame();
+      });
+      
+      captureFrame();
+    });
+  </script>
+</body>
+</html>

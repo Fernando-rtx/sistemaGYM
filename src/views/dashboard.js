@@ -240,7 +240,7 @@ export const init = async () => {
     }
 
     // Dibujar gráfico
-    const allCheckins = getCheckins();
+    const allCheckins = checkins;
     const ctx = document.getElementById('weeklyChart');
     if (ctx && window.Chart) {
         // Preparar últimos 7 días

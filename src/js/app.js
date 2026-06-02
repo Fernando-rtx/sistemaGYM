@@ -119,7 +119,7 @@ const loadView = async (viewName) => {
         }
     } catch(e) {
         console.error(e);
-        container.innerHTML = `<div style="color: var(--color-danger); text-align: center; margin-top: 50px;">Error al cargar la vista. ¿Está implementada?</div>`;
+        container.innerHTML = `<div style="color: var(--color-danger); text-align: center; margin-top: 50px;">Error al cargar la vista. ¿Está implementada?<br><br>${e.message}<br><pre style="text-align:left; background:#111; padding:20px; border-radius:8px; overflow:auto;">${e.stack}</pre></div>`;
     }
 };
 

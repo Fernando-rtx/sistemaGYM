@@ -7,7 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Material Icons para íconos -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-BBDbYyKX.js"></script>
+  
+  <!-- Librerías para Códigos QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" crossorigin src="/assets/index-DcmvT0CB.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-B_7akKC3.css">
 </head>
 <body>
@@ -35,19 +42,20 @@
           <span class="material-icons-round">point_of_sale</span>
           Ventas del Día
         </button>
-        <button class="nav-btn" data-view="configuracion">
+        <button class="nav-btn" data-view="configuracion" id="navConfiguracion">
           <span class="material-icons-round">settings</span>
           Configuración
         </button>
       </nav>
-      <div class="user-profile">
-        <div class="avatar">
+      <div class="user-profile" style="cursor: pointer;" id="userProfileBtn" title="Cerrar Sesión">
+        <div class="avatar" id="sidebarAvatar">
           <span class="material-icons-round">person</span>
         </div>
         <div class="user-info">
-          <span class="user-name">Administrador</span>
-          <span class="user-role">Dueño</span>
+          <span class="user-name" id="sidebarUserName">...</span>
+          <span class="user-role" id="sidebarUserRole">...</span>
         </div>
+        <span class="material-icons-round" style="margin-left:auto; color: var(--color-danger); opacity:0.5;">logout</span>
       </div>
     </aside>
 
@@ -72,6 +80,26 @@
       </div>
     </main>
   </div>
+  
+  <!-- Overlay de Login -->
+  <div id="loginOverlay" style="position: fixed; inset: 0; background: var(--color-bg-base); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+      <div style="background: var(--color-bg-surface); padding: 40px; border-radius: var(--border-radius-lg); width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+          <div style="width: 80px; height: 80px; background: rgba(148, 255, 0, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+              <span class="material-icons-round" style="font-size: 40px; color: var(--color-primary);">fitness_center</span>
+          </div>
+          <h2 style="margin-bottom: 5px;">NEXFIT GYM</h2>
+          <p style="color: var(--color-text-secondary); margin-bottom: 30px; font-size: 14px;">Inicia sesión para continuar</p>
+          
+          <input type="text" id="loginUser" placeholder="Usuario" style="width: 100%; box-sizing: border-box; background: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 16px; border-radius: var(--border-radius-md); margin-bottom: 15px; outline: none;">
+          
+          <input type="password" id="loginPass" placeholder="Contraseña" style="width: 100%; box-sizing: border-box; background: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 16px; border-radius: var(--border-radius-md); margin-bottom: 25px; outline: none;">
+          
+          <button class="btn btn-primary" id="btnLoginSubmit" style="width: 100%; justify-content: center;">INGRESAR</button>
+          
+          <p style="margin-top:20px; font-size:12px; color: var(--color-text-secondary);">usr: fernando | pass: 123</p>
+      </div>
+  </div>
+
   <div id="globalModal" class="modal-overlay"></div>
   <div id="toastContainer" class="toast-container"></div>
 </body>
