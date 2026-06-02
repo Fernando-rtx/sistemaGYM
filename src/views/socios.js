@@ -340,7 +340,7 @@ export const init = () => {
     document.getElementById('btnNuevoSocio').addEventListener('click', () => {
         const todayStr = new Date().toISOString().split('T')[0];
         
-        const modalHtml = \`
+        const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title" style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">NUEVO SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
@@ -365,17 +365,17 @@ export const init = () => {
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">PLAN CONTRATADO</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
-                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="\${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s; position: relative;">
+                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s; position: relative;">
                         <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
                         <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-primary); font-weight: 900;">PLAN MENSUAL</div>
                         <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">30 días de acceso</div>
-                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-primary);">$\${precios.Mensual.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
+                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-primary);">$${precios.Mensual.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
-                    <div class="plan-card-ns" data-plan="Quincenal" data-precio="\${precios.Quincenal}" data-dias="15" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.6;">
+                    <div class="plan-card-ns" data-plan="Quincenal" data-precio="${precios.Quincenal}" data-dias="15" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.6;">
                         <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: transparent; font-size: 20px;">check_circle</span>
                         <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-secondary); font-weight: 900;">PLAN QUINCENAL</div>
                         <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">15 días de acceso</div>
-                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-text-primary);">$\${precios.Quincenal.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
+                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
                 </div>
             </div>
@@ -384,7 +384,7 @@ export const init = () => {
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">FECHA DE INICIO</label>
                     <div style="position: relative;">
-                        <input type="date" id="inpFechaInicio" value="\${todayStr}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 600; outline: none; width: 100%; box-sizing: border-box; cursor: pointer;">
+                        <input type="date" id="inpFechaInicio" value="${todayStr}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 600; outline: none; width: 100%; box-sizing: border-box; cursor: pointer;">
                     </div>
                 </div>
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
@@ -397,7 +397,7 @@ export const init = () => {
                 <button class="btn btn-outline" onclick="window.closeModal()" style="padding: 12px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">CANCELAR</button>
                 <button class="btn btn-primary" id="btnGuardarSocio" style="padding: 12px 24px; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">check</span> REGISTRAR</button>
             </div>
-        \`;
+        `;
         
         window.openModal(modalHtml);
         
@@ -460,7 +460,7 @@ export const init = () => {
             
             const dVenc = new Date(fechaInicio + "T00:00:00");
             dVenc.setDate(dVenc.getDate() + dias);
-            const fechaVencimiento = \`\${dVenc.getFullYear()}-\${String(dVenc.getMonth() + 1).padStart(2, '0')}-\${String(dVenc.getDate()).padStart(2, '0')}\`;
+            const fechaVencimiento = `${dVenc.getFullYear()}-${String(dVenc.getMonth() + 1).padStart(2, '0')}-${String(dVenc.getDate()).padStart(2, '0')}`;
 
             addSocio({
                 nombre,
@@ -474,12 +474,12 @@ export const init = () => {
 
             addTransaccion({
                 tipo: 'ingreso',
-                concepto: \`Membresía \${plan} - \${nombre}\`,
+                concepto: `Membresía ${plan} - ${nombre}`,
                 monto: precio,
             });
 
             window.closeModal();
-            window.showToast(\`\${nombre} registrado con éxito\`, 'success');
+            window.showToast(`${nombre} registrado con éxito`, 'success');
             renderTable();
         });
     });
