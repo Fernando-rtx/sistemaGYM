@@ -118,7 +118,7 @@ export const render = () => {
     `;
 };
 
-export const init = () => {
+export const init = async () => {
     const inpName = document.getElementById('inpGymName');
     const inpColor = document.getElementById('inpBrandColor');
     const hexDisplay = document.getElementById('hexDisplay');
@@ -128,7 +128,7 @@ export const init = () => {
     const precioDiario = document.getElementById('precioDiario');
 
     // Load current values
-    const settings = getSettings();
+    const settings = await getSettings();
     inpName.value = settings.brandName || 'NEXFIT';
     inpColor.value = settings.brandColor || '#94ff00';
     hexDisplay.textContent = (settings.brandColor || '#94ff00').toUpperCase();
@@ -144,8 +144,8 @@ export const init = () => {
     });
 
     // Save brand settings
-    btnGuardar.addEventListener('click', () => {
-        saveSettings({
+    btnGuardar.addEventListener('click', async () => {
+        await saveSettings({
             brandName: inpName.value || 'NEXFIT',
             brandColor: inpColor.value,
         });
@@ -164,8 +164,8 @@ export const init = () => {
     });
 
     // Save prices
-    document.getElementById('btnGuardarPrecios').addEventListener('click', () => {
-        saveSettings({
+    document.getElementById('btnGuardarPrecios').addEventListener('click', async () => {
+        await saveSettings({
             precios: {
                 Mensual: parseFloat(precioMensual.value) || 20,
                 Quincenal: parseFloat(precioQuincenal.value) || 10,
@@ -192,8 +192,8 @@ export const init = () => {
             </div>
         `;
         window.openModal(modalHtml);
-        document.getElementById('btnConfirmReset').addEventListener('click', () => {
-            saveSettings({
+        document.getElementById('btnConfirmReset').addEventListener('click', async () => {
+            await saveSettings({
                 brandName: 'NEXFIT',
                 brandColor: '#94ff00',
                 precios: { Mensual: 20, Quincenal: 10, Diario: 3 },
@@ -203,7 +203,7 @@ export const init = () => {
             window.closeModal();
             window.showToast('Valores restaurados', 'success');
             // Reload view
-            init();
+            await init();
         });
     });
 };

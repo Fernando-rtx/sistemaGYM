@@ -115,7 +115,7 @@ const loadView = async (viewName) => {
         void container.offsetWidth;
         
         if (typeof viewModule.init === 'function') {
-            viewModule.init();
+            await viewModule.init();
         }
     } catch(e) {
         console.error(e);
@@ -157,12 +157,12 @@ const setupModalOverlay = () => {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Initialize centralized data store
-    initDataStore();
+    await initDataStore();
     
     // Apply saved settings
-    const settings = getSettings();
+    const settings = await getSettings();
     applySettings(settings);
     
     updateDate();

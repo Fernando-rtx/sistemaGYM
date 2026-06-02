@@ -124,9 +124,9 @@ export const render = () => {
     `;
 };
 
-export const init = () => {
+export const init = async () => {
     // Sync gym name to ticket
-    const settings = getSettings();
+    const settings = await getSettings();
     const brandTicket = document.querySelector('.brand-name-ticket');
     if (brandTicket) brandTicket.textContent = (settings.brandName || 'NEXFIT') + ' GYM';
 
@@ -135,8 +135,8 @@ export const init = () => {
     let lastCheckedSocio = null;
     let html5QrcodeScanner = null;
 
-    const procesarEscaneo = (qrCodeMessage) => {
-        const socios = getSocios();
+    const procesarEscaneo = async (qrCodeMessage) => {
+        const socios = await getSocios();
         const socio = socios.find(s => s.id === qrCodeMessage);
         
         if (!socio) {
@@ -159,7 +159,7 @@ export const init = () => {
         if (socio.estado === 'Activo') {
             statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
             statusEl.className = 'ticket-status success';
-            addCheckin(socio.id, socio.nombre);
+            await addCheckin(socio.id, socio.nombre);
             window.showToast(`Acceso concedido a ${socio.nombre}`, 'success');
         } else {
             statusEl.textContent = '❌ MEMBRESÍA VENCIDA';

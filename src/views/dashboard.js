@@ -42,16 +42,16 @@ export const render = () => {
     `;
 };
 
-export const init = () => {
-    const settings = getSettings();
-    const socios = getSocios();
-    const caja = getResumenCaja();
-    const checkinsHoy = getCheckinsHoy();
-    const checkins = getCheckins();
-    const trans = getTransacciones();
-    const rachas = calcularRachas();
-    const nuevosHoy = sociosNuevosHoy();
-    const porVencer = sociosPorVencer(3); // ≤ 3 días según diseño
+export const init = async () => {
+    const settings = await getSettings();
+    const socios = await getSocios();
+    const caja = await getResumenCaja();
+    const checkinsHoy = await getCheckinsHoy();
+    const checkins = await getCheckins();
+    const trans = await getTransacciones();
+    const rachas = await calcularRachas();
+    const nuevosHoy = await sociosNuevosHoy();
+    const porVencer = await sociosPorVencer(3); // ≤ 3 días según diseño
     
     const activos = socios.filter(s => s.estado === 'Activo').length;
     const vencidos = socios.filter(s => s.estado === 'Vencido');
@@ -313,12 +313,12 @@ export const init = () => {
     });
 };
 
-function openRenovarModal(socioId) {
-    const socios = getSocios();
+async function openRenovarModal(socioId) {
+    const socios = await getSocios();
     const socio = socios.find(s => s.id === socioId);
     if (!socio) return;
     
-    const settings = getSettings();
+    const settings = await getSettings();
     const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
     
     const modalHtml = `
@@ -378,21 +378,21 @@ function openRenovarModal(socioId) {
         });
     });
     
-    document.getElementById('btnConfirmarRenovar').addEventListener('click', () => {
+    document.getElementById('btnConfirmarRenovar').addEventListener('click', async () => {
         const nuevaFecha = calcularVencimiento(selectedPlan);
-        updateSocio(socioId, {
+        await updateSocio(socioId, {
             membresia: selectedPlan,
             precio: selectedPrecio,
             fechaVencimiento: nuevaFecha,
             estado: 'Activo',
         });
-        addTransaccion({
+        await addTransaccion({
             tipo: 'ingreso',
             concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
             monto: selectedPrecio,
         });
         window.closeModal();
         window.showToast(`Membresía de ${socio.nombre} renovada con éxito`, 'success');
-        init(); // Re-render dashboard
+        await init(); // Re-render dashboard
     });
 }

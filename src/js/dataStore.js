@@ -1,34 +1,6 @@
-/**
- * dataStore.js — Capa de datos centralizada para el Sistema GYM
- * Toda la persistencia se maneja a través de localStorage.
- */
-
-// ==================== KEYS ====================
-const KEYS = {
-    SOCIOS: 'gym_socios',
-    CHECKINS: 'gym_checkins',
-    TRANSACCIONES: 'gym_transacciones',
-    SETTINGS: 'gym_settings',
-    INVENTARIO: 'gym_inventario',
-    USUARIOS: 'gym_usuarios',
-    SESION: 'gym_sesion',
-};
+import { supabase } from './supabaseClient.js';
 
 // ==================== HELPERS ====================
-const _get = (key) => {
-    try {
-        return JSON.parse(localStorage.getItem(key)) || null;
-    } catch (e) {
-        return null;
-    }
-};
-
-const _set = (key, data) => {
-    localStorage.setItem(key, JSON.stringify(data));
-};
-
-const _genId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-
 const _today = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -39,96 +11,142 @@ const _now = () => {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-// ==================== DEFAULTS ====================
-const DEFAULT_SETTINGS = {
-    brandName: 'NEXFIT',
-    brandColor: '#94ff00',
-    precios: {
-        Mensual: 20,
-        Quincenal: 10,
-        Diario: 3,
-    },
-};
-
-const DEFAULT_SOCIOS = [
-    { id: _genId(), nombre: 'Carlos Mendoza', edad: 28, telefono: '7777-1234', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-01', fechaVencimiento: '2026-05-18', estado: 'Vencido', deuda: 0 },
-    { id: _genId(), nombre: 'María Fernanda López', edad: 24, telefono: '7777-5678', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-10', fechaVencimiento: '2026-06-09', estado: 'Activo', deuda: 0 },
-    { id: _genId(), nombre: 'Roberto Castillo', edad: 35, telefono: '7777-9012', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-01-15', fechaVencimiento: '2026-12-15', estado: 'Activo', deuda: 15 },
-    { id: _genId(), nombre: 'Miguel Vargas', edad: 22, telefono: '7777-3456', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-03', fechaVencimiento: '2026-06-03', estado: 'Vencido', deuda: 0 },
-    { id: _genId(), nombre: 'Sofía Méndez', edad: 29, telefono: '7777-7890', membresia: 'Quincenal', precio: 10, fechaRegistro: '2026-05-17', fechaVencimiento: '2026-06-01', estado: 'Vencido', deuda: 0 },
-];
-
-const DEFAULT_INVENTARIO = [
-    { id: _genId(), nombre: 'Botella de Agua', precio: 0.50, stock: 50, icono: 'water_drop', color: '#3b82f6' },
-    { id: _genId(), nombre: 'Powerade', precio: 0.75, stock: 30, icono: 'sports_bar', color: '#ef4444' },
-    { id: _genId(), nombre: 'Hi Energy', precio: 0.50, stock: 20, icono: 'bolt', color: '#94ff00' },
-    { id: _genId(), nombre: 'Monster Blanco', precio: 2.50, stock: 15, icono: 'local_drink', color: '#ffffff' },
-];
-
-const DEFAULT_USUARIOS = [
-    { id: 'usr-1', username: 'fernando', password: '123', role: 'Creador', nombre: 'Fernando' },
-    { id: 'usr-2', username: 'admin', password: '123', role: 'Admin', nombre: 'Administrador' },
-    { id: 'usr-3', username: 'empleado', password: '123', role: 'Empleado', nombre: 'Recepcionista' },
-];
-
 // ==================== INIT ====================
-export const initDataStore = () => {
-    if (!_get(KEYS.SETTINGS)) _set(KEYS.SETTINGS, DEFAULT_SETTINGS);
-    if (!_get(KEYS.SOCIOS)) _set(KEYS.SOCIOS, DEFAULT_SOCIOS);
-    if (!_get(KEYS.CHECKINS)) _set(KEYS.CHECKINS, []);
-    if (!_get(KEYS.TRANSACCIONES)) _set(KEYS.TRANSACCIONES, []);
-    if (!_get(KEYS.INVENTARIO)) _set(KEYS.INVENTARIO, DEFAULT_INVENTARIO);
-    if (!_get(KEYS.USUARIOS)) _set(KEYS.USUARIOS, DEFAULT_USUARIOS);
+export const initDataStore = async () => {
+    // Ya no es estrictamente necesario inicializar localStorage,
+    // pero podemos asegurar que exista el registro de ajustes en Supabase.
+    const { data, error } = await supabase.from('ajustes').select('*').limit(1);
+    if (data && data.length === 0) {
+        // En teoría el script inicial ya lo hizo, pero por si acaso:
+        await supabase.from('ajustes').insert([{
+            brand_name: 'NEXFIT',
+            brand_color: '#94ff00',
+            precios: { Mensual: 20, Quincenal: 10, Diario: 3 }
+        }]);
+    }
 };
 
 // ==================== SETTINGS ====================
-export const getSettings = () => _get(KEYS.SETTINGS) || DEFAULT_SETTINGS;
+export const getSettings = async () => {
+    const { data, error } = await supabase.from('ajustes').select('*').limit(1).single();
+    if (error || !data) {
+        return {
+            brandName: 'NEXFIT',
+            brandColor: '#94ff00',
+            precios: { Mensual: 20, Quincenal: 10, Diario: 3 }
+        };
+    }
+    return {
+        id: data.id,
+        brandName: data.brand_name,
+        brandColor: data.brand_color,
+        precios: data.precios
+    };
+};
 
-export const saveSettings = (newSettings) => {
-    const current = getSettings();
-    const merged = { ...current, ...newSettings };
-    _set(KEYS.SETTINGS, merged);
-    return merged;
+export const saveSettings = async (newSettings) => {
+    const current = await getSettings();
+    const updates = {
+        brand_name: newSettings.brandName || current.brandName,
+        brand_color: newSettings.brandColor || current.brandColor,
+        precios: newSettings.precios || current.precios
+    };
+    
+    if (current.id) {
+        await supabase.from('ajustes').update(updates).eq('id', current.id);
+    } else {
+        await supabase.from('ajustes').insert([updates]);
+    }
+    return { ...current, ...newSettings };
 };
 
 // ==================== SOCIOS ====================
-export const getSocios = () => _get(KEYS.SOCIOS) || [];
+export const getSocios = async () => {
+    const { data, error } = await supabase.from('socios').select('*').order('created_at', { ascending: false });
+    if (error) { console.error(error); return []; }
+    return data.map(s => ({
+        id: s.id,
+        nombre: s.nombre,
+        telefono: s.telefono,
+        edad: s.edad,
+        membresia: s.membresia,
+        precio: s.precio,
+        fechaRegistro: s.fecha_registro,
+        fechaVencimiento: s.fecha_vencimiento,
+        estado: s.estado,
+        deuda: s.deuda
+    }));
+};
 
-export const addSocio = (socio) => {
-    const socios = getSocios();
-    const newSocio = {
-        id: _genId(),
-        fechaRegistro: _today(),
-        estado: 'Activo',
-        deuda: 0,
-        ...socio,
+export const addSocio = async (socio) => {
+    const insertData = {
+        nombre: socio.nombre,
+        telefono: socio.telefono,
+        edad: socio.edad,
+        membresia: socio.membresia,
+        precio: socio.precio,
+        fecha_registro: socio.fechaRegistro || _today(),
+        fecha_vencimiento: socio.fechaVencimiento,
+        estado: socio.estado || 'Activo',
+        deuda: socio.deuda || 0
     };
-    socios.unshift(newSocio);
-    _set(KEYS.SOCIOS, socios);
-    return newSocio;
+    
+    const { data, error } = await supabase.from('socios').insert([insertData]).select().single();
+    if (error) { console.error(error); return null; }
+    
+    return {
+        id: data.id,
+        nombre: data.nombre,
+        telefono: data.telefono,
+        edad: data.edad,
+        membresia: data.membresia,
+        precio: data.precio,
+        fechaRegistro: data.fecha_registro,
+        fechaVencimiento: data.fecha_vencimiento,
+        estado: data.estado,
+        deuda: data.deuda
+    };
 };
 
-export const updateSocio = (id, updates) => {
-    const socios = getSocios();
-    const idx = socios.findIndex(s => s.id === id);
-    if (idx === -1) return null;
-    socios[idx] = { ...socios[idx], ...updates };
-    _set(KEYS.SOCIOS, socios);
-    return socios[idx];
+export const updateSocio = async (id, updates) => {
+    const updateData = {};
+    if (updates.nombre !== undefined) updateData.nombre = updates.nombre;
+    if (updates.telefono !== undefined) updateData.telefono = updates.telefono;
+    if (updates.edad !== undefined) updateData.edad = updates.edad;
+    if (updates.membresia !== undefined) updateData.membresia = updates.membresia;
+    if (updates.precio !== undefined) updateData.precio = updates.precio;
+    if (updates.fechaRegistro !== undefined) updateData.fecha_registro = updates.fechaRegistro;
+    if (updates.fechaVencimiento !== undefined) updateData.fecha_vencimiento = updates.fechaVencimiento;
+    if (updates.estado !== undefined) updateData.estado = updates.estado;
+    if (updates.deuda !== undefined) updateData.deuda = updates.deuda;
+
+    const { data, error } = await supabase.from('socios').update(updateData).eq('id', id).select().single();
+    if (error) { console.error(error); return null; }
+    return data;
 };
 
-export const deleteSocio = (id) => {
-    const socios = getSocios().filter(s => s.id !== id);
-    _set(KEYS.SOCIOS, socios);
+export const deleteSocio = async (id) => {
+    const { error } = await supabase.from('socios').delete().eq('id', id);
+    if (error) console.error(error);
 };
 
-export const getSocioById = (id) => getSocios().find(s => s.id === id) || null;
+export const getSocioById = async (id) => {
+    const { data, error } = await supabase.from('socios').select('*').eq('id', id).single();
+    if (error) return null;
+    return {
+        id: data.id,
+        nombre: data.nombre,
+        telefono: data.telefono,
+        edad: data.edad,
+        membresia: data.membresia,
+        precio: data.precio,
+        fechaRegistro: data.fecha_registro,
+        fechaVencimiento: data.fecha_vencimiento,
+        estado: data.estado,
+        deuda: data.deuda
+    };
+};
 
-/**
- * Calcula la fecha de vencimiento basada en el plan.
- * @param {string} plan - 'Mensual', 'Quincenal', o 'Diario'
- * @returns {string} Fecha en formato YYYY-MM-DD
- */
 export const calcularVencimiento = (plan) => {
     const d = new Date();
     switch (plan) {
@@ -140,9 +158,6 @@ export const calcularVencimiento = (plan) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/**
- * Formatea una fecha YYYY-MM-DD a formato legible "DD Mon"
- */
 export const formatFecha = (dateStr) => {
     if (!dateStr || dateStr === 'Próximo mes') return dateStr;
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -152,36 +167,53 @@ export const formatFecha = (dateStr) => {
 };
 
 // ==================== CHECK-INS ====================
-export const getCheckins = () => _get(KEYS.CHECKINS) || [];
+export const getCheckins = async () => {
+    const { data, error } = await supabase.from('checkins').select(`*, socios(nombre)`).order('created_at', { ascending: false });
+    if (error) return [];
+    return data.map(c => ({
+        id: c.id,
+        socioId: c.socio_id,
+        nombre: c.socios?.nombre || 'Desconocido',
+        fecha: c.fecha,
+        hora: c.hora
+    }));
+};
 
-export const addCheckin = (socioId, nombre) => {
-    const checkins = getCheckins();
-    const record = {
-        id: _genId(),
-        socioId,
-        nombre,
+export const addCheckin = async (socioId, nombre) => {
+    const insertData = {
+        socio_id: socioId,
         fecha: _today(),
-        hora: _now(),
+        hora: _now()
     };
-    checkins.unshift(record);
-    _set(KEYS.CHECKINS, checkins);
-    return record;
+    const { data, error } = await supabase.from('checkins').insert([insertData]).select().single();
+    if (error) { console.error(error); return null; }
+    
+    return {
+        id: data.id,
+        socioId: data.socio_id,
+        nombre: nombre,
+        fecha: data.fecha,
+        hora: data.hora
+    };
 };
 
-export const getCheckinsHoy = () => {
+export const getCheckinsHoy = async () => {
     const hoy = _today();
-    return getCheckins().filter(c => c.fecha === hoy);
+    const { data, error } = await supabase.from('checkins').select(`*, socios(nombre)`).eq('fecha', hoy);
+    if (error) return [];
+    return data.map(c => ({
+        id: c.id,
+        socioId: c.socio_id,
+        nombre: c.socios?.nombre || 'Desconocido',
+        fecha: c.fecha,
+        hora: c.hora
+    }));
 };
 
-/**
- * Calcula las rachas de asistencia consecutiva para cada socio.
- * Retorna un array ordenado por racha descendente.
- */
-export const calcularRachas = () => {
-    const checkins = getCheckins();
+export const calcularRachas = async () => {
+    const checkins = await getCheckins();
     const socioMap = {};
 
-    // Agrupar fechas únicas por socio
     checkins.forEach(c => {
         if (!socioMap[c.socioId]) {
             socioMap[c.socioId] = { nombre: c.nombre, fechas: new Set() };
@@ -218,33 +250,36 @@ export const calcularRachas = () => {
 };
 
 // ==================== TRANSACCIONES ====================
-export const getTransacciones = () => _get(KEYS.TRANSACCIONES) || [];
+export const getTransacciones = async () => {
+    const { data, error } = await supabase.from('transacciones').select('*').order('created_at', { ascending: false });
+    if (error) return [];
+    return data;
+};
 
-export const addTransaccion = (transaccion) => {
-    const trans = getTransacciones();
-    const record = {
-        id: _genId(),
-        fecha: _today(),
-        hora: _now(),
-        ...transaccion,
+export const addTransaccion = async (transaccion) => {
+    const insertData = {
+        tipo: transaccion.tipo,
+        concepto: transaccion.concepto,
+        monto: transaccion.monto,
+        fecha: transaccion.fecha || _today(),
+        hora: transaccion.hora || _now()
     };
-    trans.unshift(record);
-    _set(KEYS.TRANSACCIONES, trans);
-    return record;
+    const { data, error } = await supabase.from('transacciones').insert([insertData]).select().single();
+    if (error) { console.error(error); return null; }
+    return data;
 };
 
-export const getTransaccionesHoy = () => {
+export const getTransaccionesHoy = async () => {
     const hoy = _today();
-    return getTransacciones().filter(t => t.fecha === hoy);
+    const { data, error } = await supabase.from('transacciones').select('*').eq('fecha', hoy);
+    if (error) return [];
+    return data;
 };
 
-/**
- * Calcula el resumen de caja del día actual.
- */
-export const getResumenCaja = () => {
-    const transHoy = getTransaccionesHoy();
-    const ingresos = transHoy.filter(t => t.tipo === 'ingreso').reduce((sum, t) => sum + t.monto, 0);
-    const salidas = transHoy.filter(t => t.tipo === 'salida').reduce((sum, t) => sum + t.monto, 0);
+export const getResumenCaja = async () => {
+    const transHoy = await getTransaccionesHoy();
+    const ingresos = transHoy.filter(t => t.tipo === 'ingreso').reduce((sum, t) => sum + parseFloat(t.monto), 0);
+    const salidas = transHoy.filter(t => t.tipo === 'salida').reduce((sum, t) => sum + parseFloat(t.monto), 0);
     return {
         ingresos,
         salidas,
@@ -253,23 +288,20 @@ export const getResumenCaja = () => {
     };
 };
 
-/**
- * Cuenta socios registrados hoy.
- */
-export const sociosNuevosHoy = () => {
+export const sociosNuevosHoy = async () => {
     const hoy = _today();
-    return getSocios().filter(s => s.fechaRegistro === hoy).length;
+    const { count, error } = await supabase.from('socios').select('*', { count: 'exact', head: true }).eq('fecha_registro', hoy);
+    if (error) return 0;
+    return count;
 };
 
-/**
- * Cuenta socios cuya membresía vence dentro de los próximos N días.
- */
-export const sociosPorVencer = (dias = 7) => {
+export const sociosPorVencer = async (dias = 7) => {
+    const socios = await getSocios();
     const hoy = new Date();
     const limite = new Date();
     limite.setDate(hoy.getDate() + dias);
 
-    return getSocios().filter(s => {
+    return socios.filter(s => {
         if (s.estado !== 'Activo') return false;
         const venc = new Date(s.fechaVencimiento);
         return venc >= hoy && venc <= limite;
@@ -277,53 +309,59 @@ export const sociosPorVencer = (dias = 7) => {
 };
 
 // ==================== INVENTARIO ====================
-export const getInventario = () => _get(KEYS.INVENTARIO) || [];
-
-export const addProducto = (producto) => {
-    const inv = getInventario();
-    const newProd = {
-        id: _genId(),
-        stock: 0,
-        icono: 'inventory_2',
-        color: '#ffffff',
-        ...producto,
-    };
-    inv.push(newProd);
-    _set(KEYS.INVENTARIO, inv);
-    return newProd;
+export const getInventario = async () => {
+    const { data, error } = await supabase.from('inventario').select('*');
+    if (error) return [];
+    return data;
 };
 
-export const updateProducto = (id, updates) => {
-    const inv = getInventario();
-    const idx = inv.findIndex(p => p.id === id);
-    if (idx === -1) return null;
-    inv[idx] = { ...inv[idx], ...updates };
-    _set(KEYS.INVENTARIO, inv);
-    return inv[idx];
+export const addProducto = async (producto) => {
+    const { data, error } = await supabase.from('inventario').insert([producto]).select().single();
+    if (error) return null;
+    return data;
 };
 
-export const deleteProducto = (id) => {
-    const inv = getInventario().filter(p => p.id !== id);
-    _set(KEYS.INVENTARIO, inv);
+export const updateProducto = async (id, updates) => {
+    const { data, error } = await supabase.from('inventario').update(updates).eq('id', id).select().single();
+    if (error) return null;
+    return data;
+};
+
+export const deleteProducto = async (id) => {
+    await supabase.from('inventario').delete().eq('id', id);
 };
 
 // ==================== USUARIOS / SESIÓN ====================
-export const getUsuarios = () => _get(KEYS.USUARIOS) || [];
+// Por el momento, mantenemos un hardcode de login para no romper el portal existente,
+// o podríamos usar Supabase Auth si se configuran los usuarios.
+// Dado el plan, mantendremos este mock temporal mientras se adaptan las vistas.
+const DEFAULT_USUARIOS = [
+    { id: 'usr-1', username: 'fernando', password: '123', role: 'Creador', nombre: 'Fernando' },
+    { id: 'usr-2', username: 'admin', password: '123', role: 'Admin', nombre: 'Administrador' },
+    { id: 'usr-3', username: 'empleado', password: '123', role: 'Empleado', nombre: 'Recepcionista' },
+];
 
-export const loginUsuario = (username, password) => {
-    const usuarios = getUsuarios();
-    const user = usuarios.find(u => u.username === username && u.password === password);
+export const getUsuarios = async () => {
+    return DEFAULT_USUARIOS;
+};
+
+export const loginUsuario = async (username, password) => {
+    const user = DEFAULT_USUARIOS.find(u => u.username === username && u.password === password);
     if (user) {
-        _set(KEYS.SESION, user);
+        localStorage.setItem('gym_sesion', JSON.stringify(user));
         return true;
     }
     return false;
 };
 
 export const logoutUsuario = () => {
-    localStorage.removeItem(KEYS.SESION);
+    localStorage.removeItem('gym_sesion');
 };
 
-export const getCurrentUser = () => _get(KEYS.SESION);
-
-
+export const getCurrentUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem('gym_sesion')) || null;
+    } catch (e) {
+        return null;
+    }
+};

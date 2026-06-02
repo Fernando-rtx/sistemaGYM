@@ -140,7 +140,7 @@ export const render = () => {
     `;
 };
 
-export const init = () => {
+export const init = async () => {
     let carrito = [];
 
     const carritoSection = document.getElementById('carritoSection');
@@ -155,8 +155,8 @@ export const init = () => {
     }
 
     // ===== Render functions =====
-    const renderProductos = () => {
-        const inventario = getInventario();
+    const renderProductos = async () => {
+        const inventario = await getInventario();
         productsGrid.innerHTML = inventario.map(p => {
             const inCart = carrito.find(c => c.id === p.id);
             const qtyCart = inCart ? inCart.qty : 0;
@@ -194,15 +194,15 @@ export const init = () => {
         });
     };
 
-    const renderCaja = () => {
-        const caja = getResumenCaja();
+    const renderCaja = async () => {
+        const caja = await getResumenCaja();
         document.getElementById('cajaTotal').textContent = '$' + caja.total.toFixed(2);
         document.getElementById('cajaIngresos').textContent = '$' + caja.ingresos.toFixed(2);
         document.getElementById('cajaSalidas').textContent = '-$' + caja.salidas.toFixed(2);
     };
 
-    const renderTransacciones = () => {
-        const trans = getTransaccionesHoy();
+    const renderTransacciones = async () => {
+        const trans = await getTransaccionesHoy();
         const tbody = document.getElementById('transTbody');
         const empty = document.getElementById('transEmpty');
 
@@ -240,20 +240,20 @@ export const init = () => {
         `).join('');
 
         document.querySelectorAll('.btn-remove-item').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const idx = parseInt(btn.getAttribute('data-idx'));
                 carrito.splice(idx, 1);
                 renderCarrito();
-                renderProductos();
+                await renderProductos();
             });
         });
     };
 
     // Clear cart
-    document.getElementById('btnLimpiarCarrito').addEventListener('click', () => {
+    document.getElementById('btnLimpiarCarrito').addEventListener('click', async () => {
         carrito = [];
         renderCarrito();
-        renderProductos();
+        await renderProductos();
     });
 
     // Cobrar Modal
@@ -307,26 +307,26 @@ export const init = () => {
             metodo = this.getAttribute('data-method');
         }));
 
-        document.getElementById('btnConfirmarCobro').addEventListener('click', () => {
+        document.getElementById('btnConfirmarCobro').addEventListener('click', async () => {
             const itemsStr = carrito.map(i => `${i.name} x${i.qty}`).join(', ');
             
             // Restar stock
-            const inv = getInventario();
-            carrito.forEach(item => {
+            const inv = await getInventario();
+            for (const item of carrito) {
                 const prod = inv.find(p => p.id === item.id);
                 if (prod) {
-                    updateProducto(prod.id, { stock: prod.stock - item.qty });
+                    await updateProducto(prod.id, { stock: prod.stock - item.qty });
                 }
-            });
+            }
 
-            addTransaccion({ tipo: 'ingreso', concepto: `Venta (${metodo}): ${itemsStr}`, monto: total });
+            await addTransaccion({ tipo: 'ingreso', concepto: `Venta (${metodo}): ${itemsStr}`, monto: total });
             window.showToast(`Venta cobrada con éxito`, 'success');
             carrito = [];
             window.closeModal();
             renderCarrito();
-            renderTransacciones();
-            renderCaja();
-            renderProductos(); // Actualizar el UI de stock
+            await renderTransacciones();
+            await renderCaja();
+            await renderProductos(); // Actualizar el UI de stock
         });
     });
 
@@ -354,20 +354,20 @@ export const init = () => {
         `;
         window.openModal(modalHtml);
 
-        document.getElementById('btnRegistrarMov').addEventListener('click', () => {
+        document.getElementById('btnRegistrarMov').addEventListener('click', async () => {
             const concepto = document.getElementById('movConcepto').value.trim() || `${tipo} de efectivo`;
             const monto = parseFloat(document.getElementById('movMonto').value);
             if (!monto || monto <= 0) { window.showToast('Ingresa un monto válido', 'danger'); return; }
 
-            addTransaccion({
+            await addTransaccion({
                 tipo: isEntrada ? 'ingreso' : 'salida',
                 concepto,
                 monto,
             });
             window.closeModal();
             window.showToast(`${tipo} registrada: $${monto.toFixed(2)}`, 'success');
-            renderTransacciones();
-            renderCaja();
+            await renderTransacciones();
+            await renderCaja();
         });
     };
 
@@ -375,8 +375,8 @@ export const init = () => {
     document.getElementById('btnSalidaCaja').addEventListener('click', () => openMovimientoModal('SALIDA'));
 
     // Cerrar caja
-    document.getElementById('btnCerrarCaja').addEventListener('click', () => {
-        const caja = getResumenCaja();
+    document.getElementById('btnCerrarCaja').addEventListener('click', async () => {
+        const caja = await getResumenCaja();
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">CERRAR CAJA</h3>
@@ -407,8 +407,8 @@ export const init = () => {
         openAdminInventarioModal();
     });
 
-    const openAdminInventarioModal = () => {
-        const inventario = getInventario();
+    const openAdminInventarioModal = async () => {
+        const inventario = await getInventario();
         let listHtml = inventario.map(p => `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -449,15 +449,15 @@ export const init = () => {
         window.openModal(modalHtml);
 
         document.querySelectorAll('.btn-delete-prod').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
-                deleteProducto(id);
-                openAdminInventarioModal(); // Refresh modal
-                renderProductos(); // Refresh main view
+                await deleteProducto(id);
+                await openAdminInventarioModal(); // Refresh modal
+                await renderProductos(); // Refresh main view
             });
         });
 
-        document.getElementById('btnAddProd').addEventListener('click', () => {
+        document.getElementById('btnAddProd').addEventListener('click', async () => {
             const nombre = document.getElementById('newProdName').value.trim();
             const precio = parseFloat(document.getElementById('newProdPrice').value);
             const stock = parseInt(document.getElementById('newProdStock').value);
@@ -467,15 +467,15 @@ export const init = () => {
                 return;
             }
 
-            addProducto({ nombre, precio, stock });
-            openAdminInventarioModal();
-            renderProductos();
+            await addProducto({ nombre, precio, stock });
+            await openAdminInventarioModal();
+            await renderProductos();
             window.showToast('Producto añadido', 'success');
         });
     };
 
     // Initial render
-    renderProductos();
-    renderTransacciones();
-    renderCaja();
+    await renderProductos();
+    await renderTransacciones();
+    await renderCaja();
 };

@@ -156,22 +156,22 @@ export const render = () => {
     `;
 };
 
-export const init = () => {
-    let socios = getSocios();
+export const init = async () => {
+    let socios = await getSocios();
     let currentFilter = 'TODOS';
     let searchQuery = '';
 
     const tbody = document.getElementById('sociosTbody');
     const searchInput = document.querySelector('.search-input');
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const settings = getSettings();
+    const settings = await getSettings();
     const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
 
-    const renderTable = () => {
-        socios = getSocios(); // Refresh
+    const renderTable = async () => {
+        socios = await getSocios(); // Refresh
         if (!tbody) return;
         
-        const checkins = getCheckins();
+        const checkins = await getCheckins();
         const hoy = new Date();
         
         let countTodos = 0, countActivos = 0, countVencer = 0, countVencidos = 0, countAusentes = 0;
@@ -273,13 +273,13 @@ export const init = () => {
 
         // Attach row action handlers
         document.querySelectorAll('.btn-checkin-row').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 const nombre = btn.getAttribute('data-nombre');
-                addCheckin(id, nombre);
+                await addCheckin(id, nombre);
                 window.showToast(`Check-in registrado para ${nombre}`, 'success');
-                renderTable(); // Update table stats
+                await renderTable(); // Update table stats
             });
         });
 
@@ -334,7 +334,7 @@ export const init = () => {
         });
     });
 
-    renderTable();
+    await renderTable();
 
     // New Socio Button
     document.getElementById('btnNuevoSocio').addEventListener('click', () => {
@@ -446,7 +446,7 @@ export const init = () => {
         
         updateVencimiento();
 
-        document.getElementById('btnGuardarSocio').addEventListener('click', () => {
+        document.getElementById('btnGuardarSocio').addEventListener('click', async () => {
             const nombre = document.getElementById('inpSocioNombre').value.trim();
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
             const telefono = document.getElementById('inpSocioTel').value.trim();
@@ -462,7 +462,7 @@ export const init = () => {
             dVenc.setDate(dVenc.getDate() + dias);
             const fechaVencimiento = `${dVenc.getFullYear()}-${String(dVenc.getMonth() + 1).padStart(2, '0')}-${String(dVenc.getDate()).padStart(2, '0')}`;
 
-            addSocio({
+            await addSocio({
                 nombre,
                 telefono,
                 edad,
@@ -472,7 +472,7 @@ export const init = () => {
                 fechaVencimiento: fechaVencimiento,
             });
 
-            addTransaccion({
+            await addTransaccion({
                 tipo: 'ingreso',
                 concepto: `Membresía ${plan} - ${nombre}`,
                 monto: precio,
@@ -480,7 +480,7 @@ export const init = () => {
 
             window.closeModal();
             window.showToast(`${nombre} registrado con éxito`, 'success');
-            renderTable();
+            await renderTable();
         });
     });
 
@@ -510,15 +510,15 @@ export const init = () => {
             </div>
         `;
         window.openModal(modalHtml);
-        document.getElementById('btnUpdateSocio').addEventListener('click', () => {
+        document.getElementById('btnUpdateSocio').addEventListener('click', async () => {
             const nombre = document.getElementById('editNombre').value.trim();
             const telefono = document.getElementById('editTel').value.trim();
             const edad = document.getElementById('editEdad').value ? parseInt(document.getElementById('editEdad').value) : null;
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
-            updateSocio(id, { nombre, telefono, edad });
+            await updateSocio(id, { nombre, telefono, edad });
             window.closeModal();
             window.showToast('Socio actualizado', 'success');
-            renderTable();
+            await renderTable();
             
             // If profile is open, refresh it
             const profileView = document.getElementById('sociosProfileView');
@@ -546,8 +546,8 @@ export const init = () => {
             </div>
         `;
         window.openModal(modalHtml);
-        document.getElementById('btnConfirmDelete').addEventListener('click', () => {
-            deleteSocio(id);
+        document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+            await deleteSocio(id);
             window.closeModal();
             window.showToast(`${nombre} eliminado`, 'success');
             
@@ -557,12 +557,12 @@ export const init = () => {
                 document.getElementById('sociosProfileView').style.display = 'none';
                 document.getElementById('sociosMainView').style.display = 'block';
             }
-            renderTable();
+            await renderTable();
         });
     }
 
     // Full Page Profile View
-    function openProfileView(id) {
+    async function openProfileView(id) {
         const socio = socios.find(s => s.id === id);
         if (!socio) return;
         
@@ -585,7 +585,8 @@ export const init = () => {
         if(porcentaje < 0) porcentaje = 0;
 
         // 2. Historial de checkins
-        const checkins = getCheckins().filter(c => c.socioId === id).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+        const allCheckins = await getCheckins();
+        const checkins = allCheckins.filter(c => c.socioId === id).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
         let rachaActual = 0;
         let ultimaVisitaFormateada = '-';
         let isAusenteBadge = false;
@@ -768,8 +769,8 @@ export const init = () => {
             renderTable(); // Update stats in table just in case
         });
 
-        document.getElementById('btnCheckinProfile').addEventListener('click', () => {
-            addCheckin(socio.id, socio.nombre);
+        document.getElementById('btnCheckinProfile').addEventListener('click', async () => {
+            await addCheckin(socio.id, socio.nombre);
             window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
             openProfileView(id); // Reload profile view to show updated stats
         });
@@ -783,11 +784,11 @@ export const init = () => {
             }
         }
 
-        document.getElementById('btnRenovarProfile').addEventListener('click', () => {
+        document.getElementById('btnRenovarProfile').addEventListener('click', async () => {
             // Re-utilize Edit Plan logic or simply renew for 30 days
             const nuevoVencimiento = calcularVencimiento(socio.membresia);
-            updateSocio(socio.id, { fechaVencimiento: nuevoVencimiento, estado: 'Activo' });
-            addTransaccion({
+            await updateSocio(socio.id, { fechaVencimiento: nuevoVencimiento, estado: 'Activo' });
+            await addTransaccion({
                 tipo: 'ingreso',
                 concepto: `Renovación Membresía ${socio.membresia} - ${socio.nombre}`,
                 monto: socio.precio,
