@@ -457,12 +457,12 @@ export const init = () => {
         for(let i = 29; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const vino = setFechas.has(dateStr);
-            heatmapHtml += \`<div style="width: 15px; height: 15px; border-radius: 3px; background-color: \${vino ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)'};" title="\${dateStr}\${vino?' (Asistió)':''}"></div>\`;
+            heatmapHtml += `<div style="width: 15px; height: 15px; border-radius: 3px; background-color: ${vino ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)'};" title="${dateStr}${vino?' (Asistió)':''}"></div>`;
         }
 
-        const modalHtml = \`
+        const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">PERFIL DEL SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
@@ -501,14 +501,14 @@ export const init = () => {
                     <span class="material-icons-round">login</span> CHECK-IN
                 </button>
             </div>
-        \`;
+        `;
         
         window.openModal(modalHtml);
 
         // Generar QR
         setTimeout(() => {
             if (window.QRCode) {
-                new window.QRCode(document.getElementById(\`qrcode-\${socio.id}\`), {
+                new window.QRCode(document.getElementById(`qrcode-${socio.id}`), {
                     text: socio.id,
                     width: 70,
                     height: 70,
@@ -525,7 +525,7 @@ export const init = () => {
             btnCheck.addEventListener('click', () => {
                 addCheckin(socio.id, socio.nombre);
                 window.closeModal();
-                window.showToast(\`Check-in registrado para \${socio.nombre}\`, 'success');
+                window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
                 renderTable(); // Update main view
             });
         }
