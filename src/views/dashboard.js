@@ -1,160 +1,43 @@
-import { getSocios, getResumenCaja, getCheckinsHoy, calcularRachas, sociosNuevosHoy, sociosPorVencer, updateSocio, calcularVencimiento, addTransaccion, formatFecha, getSettings, getCheckins } from '../js/dataStore.js';
+import { getSocios, getResumenCaja, getCheckinsHoy, calcularRachas, sociosNuevosHoy, sociosPorVencer, updateSocio, calcularVencimiento, addTransaccion, formatFecha, getSettings, getCheckins, getTransacciones } from '../js/dataStore.js';
 
 export const render = () => {
     return `
-        <div class="dashboard-grid">
-            <div class="stats-cards">
-                <div class="card stat-card">
-                    <h3>INGRESOS HOY</h3>
-                    <div class="stat-value" id="dashIngresos">$0.00</div>
-                    <div class="stat-trend" id="dashIngresosTrend">Actualizado hoy</div>
-                </div>
-                <div class="card stat-card">
-                    <h3>SOCIOS ACTIVOS</h3>
-                    <div class="stat-value" id="dashActivos">0</div>
-                    <div class="stat-trend success" id="dashNuevos">+0 nuevos hoy</div>
-                </div>
-                <div class="card stat-card">
-                    <h3>POR VENCER (7D)</h3>
-                    <div class="stat-value" id="dashVencer">0</div>
-                    <div class="stat-trend danger">Requiere atención</div>
-                </div>
-            </div>
-
-            <div class="dashboard-main">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>ALERTAS DE RENOVACIÓN</h3>
-                        <span id="alertCount" style="font-size: 13px; color: var(--color-text-secondary);"></span>
-                    </div>
-                    <div class="alerts-list" id="alertsList">
-                        <!-- Generado en JS -->
-                    </div>
-                </div>
-
-                <div class="card" style="grid-column: span 2;">
-                    <div class="card-header">
-                        <h3>ASISTENCIA SEMANAL</h3>
-                    </div>
-                    <div style="height: 250px; width: 100%;">
-                        <canvas id="weeklyChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>TOP RACHAS (ASISTENCIA)</h3>
-                    </div>
-                    <div class="streaks-list" id="streaksList">
-                        <!-- Generado en JS -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3>CHECK-INS HOY</h3>
-                    <span id="checkinCount" style="font-size: 13px; color: var(--color-text-secondary);"></span>
-                </div>
-                <div id="checkinsList" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    <!-- Generado en JS -->
-                </div>
-            </div>
+        <div class="dashboard-grid-premium" id="dashboardContainer">
+            <!-- Rendered in JS -->
         </div>
 
         <style>
-            .dashboard-grid {
+            .dashboard-grid-premium {
                 display: flex;
                 flex-direction: column;
                 gap: 24px;
+                padding-bottom: 24px;
             }
-            .stats-cards {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 24px;
+            .card {
+                background: var(--color-bg-base);
+                border: 1px solid rgba(255,255,255,0.03);
+                border-radius: var(--border-radius-lg);
             }
-            .stat-card {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
+            /* Custom Scrollbar for Alerts */
+            .alerts-container::-webkit-scrollbar {
+                width: 6px;
             }
-            .stat-card h3 {
-                font-size: 14px;
-                color: var(--color-text-secondary);
-                letter-spacing: 1px;
+            .alerts-container::-webkit-scrollbar-track {
+                background: rgba(0,0,0,0.1); 
             }
-            .stat-value {
-                font-size: 36px;
-                font-weight: 700;
-                color: var(--color-text-primary);
+            .alerts-container::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.1); 
+                border-radius: 4px;
             }
-            .stat-trend {
-                font-size: 13px;
-                font-weight: 500;
-                color: var(--color-text-secondary);
+            .alerts-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(255,255,255,0.2); 
             }
-            .success { color: var(--color-success); }
-            .danger { color: var(--color-danger); }
             
-            .dashboard-main {
-                display: grid;
-                grid-template-columns: 2fr 1fr;
-                gap: 24px;
+            /* Responsive adjust */
+            @media (max-width: 1024px) {
+                .top-row { grid-template-columns: 1fr !important; }
+                .bottom-row { grid-template-columns: 1fr !important; }
             }
-            .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .alerts-list, .streaks-list {
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-            }
-            .alert-item {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                background-color: var(--color-bg-base);
-                padding: 12px;
-                border-radius: var(--border-radius-sm);
-            }
-            .alert-avatar {
-                width: 40px; height: 40px;
-                background-color: var(--color-bg-surface-hover);
-                color: var(--color-text-primary);
-                border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
-                font-weight: 600; font-size: 13px; flex-shrink: 0;
-            }
-            .alert-info { flex: 1; }
-            .alert-info h4 { font-size: 15px; margin-bottom: 4px; }
-            .alert-info span { font-size: 13px; color: var(--color-text-secondary); }
-            
-            .streak-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px;
-                background-color: var(--color-bg-base);
-                border-radius: var(--border-radius-sm);
-                font-weight: 500;
-            }
-            .streak-count {
-                color: var(--color-primary);
-            }
-            .checkin-chip {
-                background-color: var(--color-bg-base);
-                padding: 8px 14px;
-                border-radius: 20px;
-                font-size: 13px;
-                font-weight: 500;
-                display: flex; align-items: center; gap: 8px;
-            }
-            .checkin-chip .material-icons-round { font-size: 16px; color: var(--color-success); }
         </style>
     `;
 };
@@ -163,96 +46,196 @@ export const init = () => {
     const socios = getSocios();
     const caja = getResumenCaja();
     const checkinsHoy = getCheckinsHoy();
+    const checkins = getCheckins();
+    const trans = getTransacciones();
     const rachas = calcularRachas();
     const nuevosHoy = sociosNuevosHoy();
-    const porVencer = sociosPorVencer(7);
+    const porVencer = sociosPorVencer(3); // ≤ 3 días según diseño
     
     const activos = socios.filter(s => s.estado === 'Activo').length;
     const vencidos = socios.filter(s => s.estado === 'Vencido');
     
-    // Stats cards
-    const elIngresos = document.getElementById('dashIngresos');
-    const elActivos = document.getElementById('dashActivos');
-    const elVencer = document.getElementById('dashVencer');
-    const elNuevos = document.getElementById('dashNuevos');
-    const elIngresosTrend = document.getElementById('dashIngresosTrend');
+    const hoy = new Date();
     
-    if (elIngresos) elIngresos.textContent = '$' + caja.ingresos.toFixed(2);
-    if (elActivos) elActivos.textContent = activos;
-    if (elVencer) elVencer.textContent = vencidos.length + porVencer.length;
-    if (elNuevos) {
-        elNuevos.textContent = `+${nuevosHoy} nuevos hoy`;
-        elNuevos.className = nuevosHoy > 0 ? 'stat-trend success' : 'stat-trend';
-    }
-    if (elIngresosTrend) {
-        if (caja.numTransacciones > 0) {
-            elIngresosTrend.textContent = `${caja.numTransacciones} transacciones hoy`;
-            elIngresosTrend.className = 'stat-trend success';
+    // Calcular ausentes (>5 dias)
+    const ausentes = socios.filter(s => {
+        if(s.estado === 'Vencido') return false;
+        const checksSocio = checkins.filter(c => c.socioId === s.id);
+        let diffDiasAusente = 999;
+        if(checksSocio.length > 0) {
+            const ultimo = new Date(checksSocio[0].fecha + "T00:00:00");
+            diffDiasAusente = (hoy - ultimo) / (1000 * 60 * 60 * 24);
+        } else {
+            const fRegStr = s.fechaRegistro ? s.fechaRegistro : (hoy.toISOString().split('T')[0]);
+            const fReg = new Date(fRegStr + "T00:00:00");
+            diffDiasAusente = (hoy - fReg) / (1000 * 60 * 60 * 24);
         }
-    }
+        return diffDiasAusente > 5;
+    });
+
+    // Calcular ingresos del mes
+    const mesActual = hoy.getMonth();
+    const anoActual = hoy.getFullYear();
+    const ingresosMesNum = trans.filter(t => {
+        if(t.tipo !== 'ingreso') return false;
+        const d = new Date(t.fecha + "T00:00:00");
+        return d.getMonth() === mesActual && d.getFullYear() === anoActual;
+    }).reduce((acc, t) => acc + t.monto, 0);
+    const ingresosMes = ingresosMesNum.toFixed(2);
+
+    // Racha Récord
+    const rachaRecord = rachas.length > 0 ? rachas[0].racha : 0;
+
+    // Fecha Panel
+    const fechaHoyFormato = hoy.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+
+    // Alertas HTML
+    const allAlerts = [...vencidos.map(v => ({...v, alertType: 'Vencido'})), ...porVencer.map(p => ({...p, alertType: 'PorRenovar'}))];
+    allAlerts.sort((a,b) => new Date(a.fechaVencimiento + "T00:00:00") - new Date(b.fechaVencimiento + "T00:00:00"));
     
-    // Alertas de renovación
-    const alertsList = document.getElementById('alertsList');
-    const alertCount = document.getElementById('alertCount');
-    const allAlerts = [...vencidos, ...porVencer];
-    
-    if (alertCount) alertCount.textContent = `${allAlerts.length} alertas`;
-    
-    if (alertsList && allAlerts.length > 0) {
-        alertsList.innerHTML = allAlerts.slice(0, 5).map(v => `
-            <div class="alert-item">
-                <div class="alert-avatar">${v.nombre.substring(0,2).toUpperCase()}</div>
-                <div class="alert-info">
-                    <h4>${v.nombre}</h4>
-                    <span>${v.estado === 'Vencido' ? '❌ Vencido: ' : '⚠️ Vence: '}${formatFecha(v.fechaVencimiento)}</span>
-                </div>
-                <button class="btn btn-primary btn-renovar" data-socio-id="${v.id}" style="padding: 5px 15px;">Renovar</button>
-            </div>
-        `).join('');
+    const alertasHtml = allAlerts.length > 0 ? allAlerts.map(v => {
+        const fVenc = new Date((v.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
+        const diffDias = Math.floor((hoy - fVenc) / (1000*60*60*24));
+        const textVencimiento = diffDias > 0 ? \`Venció hace \${diffDias} días\` : (diffDias < 0 ? \`Vence en \${Math.abs(diffDias)} días\` : 'Vence hoy');
         
-        // Attach renovar handlers
-        document.querySelectorAll('.btn-renovar').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const socioId = btn.getAttribute('data-socio-id');
-                openRenovarModal(socioId);
-            });
-        });
-    } else if (alertsList) {
-        alertsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">🎉 No hay alertas pendientes.</div>';
-    }
-    
-    // Rachas
-    const streaksList = document.getElementById('streaksList');
-    if (streaksList) {
-        if (rachas.length > 0) {
-            streaksList.innerHTML = rachas.map((r, i) => `
-                <div class="streak-item">
-                    <span>${i + 1}. ${r.nombre}</span>
-                    <div class="streak-count">🔥 ${r.racha} días</div>
+        const badgeStyle = v.alertType === 'Vencido' 
+            ? 'color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);' 
+            : 'color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);';
+            
+        const phoneClean = v.telefono ? v.telefono.replace(/[^0-9]/g, '') : '';
+        const waLink = phoneClean ? \`https://wa.me/\${phoneClean}?text=\${encodeURIComponent('Hola '+v.nombre+', te contactamos de NEXFIT.\\n\\nNotamos que tu membresía ' + textVencimiento.toLowerCase() + '. ¡Te invitamos a renovar para seguir entrenando juntos!')}\` : '#';
+        
+        return \`
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 44px; height: 44px; background: rgba(148, 255, 0, 0.1); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">\${v.nombre.substring(0,2).toUpperCase()}</div>
+                <div>
+                    <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">\${v.nombre}</div>
+                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">\${textVencimiento} · Plan \${v.membresia}</div>
                 </div>
-            `).join('');
-        } else {
-            streaksList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Sin datos de asistencia aún. Registra check-ins para ver rachas.</div>';
-        }
-    }
-    
-    // Check-ins de hoy
-    const checkinsList = document.getElementById('checkinsList');
-    const checkinCount = document.getElementById('checkinCount');
-    
-    if (checkinCount) checkinCount.textContent = `${checkinsHoy.length} ingresos`;
-    
-    if (checkinsList) {
-        if (checkinsHoy.length > 0) {
-            checkinsList.innerHTML = checkinsHoy.slice(0, 10).map(c => `
-                <div class="checkin-chip">
-                    <span class="material-icons-round">check_circle</span>
-                    ${c.nombre} <span style="color: var(--color-text-secondary); font-size: 12px;">${c.hora}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="\${badgeStyle} font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; letter-spacing: 1px;">
+                    <span style="font-size: 8px;">●</span> \${v.alertType === 'Vencido' ? 'VENCIDO' : 'POR RENOVAR'}
                 </div>
-            `).join('');
-        } else {
-            checkinsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); width: 100%;">Ningún ingreso registrado hoy.</div>';
-        }
+                <a href="\${waLink}" target="\${phoneClean ? '_blank' : '_self'}" title="\${phoneClean ? 'Enviar WhatsApp' : 'Sin número'}" class="btn btn-outline" style="padding: 8px; border-radius: 8px; color: var(--color-text-primary); border-color: rgba(255,255,255,0.1); \${!phoneClean ? 'opacity: 0.3; pointer-events: none;' : ''}">
+                    <span class="material-icons-round" style="font-size: 18px;">chat</span>
+                </a>
+                <button class="btn btn-primary btn-renovar" data-socio-id="\${v.id}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
+            </div>
+        </div>\`;
+    }).join('') : '<div style="padding: 40px; text-align: center; color: var(--color-text-secondary); font-size: 14px;">🎉 No hay alertas de renovación pendientes. Todo al día.</div>';
+
+    // Top Rachas HTML
+    const rachasHtml = rachas.length > 0 ? rachas.slice(0, 5).map((r, index) => \`
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="font-size: 20px; font-weight: 900; color: var(--color-primary); width: 24px; text-align: center;">\${index + 1}</div>
+                <div>
+                    <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">\${r.nombre}</div>
+                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan \${socios.find(s=>s.id===r.socioId)?.membresia || ''}</div>
+                </div>
+            </div>
+            <div style="color: var(--color-primary); font-weight: 800; font-size: 15px;">
+                🔥 \${r.racha}
+            </div>
+        </div>
+    \`).join('') : '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Sin rachas. ¡Invita a tus socios a entrenar!</div>';
+
+    // Inyectar HTML
+    const container = document.getElementById('dashboardContainer');
+    if(container) {
+        container.innerHTML = \`
+            <div class="top-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+                <!-- Panel de Control Principal -->
+                <div class="main-panel card" style="background: linear-gradient(135deg, rgba(148, 255, 0, 0.03) 0%, rgba(0,0,0,0) 100%); border: 1px solid rgba(148, 255, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+                    <!-- Decorativo -->
+                    <div style="position: absolute; top: -50%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, rgba(148, 255, 0, 0.05) 0%, rgba(0,0,0,0) 70%); pointer-events: none;"></div>
+                    
+                    <div style="padding: 24px; position: relative; z-index: 1;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 8px var(--color-primary);"></span>
+                            PANEL DE CONTROL · \${fechaHoyFormato}
+                        </div>
+                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(148,255,0,0.2);">NEXFIT</h1>
+                        <p style="color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; max-width: 450px; margin: 0;">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 32px; padding: 24px; border-top: 1px solid rgba(255,255,255,0.03); background: rgba(0,0,0,0.2); position: relative; z-index: 1; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 100px;">
+                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">CHECK-INS HOY</div>
+                            <div style="font-size: 28px; font-weight: 800; color: var(--color-primary);">\${checkinsHoy.length}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 100px;">
+                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">SOCIOS TOTALES</div>
+                            <div style="font-size: 28px; font-weight: 800;">\${socios.length}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 100px;">
+                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">INGRESOS DEL MES</div>
+                            <div style="font-size: 28px; font-weight: 800;">$\${ingresosMes}</div>
+                        </div>
+                        <div style="flex: 1; min-width: 100px;">
+                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">RACHA RÉCORD</div>
+                            <div style="font-size: 28px; font-weight: 800;">\${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metric Cards 2x2 -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="card" style="border-left: 4px solid var(--color-success); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">bolt</span> ACTIVOS</div>
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-success); margin: 8px 0 4px 0;">\${activos}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">de \${socios.length} socios</div>
+                    </div>
+                    <div class="card" style="border-left: 4px solid #f59e0b; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">notifications</span> POR RENOVAR</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #f59e0b; margin: 8px 0 4px 0;">\${porVencer.length}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">≤ 3 días para vencer</div>
+                    </div>
+                    <div class="card" style="border-left: 4px solid var(--color-danger); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">schedule</span> VENCIDOS</div>
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">\${vencidos.length}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">requieren acción</div>
+                    </div>
+                    <div class="card" style="border-left: 4px solid #6b7280; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">person_off</span> AUSENTES</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">\${ausentes.length}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">+5 días sin asistir</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row 2:1 -->
+            <div class="bottom-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+                <!-- Alertas de Renovación -->
+                <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px;">ALERTAS DE RENOVACIÓN <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">\${allAlerts.length} pendientes</span></div>
+                        <button class="btn btn-outline" style="font-size:11px; padding: 6px 12px; letter-spacing:1px; border-radius: 6px; font-weight: 700;">VER TODOS</button>
+                    </div>
+                    <div class="alerts-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 520px; padding-right: 8px;">
+                        \${alertasHtml}
+                    </div>
+                </div>
+
+                <!-- Right Column: Asistencia y Rachas -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="card" style="padding: 24px;">
+                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">ASISTENCIA SEMANAL <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">últimos 7 días</span></div>
+                        <div style="height: 180px; width: 100%;">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card" style="padding: 24px; flex: 1;">
+                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">TOP RACHAS <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">consecutivos</span></div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            \${rachasHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        \`;
     }
 
     // Dibujar gráfico
@@ -262,15 +245,26 @@ export const init = () => {
         // Preparar últimos 7 días
         const dias = [];
         const conteos = [];
+        let maxIndex = 0;
+        let maxVal = -1;
         for(let i=6; i>=0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
             const nameDay = d.toLocaleDateString('es-ES', {weekday: 'short'}).toUpperCase();
             dias.push(nameDay);
             const sum = allCheckins.filter(c => c.fecha === dateStr).length;
             conteos.push(sum);
+            if (sum >= maxVal) { // Keep the latest highest day
+                maxVal = sum;
+                maxIndex = 6 - i;
+            }
         }
+
+        // Si todos son 0, highlight current day (last index 6)
+        if (maxVal === 0) maxIndex = 6;
+        
+        const backgroundColors = conteos.map((_, i) => i === maxIndex ? '#94ff00' : 'rgba(255,255,255,0.1)');
         
         new window.Chart(ctx, {
             type: 'bar',
@@ -279,7 +273,7 @@ export const init = () => {
                 datasets: [{
                     label: 'Check-ins',
                     data: conteos,
-                    backgroundColor: '#94ff00',
+                    backgroundColor: backgroundColors,
                     borderRadius: 4,
                 }]
             },
@@ -287,15 +281,35 @@ export const init = () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1, color: '#aaa' } },
-                    x: { grid: { display: false }, ticks: { color: '#aaa' } }
+                    y: { display: false, beginAtZero: true }, // Ocultar eje Y para limpieza
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: '#aaa', font: { size: 10, weight: 'bold' } },
+                        border: { display: false }
+                    }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e1e1e',
+                        titleColor: '#fff',
+                        bodyColor: '#94ff00',
+                        displayColors: false,
+                        cornerRadius: 8,
+                        padding: 10
+                    }
                 }
             }
         });
     }
+
+    // Attach renovar handlers
+    document.querySelectorAll('.btn-renovar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const socioId = btn.getAttribute('data-socio-id');
+            openRenovarModal(socioId);
+        });
+    });
 };
 
 function openRenovarModal(socioId) {
@@ -306,35 +320,35 @@ function openRenovarModal(socioId) {
     const settings = getSettings();
     const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
     
-    const modalHtml = `
+    const modalHtml = \`
         <div class="modal-header">
             <h3 class="modal-title">RENOVAR MEMBRESÍA</h3>
             <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; background: var(--color-bg-base); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; margin-bottom: 10px;">${socio.nombre.substring(0,2).toUpperCase()}</div>
-            <h3 style="font-size: 18px;">${socio.nombre}</h3>
-            <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: ${socio.membresia}</p>
+            <div style="width: 60px; height: 60px; background: rgba(148,255,0,0.1); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">\${socio.nombre.substring(0,2).toUpperCase()}</div>
+            <h3 style="font-size: 18px; font-weight: 800;">\${socio.nombre}</h3>
+            <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: \${socio.membresia}</p>
         </div>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
-                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">MENSUAL</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
+            <div class="plan-card selected" data-plan="Mensual" data-precio="\${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 800;">MENSUAL</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$\${precios.Mensual.toFixed(2)}</div>
             </div>
-            <div class="plan-card" data-plan="Quincenal" data-precio="${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
-                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">QUINCENAL</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)}</div>
+            <div class="plan-card" data-plan="Quincenal" data-precio="\${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 800;">QUINCENAL</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$\${precios.Quincenal.toFixed(2)}</div>
             </div>
-            <div class="plan-card" data-plan="Diario" data-precio="${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
-                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">DIARIO</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Diario.toFixed(2)}</div>
+            <div class="plan-card" data-plan="Diario" data-precio="\${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 800;">DIARIO</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$\${precios.Diario.toFixed(2)}</div>
             </div>
         </div>
         <div style="display: flex; gap: 10px;">
             <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
             <button class="btn btn-primary" id="btnConfirmarRenovar" style="flex: 1; justify-content: center;">RENOVAR</button>
         </div>
-    `;
+    \`;
     window.openModal(modalHtml);
     
     let selectedPlan = 'Mensual';
@@ -373,11 +387,11 @@ function openRenovarModal(socioId) {
         });
         addTransaccion({
             tipo: 'ingreso',
-            concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
+            concepto: \`Renovación \${selectedPlan} - \${socio.nombre}\`,
             monto: selectedPrecio,
         });
         window.closeModal();
-        window.showToast(`Membresía de ${socio.nombre} renovada con éxito`, 'success');
+        window.showToast(\`Membresía de \${socio.nombre} renovada con éxito\`, 'success');
         init(); // Re-render dashboard
     });
 }
