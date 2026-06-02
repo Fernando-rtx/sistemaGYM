@@ -96,56 +96,56 @@ export const init = () => {
     const alertasHtml = allAlerts.length > 0 ? allAlerts.map(v => {
         const fVenc = new Date((v.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
         const diffDias = Math.floor((hoy - fVenc) / (1000*60*60*24));
-        const textVencimiento = diffDias > 0 ? \`Venció hace \${diffDias} días\` : (diffDias < 0 ? \`Vence en \${Math.abs(diffDias)} días\` : 'Vence hoy');
+        const textVencimiento = diffDias > 0 ? `Venció hace ${diffDias} días` : (diffDias < 0 ? `Vence en ${Math.abs(diffDias)} días` : 'Vence hoy');
         
         const badgeStyle = v.alertType === 'Vencido' 
             ? 'color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);' 
             : 'color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);';
             
         const phoneClean = v.telefono ? v.telefono.replace(/[^0-9]/g, '') : '';
-        const waLink = phoneClean ? \`https://wa.me/\${phoneClean}?text=\${encodeURIComponent('Hola '+v.nombre+', te contactamos de NEXFIT.\\n\\nNotamos que tu membresía ' + textVencimiento.toLowerCase() + '. ¡Te invitamos a renovar para seguir entrenando juntos!')}\` : '#';
+        const waLink = phoneClean ? `https://wa.me/${phoneClean}?text=${encodeURIComponent('Hola '+v.nombre+', te contactamos de NEXFIT.\n\nNotamos que tu membresía ' + textVencimiento.toLowerCase() + '. ¡Te invitamos a renovar para seguir entrenando juntos!')}` : '#';
         
-        return \`
+        return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="width: 44px; height: 44px; background: rgba(148, 255, 0, 0.1); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">\${v.nombre.substring(0,2).toUpperCase()}</div>
+                <div style="width: 44px; height: 44px; background: rgba(148, 255, 0, 0.1); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${v.nombre.substring(0,2).toUpperCase()}</div>
                 <div>
-                    <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">\${v.nombre}</div>
-                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">\${textVencimiento} · Plan \${v.membresia}</div>
+                    <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">${v.nombre}</div>
+                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">${textVencimiento} · Plan ${v.membresia}</div>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="\${badgeStyle} font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; letter-spacing: 1px;">
-                    <span style="font-size: 8px;">●</span> \${v.alertType === 'Vencido' ? 'VENCIDO' : 'POR RENOVAR'}
+                <div style="${badgeStyle} font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; letter-spacing: 1px;">
+                    <span style="font-size: 8px;">●</span> ${v.alertType === 'Vencido' ? 'VENCIDO' : 'POR RENOVAR'}
                 </div>
-                <a href="\${waLink}" target="\${phoneClean ? '_blank' : '_self'}" title="\${phoneClean ? 'Enviar WhatsApp' : 'Sin número'}" class="btn btn-outline" style="padding: 8px; border-radius: 8px; color: var(--color-text-primary); border-color: rgba(255,255,255,0.1); \${!phoneClean ? 'opacity: 0.3; pointer-events: none;' : ''}">
+                <a href="${waLink}" target="${phoneClean ? '_blank' : '_self'}" title="${phoneClean ? 'Enviar WhatsApp' : 'Sin número'}" class="btn btn-outline" style="padding: 8px; border-radius: 8px; color: var(--color-text-primary); border-color: rgba(255,255,255,0.1); ${!phoneClean ? 'opacity: 0.3; pointer-events: none;' : ''}">
                     <span class="material-icons-round" style="font-size: 18px;">chat</span>
                 </a>
-                <button class="btn btn-primary btn-renovar" data-socio-id="\${v.id}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
+                <button class="btn btn-primary btn-renovar" data-socio-id="${v.id}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
             </div>
-        </div>\`;
+        </div>`;
     }).join('') : '<div style="padding: 40px; text-align: center; color: var(--color-text-secondary); font-size: 14px;">🎉 No hay alertas de renovación pendientes. Todo al día.</div>';
 
     // Top Rachas HTML
-    const rachasHtml = rachas.length > 0 ? rachas.slice(0, 5).map((r, index) => \`
+    const rachasHtml = rachas.length > 0 ? rachas.slice(0, 5).map((r, index) => `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
             <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="font-size: 20px; font-weight: 900; color: var(--color-primary); width: 24px; text-align: center;">\${index + 1}</div>
+                <div style="font-size: 20px; font-weight: 900; color: var(--color-primary); width: 24px; text-align: center;">${index + 1}</div>
                 <div>
-                    <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">\${r.nombre}</div>
-                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan \${socios.find(s=>s.id===r.socioId)?.membresia || ''}</div>
+                    <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">${r.nombre}</div>
+                    <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan ${socios.find(s=>s.id===r.socioId)?.membresia || ''}</div>
                 </div>
             </div>
             <div style="color: var(--color-primary); font-weight: 800; font-size: 15px;">
-                🔥 \${r.racha}
+                🔥 ${r.racha}
             </div>
         </div>
-    \`).join('') : '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Sin rachas. ¡Invita a tus socios a entrenar!</div>';
+    `).join('') : '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Sin rachas. ¡Invita a tus socios a entrenar!</div>';
 
     // Inyectar HTML
     const container = document.getElementById('dashboardContainer');
     if(container) {
-        container.innerHTML = \`
+        container.innerHTML = `
             <div class="top-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
                 <!-- Panel de Control Principal -->
                 <div class="main-panel card" style="background: linear-gradient(135deg, rgba(148, 255, 0, 0.03) 0%, rgba(0,0,0,0) 100%); border: 1px solid rgba(148, 255, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
@@ -155,7 +155,7 @@ export const init = () => {
                     <div style="padding: 24px; position: relative; z-index: 1;">
                         <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                             <span style="display: inline-block; width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 8px var(--color-primary);"></span>
-                            PANEL DE CONTROL · \${fechaHoyFormato}
+                            PANEL DE CONTROL · ${fechaHoyFormato}
                         </div>
                         <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(148,255,0,0.2);">NEXFIT</h1>
                         <p style="color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; max-width: 450px; margin: 0;">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
@@ -164,19 +164,19 @@ export const init = () => {
                     <div style="display: flex; gap: 32px; padding: 24px; border-top: 1px solid rgba(255,255,255,0.03); background: rgba(0,0,0,0.2); position: relative; z-index: 1; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">CHECK-INS HOY</div>
-                            <div style="font-size: 28px; font-weight: 800; color: var(--color-primary);">\${checkinsHoy.length}</div>
+                            <div style="font-size: 28px; font-weight: 800; color: var(--color-primary);">${checkinsHoy.length}</div>
                         </div>
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">SOCIOS TOTALES</div>
-                            <div style="font-size: 28px; font-weight: 800;">\${socios.length}</div>
+                            <div style="font-size: 28px; font-weight: 800;">${socios.length}</div>
                         </div>
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">INGRESOS DEL MES</div>
-                            <div style="font-size: 28px; font-weight: 800;">$\${ingresosMes}</div>
+                            <div style="font-size: 28px; font-weight: 800;">$${ingresosMes}</div>
                         </div>
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">RACHA RÉCORD</div>
-                            <div style="font-size: 28px; font-weight: 800;">\${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
+                            <div style="font-size: 28px; font-weight: 800;">${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
                         </div>
                     </div>
                 </div>
@@ -185,22 +185,22 @@ export const init = () => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div class="card" style="border-left: 4px solid var(--color-success); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">bolt</span> ACTIVOS</div>
-                        <div style="font-size: 36px; font-weight: 800; color: var(--color-success); margin: 8px 0 4px 0;">\${activos}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">de \${socios.length} socios</div>
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-success); margin: 8px 0 4px 0;">${activos}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">de ${socios.length} socios</div>
                     </div>
                     <div class="card" style="border-left: 4px solid #f59e0b; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">notifications</span> POR RENOVAR</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #f59e0b; margin: 8px 0 4px 0;">\${porVencer.length}</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #f59e0b; margin: 8px 0 4px 0;">${porVencer.length}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">≤ 3 días para vencer</div>
                     </div>
                     <div class="card" style="border-left: 4px solid var(--color-danger); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">schedule</span> VENCIDOS</div>
-                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">\${vencidos.length}</div>
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">${vencidos.length}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">requieren acción</div>
                     </div>
                     <div class="card" style="border-left: 4px solid #6b7280; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">person_off</span> AUSENTES</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">\${ausentes.length}</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">${ausentes.length}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">+5 días sin asistir</div>
                     </div>
                 </div>
@@ -211,11 +211,11 @@ export const init = () => {
                 <!-- Alertas de Renovación -->
                 <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px;">ALERTAS DE RENOVACIÓN <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">\${allAlerts.length} pendientes</span></div>
+                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px;">ALERTAS DE RENOVACIÓN <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">${allAlerts.length} pendientes</span></div>
                         <button class="btn btn-outline" style="font-size:11px; padding: 6px 12px; letter-spacing:1px; border-radius: 6px; font-weight: 700;">VER TODOS</button>
                     </div>
                     <div class="alerts-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 520px; padding-right: 8px;">
-                        \${alertasHtml}
+                        ${alertasHtml}
                     </div>
                 </div>
 
@@ -230,12 +230,12 @@ export const init = () => {
                     <div class="card" style="padding: 24px; flex: 1;">
                         <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">TOP RACHAS <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">consecutivos</span></div>
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            \${rachasHtml}
+                            ${rachasHtml}
                         </div>
                     </div>
                 </div>
             </div>
-        \`;
+        `;
     }
 
     // Dibujar gráfico
@@ -250,7 +250,7 @@ export const init = () => {
         for(let i=6; i>=0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const nameDay = d.toLocaleDateString('es-ES', {weekday: 'short'}).toUpperCase();
             dias.push(nameDay);
             const sum = allCheckins.filter(c => c.fecha === dateStr).length;
@@ -320,35 +320,35 @@ function openRenovarModal(socioId) {
     const settings = getSettings();
     const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
     
-    const modalHtml = \`
+    const modalHtml = `
         <div class="modal-header">
             <h3 class="modal-title">RENOVAR MEMBRESÍA</h3>
             <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; background: rgba(148,255,0,0.1); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">\${socio.nombre.substring(0,2).toUpperCase()}</div>
-            <h3 style="font-size: 18px; font-weight: 800;">\${socio.nombre}</h3>
-            <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: \${socio.membresia}</p>
+            <div style="width: 60px; height: 60px; background: rgba(148,255,0,0.1); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${socio.nombre.substring(0,2).toUpperCase()}</div>
+            <h3 style="font-size: 18px; font-weight: 800;">${socio.nombre}</h3>
+            <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: ${socio.membresia}</p>
         </div>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <div class="plan-card selected" data-plan="Mensual" data-precio="\${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+            <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
                 <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 800;">MENSUAL</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$\${precios.Mensual.toFixed(2)}</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
             </div>
-            <div class="plan-card" data-plan="Quincenal" data-precio="\${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div class="plan-card" data-plan="Quincenal" data-precio="${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                 <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 800;">QUINCENAL</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$\${precios.Quincenal.toFixed(2)}</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)}</div>
             </div>
-            <div class="plan-card" data-plan="Diario" data-precio="\${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div class="plan-card" data-plan="Diario" data-precio="${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                 <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 800;">DIARIO</div>
-                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$\${precios.Diario.toFixed(2)}</div>
+                <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Diario.toFixed(2)}</div>
             </div>
         </div>
         <div style="display: flex; gap: 10px;">
             <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
             <button class="btn btn-primary" id="btnConfirmarRenovar" style="flex: 1; justify-content: center;">RENOVAR</button>
         </div>
-    \`;
+    `;
     window.openModal(modalHtml);
     
     let selectedPlan = 'Mensual';
@@ -387,11 +387,11 @@ function openRenovarModal(socioId) {
         });
         addTransaccion({
             tipo: 'ingreso',
-            concepto: \`Renovación \${selectedPlan} - \${socio.nombre}\`,
+            concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
             monto: selectedPrecio,
         });
         window.closeModal();
-        window.showToast(\`Membresía de \${socio.nombre} renovada con éxito\`, 'success');
+        window.showToast(`Membresía de ${socio.nombre} renovada con éxito`, 'success');
         init(); // Re-render dashboard
     });
 }
