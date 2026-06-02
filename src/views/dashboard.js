@@ -43,6 +43,7 @@ export const render = () => {
 };
 
 export const init = () => {
+    const settings = getSettings();
     const socios = getSocios();
     const caja = getResumenCaja();
     const checkinsHoy = getCheckinsHoy();
@@ -157,7 +158,7 @@ export const init = () => {
                             <span style="display: inline-block; width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 8px var(--color-primary);"></span>
                             PANEL DE CONTROL · ${fechaHoyFormato}
                         </div>
-                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(148,255,0,0.2);">NEXFIT</h1>
+                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(148,255,0,0.2);">${settings.brandName.toUpperCase()}</h1>
                         <p style="color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; max-width: 450px; margin: 0;">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
                     </div>
                     
