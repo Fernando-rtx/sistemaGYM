@@ -59,7 +59,15 @@ const loadView = async (viewName) => {
     // Para simplificar, insertaremos HTML directamente según la vista
     // En un caso real, esto vendría de módulos separados
     try {
-        const viewModule = await import(`./views/${viewName}.js`);
+        let viewModule;
+        switch(viewName) {
+            case 'dashboard': viewModule = await import('../views/dashboard.js'); break;
+            case 'socios': viewModule = await import('../views/socios.js'); break;
+            case 'checkin': viewModule = await import('../views/checkin.js'); break;
+            case 'ventas': viewModule = await import('../views/ventas.js'); break;
+            case 'configuracion': viewModule = await import('../views/configuracion.js'); break;
+            default: throw new Error('Vista no implementada');
+        }
         container.innerHTML = viewModule.render();
         container.className = 'view-container fade-in';
         // Forzar reflow para reiniciar animación
