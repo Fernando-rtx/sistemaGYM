@@ -231,11 +231,11 @@ export const init = () => {
         `).join('');
 
         // Contadores
-        filterBtns[0].textContent = \`TODOS (\${countTodos})\`;
-        filterBtns[1].textContent = \`ACTIVOS (\${countActivos})\`;
-        filterBtns[2].textContent = \`POR RENOVAR (\${countVencer})\`;
-        filterBtns[3].textContent = \`VENCIDOS (\${countVencidos})\`;
-        filterBtns[4].textContent = \`AUSENTES (\${countAusentes})\`;
+        filterBtns[0].textContent = `TODOS (${countTodos})`;
+        filterBtns[1].textContent = `ACTIVOS (${countActivos})`;
+        filterBtns[2].textContent = `POR RENOVAR (${countVencer})`;
+        filterBtns[3].textContent = `VENCIDOS (${countVencidos})`;
+        filterBtns[4].textContent = `AUSENTES (${countAusentes})`;
 
         // Attach row action handlers
         document.querySelectorAll('.btn-checkin-row').forEach(btn => {

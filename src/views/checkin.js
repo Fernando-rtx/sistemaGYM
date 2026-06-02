@@ -149,7 +149,7 @@ export const init = () => {
         ticketContainer.style.pointerEvents = 'auto';
         
         document.getElementById('tktSocio').textContent = socio.nombre;
-        document.getElementById('tktPlan').textContent = \`Plan \${socio.membresia}\`;
+        document.getElementById('tktPlan').textContent = `Plan ${socio.membresia}`;
         document.getElementById('tktVenc').textContent = formatFecha(socio.fechaVencimiento);
         
         const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -160,11 +160,11 @@ export const init = () => {
             statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
             statusEl.className = 'ticket-status success';
             addCheckin(socio.id, socio.nombre);
-            window.showToast(\`Acceso concedido a \${socio.nombre}\`, 'success');
+            window.showToast(`Acceso concedido a ${socio.nombre}`, 'success');
         } else {
             statusEl.textContent = '❌ MEMBRESÍA VENCIDA';
             statusEl.className = 'ticket-status denied';
-            window.showToast(\`Atención: Membresía de \${socio.nombre} vencida\`, 'danger');
+            window.showToast(`Atención: Membresía de ${socio.nombre} vencida`, 'danger');
         }
         
         // Pausar escáner un momento

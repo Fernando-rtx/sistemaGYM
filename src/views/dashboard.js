@@ -265,7 +265,7 @@ export const init = () => {
         for(let i=6; i>=0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const nameDay = d.toLocaleDateString('es-ES', {weekday: 'short'}).toUpperCase();
             dias.push(nameDay);
             const sum = allCheckins.filter(c => c.fecha === dateStr).length;
