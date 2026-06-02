@@ -146,13 +146,20 @@ export const init = () => {
                 <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
                     <div style="display: flex; gap: 10px; margin-top: 5px;">
-                        <div style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05);">
-                            <div style="font-size: 12px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">PLAN MENSUAL</div>
-                            <div style="font-size: 20px; font-weight: 800; color: var(--color-primary);">$11.00</div>
+                        <!-- MENSUAL -->
+                        <div class="plan-card selected" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+                            <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">PLAN MENSUAL</div>
+                            <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$20.00</div>
                         </div>
-                        <div style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5;">
-                            <div style="font-size: 12px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN QUINCENAL</div>
-                            <div style="font-size: 20px; font-weight: 800;">$9.00</div>
+                        <!-- QUINCENAL -->
+                        <div class="plan-card" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                            <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN QUINCENAL</div>
+                            <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$10.00</div>
+                        </div>
+                        <!-- DIARIO -->
+                        <div class="plan-card" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                            <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN DIARIO</div>
+                            <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$3.00</div>
                         </div>
                     </div>
                 </div>
@@ -162,6 +169,30 @@ export const init = () => {
                 </div>
             `;
             window.openModal(modalHtml);
+            
+            // Logic for plan selection
+            const planCards = document.querySelectorAll('.plan-card');
+            planCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Reset all
+                    planCards.forEach(c => {
+                        c.classList.remove('selected');
+                        c.style.border = '1px solid rgba(255,255,255,0.1)';
+                        c.style.backgroundColor = 'transparent';
+                        c.style.opacity = '0.5';
+                        c.querySelector('.plan-name').style.color = 'var(--color-text-secondary)';
+                        c.querySelector('.plan-price').style.color = 'var(--color-text-primary)';
+                    });
+                    
+                    // Set active
+                    this.classList.add('selected');
+                    this.style.border = '2px solid var(--color-primary)';
+                    this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
+                    this.style.opacity = '1';
+                    this.querySelector('.plan-name').style.color = 'var(--color-primary)';
+                    this.querySelector('.plan-price').style.color = 'var(--color-primary)';
+                });
+            });
         });
     }
 
