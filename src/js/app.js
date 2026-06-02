@@ -17,6 +17,24 @@ window.showToast = (msg, type = 'info') => {
     }, 3000);
 };
 
+// Global Modal Functions
+window.openModal = (contentHtml) => {
+    const modal = document.getElementById('globalModal');
+    if (!modal) return;
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            ${contentHtml}
+        </div>
+    `;
+    modal.classList.add('active');
+};
+
+window.closeModal = () => {
+    const modal = document.getElementById('globalModal');
+    if (modal) modal.classList.remove('active');
+};
+
 // Mock Store inicialización (Persistencia local)
 const initStore = () => {
     if (!localStorage.getItem('gym_settings')) {

@@ -77,8 +77,8 @@ export const render = () => {
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button class="btn btn-outline" style="flex: 1;" onclick="window.showToast('Abriendo formulario de entrada de efectivo', 'info')">ENTRADA</button>
-                        <button class="btn btn-outline" style="flex: 1;" onclick="window.showToast('Abriendo formulario de salida de efectivo', 'info')">SALIDA</button>
+                        <button class="btn btn-outline" style="flex: 1;" id="btnEntradaCaja">ENTRADA</button>
+                        <button class="btn btn-outline" style="flex: 1;" id="btnSalidaCaja">SALIDA</button>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;" onclick="window.showToast('Caja cerrada. Imprimiendo corte Z...', 'success')">CERRAR CAJA</button>
                 </div>
@@ -169,4 +169,34 @@ export const init = () => {
             setTimeout(() => item.style.transform = '', 150);
         });
     });
+
+    const openMovimientoModal = (tipo) => {
+        const isEntrada = tipo === 'ENTRADA';
+        const color = isEntrada ? 'var(--color-success)' : 'var(--color-danger)';
+        const modalHtml = `
+            <div class="modal-header">
+                <h3 class="modal-title">REGISTRAR ${tipo} DE EFECTIVO</h3>
+                <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Concepto / Motivo</label>
+                <input type="text" class="form-input" placeholder="Ej. Pago a proveedor" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Monto</label>
+                <input type="number" class="form-input" placeholder="$ 0.00" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: ${color}; padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 24px; font-weight: 800; width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
+                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.closeModal(); window.showToast('${tipo} registrada con éxito', 'success')">REGISTRAR ${tipo}</button>
+            </div>
+        `;
+        window.openModal(modalHtml);
+    };
+
+    const btnEntrada = document.getElementById('btnEntradaCaja');
+    const btnSalida = document.getElementById('btnSalidaCaja');
+    
+    if (btnEntrada) btnEntrada.addEventListener('click', () => openMovimientoModal('ENTRADA'));
+    if (btnSalida) btnSalida.addEventListener('click', () => openMovimientoModal('SALIDA'));
 };

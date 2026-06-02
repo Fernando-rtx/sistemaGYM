@@ -9,7 +9,7 @@ export const render = () => {
                     <button class="filter-btn text-danger" onclick="window.showToast('Filtro aplicado: VENCIDOS', 'success')">VENCIDOS (7)</button>
                 </div>
             </div>
-            <button class="btn btn-primary" id="btnNuevoSocio" onclick="window.showToast('Abriendo formulario de Nuevo Socio...', 'info')">
+            <button class="btn btn-primary" id="btnNuevoSocio">
                 <span class="material-icons-round">add</span> NUEVO SOCIO
             </button>
         </div>
@@ -126,6 +126,44 @@ export const init = () => {
         { id: '002', nombre: 'María Fernanda López', membresia: 'Mensual', vencimiento: '09 Jun', estado: 'Activo' },
         { id: '003', nombre: 'Roberto Castillo', membresia: 'Anual', vencimiento: '15 Dic', estado: 'Activo' },
     ];
+
+    const btnNuevoSocio = document.getElementById('btnNuevoSocio');
+    if (btnNuevoSocio) {
+        btnNuevoSocio.addEventListener('click', () => {
+            const modalHtml = `
+                <div class="modal-header">
+                    <h3 class="modal-title">NUEVO SOCIO</h3>
+                    <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+                </div>
+                <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Nombres</label>
+                    <input type="text" class="form-input" placeholder="Nombres del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Apellidos</label>
+                    <input type="text" class="form-input" placeholder="Apellidos del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <div style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05);">
+                            <div style="font-size: 12px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">PLAN MENSUAL</div>
+                            <div style="font-size: 20px; font-weight: 800; color: var(--color-primary);">$11.00</div>
+                        </div>
+                        <div style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5;">
+                            <div style="font-size: 12px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN QUINCENAL</div>
+                            <div style="font-size: 20px; font-weight: 800;">$9.00</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
+                    <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.closeModal(); window.showToast('Socio registrado con éxito', 'success')">REGISTRAR</button>
+                </div>
+            `;
+            window.openModal(modalHtml);
+        });
+    }
 
     const tbody = document.getElementById('sociosTbody');
     if (!tbody) return;
