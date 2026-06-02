@@ -9,6 +9,9 @@ const KEYS = {
     CHECKINS: 'gym_checkins',
     TRANSACCIONES: 'gym_transacciones',
     SETTINGS: 'gym_settings',
+    INVENTARIO: 'gym_inventario',
+    USUARIOS: 'gym_usuarios',
+    SESION: 'gym_sesion',
 };
 
 // ==================== HELPERS ====================
@@ -48,11 +51,24 @@ const DEFAULT_SETTINGS = {
 };
 
 const DEFAULT_SOCIOS = [
-    { id: _genId(), nombre: 'Carlos Mendoza', telefono: '7777-1234', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-01', fechaVencimiento: '2026-05-18', estado: 'Vencido' },
-    { id: _genId(), nombre: 'María Fernanda López', telefono: '7777-5678', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-10', fechaVencimiento: '2026-06-09', estado: 'Activo' },
-    { id: _genId(), nombre: 'Roberto Castillo', telefono: '7777-9012', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-01-15', fechaVencimiento: '2026-12-15', estado: 'Activo' },
-    { id: _genId(), nombre: 'Miguel Vargas', telefono: '7777-3456', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-03', fechaVencimiento: '2026-06-03', estado: 'Vencido' },
-    { id: _genId(), nombre: 'Sofía Méndez', telefono: '7777-7890', membresia: 'Quincenal', precio: 10, fechaRegistro: '2026-05-17', fechaVencimiento: '2026-06-01', estado: 'Vencido' },
+    { id: _genId(), nombre: 'Carlos Mendoza', edad: 28, telefono: '7777-1234', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-01', fechaVencimiento: '2026-05-18', estado: 'Vencido', deuda: 0 },
+    { id: _genId(), nombre: 'María Fernanda López', edad: 24, telefono: '7777-5678', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-10', fechaVencimiento: '2026-06-09', estado: 'Activo', deuda: 0 },
+    { id: _genId(), nombre: 'Roberto Castillo', edad: 35, telefono: '7777-9012', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-01-15', fechaVencimiento: '2026-12-15', estado: 'Activo', deuda: 15 },
+    { id: _genId(), nombre: 'Miguel Vargas', edad: 22, telefono: '7777-3456', membresia: 'Mensual', precio: 20, fechaRegistro: '2026-05-03', fechaVencimiento: '2026-06-03', estado: 'Vencido', deuda: 0 },
+    { id: _genId(), nombre: 'Sofía Méndez', edad: 29, telefono: '7777-7890', membresia: 'Quincenal', precio: 10, fechaRegistro: '2026-05-17', fechaVencimiento: '2026-06-01', estado: 'Vencido', deuda: 0 },
+];
+
+const DEFAULT_INVENTARIO = [
+    { id: _genId(), nombre: 'Botella de Agua', precio: 0.50, stock: 50, icono: 'water_drop', color: '#3b82f6' },
+    { id: _genId(), nombre: 'Powerade', precio: 0.75, stock: 30, icono: 'sports_bar', color: '#ef4444' },
+    { id: _genId(), nombre: 'Hi Energy', precio: 0.50, stock: 20, icono: 'bolt', color: '#94ff00' },
+    { id: _genId(), nombre: 'Monster Blanco', precio: 2.50, stock: 15, icono: 'local_drink', color: '#ffffff' },
+];
+
+const DEFAULT_USUARIOS = [
+    { id: 'usr-1', username: 'fernando', password: '123', role: 'Creador', nombre: 'Fernando' },
+    { id: 'usr-2', username: 'admin', password: '123', role: 'Admin', nombre: 'Administrador' },
+    { id: 'usr-3', username: 'empleado', password: '123', role: 'Empleado', nombre: 'Recepcionista' },
 ];
 
 // ==================== INIT ====================
@@ -61,6 +77,8 @@ export const initDataStore = () => {
     if (!_get(KEYS.SOCIOS)) _set(KEYS.SOCIOS, DEFAULT_SOCIOS);
     if (!_get(KEYS.CHECKINS)) _set(KEYS.CHECKINS, []);
     if (!_get(KEYS.TRANSACCIONES)) _set(KEYS.TRANSACCIONES, []);
+    if (!_get(KEYS.INVENTARIO)) _set(KEYS.INVENTARIO, DEFAULT_INVENTARIO);
+    if (!_get(KEYS.USUARIOS)) _set(KEYS.USUARIOS, DEFAULT_USUARIOS);
 };
 
 // ==================== SETTINGS ====================
@@ -82,6 +100,7 @@ export const addSocio = (socio) => {
         id: _genId(),
         fechaRegistro: _today(),
         estado: 'Activo',
+        deuda: 0,
         ...socio,
     };
     socios.unshift(newSocio);
@@ -256,3 +275,55 @@ export const sociosPorVencer = (dias = 7) => {
         return venc >= hoy && venc <= limite;
     });
 };
+
+// ==================== INVENTARIO ====================
+export const getInventario = () => _get(KEYS.INVENTARIO) || [];
+
+export const addProducto = (producto) => {
+    const inv = getInventario();
+    const newProd = {
+        id: _genId(),
+        stock: 0,
+        icono: 'inventory_2',
+        color: '#ffffff',
+        ...producto,
+    };
+    inv.push(newProd);
+    _set(KEYS.INVENTARIO, inv);
+    return newProd;
+};
+
+export const updateProducto = (id, updates) => {
+    const inv = getInventario();
+    const idx = inv.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    inv[idx] = { ...inv[idx], ...updates };
+    _set(KEYS.INVENTARIO, inv);
+    return inv[idx];
+};
+
+export const deleteProducto = (id) => {
+    const inv = getInventario().filter(p => p.id !== id);
+    _set(KEYS.INVENTARIO, inv);
+};
+
+// ==================== USUARIOS / SESIÓN ====================
+export const getUsuarios = () => _get(KEYS.USUARIOS) || [];
+
+export const loginUsuario = (username, password) => {
+    const usuarios = getUsuarios();
+    const user = usuarios.find(u => u.username === username && u.password === password);
+    if (user) {
+        _set(KEYS.SESION, user);
+        return true;
+    }
+    return false;
+};
+
+export const logoutUsuario = () => {
+    localStorage.removeItem(KEYS.SESION);
+};
+
+export const getCurrentUser = () => _get(KEYS.SESION);
+
+

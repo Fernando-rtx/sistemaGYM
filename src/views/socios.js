@@ -1,14 +1,16 @@
-import { getSocios, addSocio, updateSocio, deleteSocio, addCheckin, calcularVencimiento, formatFecha, addTransaccion, getSettings } from '../js/dataStore.js';
+import { getSocios, addSocio, updateSocio, deleteSocio, addCheckin, calcularVencimiento, formatFecha, addTransaccion, getSettings, getCheckins, getCurrentUser } from '../js/dataStore.js';
 
 export const render = () => {
     return `
         <div class="socios-header">
             <div class="filters">
                 <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
-                <div class="status-filters">
+                <div class="status-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="filter-btn active">TODOS (0)</button>
                     <button class="filter-btn text-success">ACTIVOS (0)</button>
+                    <button class="filter-btn text-warning" style="color: #eab308;">POR RENOVAR (0)</button>
                     <button class="filter-btn text-danger">VENCIDOS (0)</button>
+                    <button class="filter-btn" style="color: #a8a29e;">AUSENTES (0)</button>
                 </div>
             </div>
             <button class="btn btn-primary" id="btnNuevoSocio">
@@ -145,21 +147,61 @@ export const init = () => {
         socios = getSocios(); // Refresh
         if (!tbody) return;
         
+        const checkins = getCheckins();
+        const hoy = new Date();
+        
+        let countTodos = 0, countActivos = 0, countVencer = 0, countVencidos = 0, countAusentes = 0;
+
         let filtrados = socios.filter(s => {
             const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
-            const matchesFilter = currentFilter === 'TODOS' || s.estado.toUpperCase() === currentFilter;
+            
+            // Cálculos para contadores
+            const isActivo = s.estado === 'Activo';
+            const isVencido = s.estado === 'Vencido';
+            
+            const fVenc = new Date(s.fechaVencimiento);
+            const diffDiasVenc = (fVenc - hoy) / (1000 * 60 * 60 * 24);
+            const isPorVencer = isActivo && diffDiasVenc >= 0 && diffDiasVenc <= 3;
+            
+            const checksSocio = checkins.filter(c => c.socioId === s.id);
+            let diffDiasAusente = 999;
+            if(checksSocio.length > 0) {
+                const ultimo = new Date(checksSocio[0].fecha + "T00:00:00");
+                diffDiasAusente = (hoy - ultimo) / (1000 * 60 * 60 * 24);
+            } else {
+                const fReg = new Date(s.fechaRegistro + "T00:00:00");
+                diffDiasAusente = (hoy - fReg) / (1000 * 60 * 60 * 24);
+            }
+            const isAusente = diffDiasAusente > 5;
+
+            // Increment counters
+            countTodos++;
+            if(isActivo) countActivos++;
+            if(isVencido) countVencidos++;
+            if(isPorVencer) countVencer++;
+            if(isAusente) countAusentes++;
+
+            let matchesFilter = false;
+            if (currentFilter === 'TODOS') matchesFilter = true;
+            if (currentFilter === 'ACTIVO' && isActivo) matchesFilter = true;
+            if (currentFilter === 'VENCIDO' && isVencido) matchesFilter = true;
+            if (currentFilter === 'POR RENOVAR' && isPorVencer) matchesFilter = true;
+            if (currentFilter === 'AUSENTE' && isAusente) matchesFilter = true;
+
             return matchesSearch && matchesFilter;
         });
 
+        const user = getCurrentUser();
+
         tbody.innerHTML = filtrados.map(s => `
-            <tr>
+            <tr style="cursor: pointer;" class="socio-row" data-id="${s.id}">
                 <td style="color: var(--color-text-secondary);">#${s.id.substring(0,6)}</td>
                 <td>
                     <div style="display: flex; align-items: center;">
                         <span class="avatar-sm">${s.nombre.substring(0,2).toUpperCase()}</span>
                         <div>
                             <div>${s.nombre}</div>
-                            ${s.telefono ? `<div style="font-size: 12px; color: var(--color-text-secondary);">${s.telefono}</div>` : ''}
+                            <div style="font-size: 12px; color: var(--color-text-secondary);">${s.edad ? s.edad + ' años • ' : ''}${s.telefono || 'Sin teléfono'}</div>
                         </div>
                     </div>
                 </td>
@@ -178,21 +220,22 @@ export const init = () => {
                         <button class="btn-icon btn-edit-row" data-id="${s.id}" title="Editar">
                             <span class="material-icons-round" style="font-size: 16px;">edit</span>
                         </button>
+                        ${user && user.role !== 'Empleado' ? `
                         <button class="btn-icon danger btn-delete-row" data-id="${s.id}" data-nombre="${s.nombre}" title="Eliminar">
                             <span class="material-icons-round" style="font-size: 16px;">delete</span>
                         </button>
+                        ` : ''}
                     </div>
                 </td>
             </tr>
         `).join('');
 
         // Contadores
-        const countTodos = socios.length;
-        const countActivos = socios.filter(s => s.estado === 'Activo').length;
-        const countVencidos = socios.filter(s => s.estado === 'Vencido').length;
-        filterBtns[0].textContent = `TODOS (${countTodos})`;
-        filterBtns[1].textContent = `ACTIVOS (${countActivos})`;
-        filterBtns[2].textContent = `VENCIDOS (${countVencidos})`;
+        filterBtns[0].textContent = \`TODOS (\${countTodos})\`;
+        filterBtns[1].textContent = \`ACTIVOS (\${countActivos})\`;
+        filterBtns[2].textContent = \`POR RENOVAR (\${countVencer})\`;
+        filterBtns[3].textContent = \`VENCIDOS (\${countVencidos})\`;
+        filterBtns[4].textContent = \`AUSENTES (\${countAusentes})\`;
 
         // Attach row action handlers
         document.querySelectorAll('.btn-checkin-row').forEach(btn => {
@@ -212,10 +255,21 @@ export const init = () => {
         });
 
         document.querySelectorAll('.btn-delete-row').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 const nombre = btn.getAttribute('data-nombre');
                 openDeleteModal(id, nombre);
+            });
+        });
+
+        // Row click for Profile
+        document.querySelectorAll('.socio-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                // Ignore clicks on buttons
+                if(e.target.closest('button')) return;
+                const id = row.getAttribute('data-id');
+                openProfileModal(id);
             });
         });
     };
@@ -235,8 +289,10 @@ export const init = () => {
             e.currentTarget.classList.add('active');
             const text = e.currentTarget.textContent;
             if (text.includes('TODOS')) currentFilter = 'TODOS';
-            if (text.includes('ACTIVOS')) currentFilter = 'ACTIVO';
-            if (text.includes('VENCIDOS')) currentFilter = 'VENCIDO';
+            else if (text.includes('ACTIVOS')) currentFilter = 'ACTIVO';
+            else if (text.includes('POR RENOVAR')) currentFilter = 'POR RENOVAR';
+            else if (text.includes('VENCIDOS')) currentFilter = 'VENCIDO';
+            else if (text.includes('AUSENTES')) currentFilter = 'AUSENTE';
             renderTable();
         });
     });
@@ -256,7 +312,10 @@ export const init = () => {
             </div>
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono</label>
-                <input type="tel" id="inpSocioTel" placeholder="7777-1234" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="inpSocioEdad" placeholder="Edad" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+                    <input type="tel" id="inpSocioTel" placeholder="7777-1234" style="flex: 2; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+                </div>
             </div>
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
@@ -291,9 +350,11 @@ export const init = () => {
             const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
             const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
 
+            const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
             const newSocio = addSocio({
                 nombre,
                 telefono,
+                edad,
                 membresia: plan,
                 precio,
                 fechaVencimiento: calcularVencimiento(plan),
@@ -325,8 +386,11 @@ export const init = () => {
                 <input type="text" id="editNombre" value="${socio.nombre}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
             </div>
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono</label>
-                <input type="tel" id="editTel" value="${socio.telefono || ''}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono / Edad</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="editEdad" value="${socio.edad || ''}" placeholder="Edad" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+                    <input type="tel" id="editTel" value="${socio.telefono || ''}" placeholder="7777-1234" style="flex: 2; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+                </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
@@ -337,8 +401,9 @@ export const init = () => {
         document.getElementById('btnUpdateSocio').addEventListener('click', () => {
             const nombre = document.getElementById('editNombre').value.trim();
             const telefono = document.getElementById('editTel').value.trim();
+            const edad = document.getElementById('editEdad').value ? parseInt(document.getElementById('editEdad').value) : null;
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
-            updateSocio(id, { nombre, telefono });
+            updateSocio(id, { nombre, telefono, edad });
             window.closeModal();
             window.showToast('Socio actualizado', 'success');
             renderTable();
@@ -369,6 +434,101 @@ export const init = () => {
             window.showToast(`${nombre} eliminado`, 'success');
             renderTable();
         });
+    }
+
+    // Profile Modal
+    function openProfileModal(id) {
+        const socio = socios.find(s => s.id === id);
+        if (!socio) return;
+        
+        // Calcular info membresía
+        const fReg = new Date(socio.fechaRegistro);
+        const fVenc = new Date(socio.fechaVencimiento);
+        const hoy = new Date();
+        const totalDias = Math.max(1, Math.ceil((fVenc - fReg) / (1000 * 60 * 60 * 24)));
+        const diasPasados = Math.max(0, Math.ceil((hoy - fReg) / (1000 * 60 * 60 * 24)));
+        let porcentaje = (diasPasados / totalDias) * 100;
+        if(porcentaje > 100) porcentaje = 100;
+        
+        // Heatmap últimos 30 días
+        const checkins = getCheckins().filter(c => c.socioId === id);
+        const setFechas = new Set(checkins.map(c => c.fecha));
+        let heatmapHtml = '';
+        for(let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+            const vino = setFechas.has(dateStr);
+            heatmapHtml += \`<div style="width: 15px; height: 15px; border-radius: 3px; background-color: \${vino ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)'};" title="\${dateStr}\${vino?' (Asistió)':''}"></div>\`;
+        }
+
+        const modalHtml = \`
+            <div class="modal-header">
+                <h3 class="modal-title">PERFIL DEL SOCIO</h3>
+                <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+            </div>
+            
+            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 25px;">
+                <div style="width: 80px; height: 80px; background: var(--color-bg-base); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700;">\${socio.nombre.substring(0,2).toUpperCase()}</div>
+                <div style="flex: 1;">
+                    <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">\${socio.nombre} <span class="status-badge \${socio.estado === 'Activo' ? 'status-activo' : 'status-vencido'}" style="font-size:10px;">\${socio.estado.toUpperCase()}</span></h2>
+                    <div style="color: var(--color-text-secondary); font-size: 14px; margin-top: 5px;">\${socio.edad ? socio.edad + ' años • ' : ''}\${socio.telefono || 'Sin teléfono'}</div>
+                </div>
+                <div id="qrcode-\${socio.id}" style="background: white; padding: 5px; border-radius: 5px;"></div>
+            </div>
+
+            <div style="background: var(--color-bg-base); padding: 20px; border-radius: var(--border-radius-md); margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                    <span style="color: var(--color-text-secondary);">Plan \${socio.membresia}</span>
+                    <span style="\${porcentaje >= 100 ? 'color: var(--color-danger);' : ''}">Vence: \${formatFecha(socio.fechaVencimiento)}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                    <div style="height: 100%; width: \${porcentaje}%; background: \${porcentaje >= 100 ? 'var(--color-danger)' : 'var(--color-primary)'}; border-radius: 4px;"></div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <h4 style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px;">ASISTENCIA (ÚLTIMOS 30 DÍAS)</h4>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    \${heatmapHtml}
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: var(--color-text-secondary);">Total de visitas: <strong style="color:var(--color-text-primary);">\${checkins.length}</strong></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CERRAR</button>
+                <button class="btn btn-primary btn-checkin-row" data-id="\${socio.id}" data-nombre="\${socio.nombre}" style="flex: 1; justify-content: center;">
+                    <span class="material-icons-round">login</span> CHECK-IN
+                </button>
+            </div>
+        \`;
+        
+        window.openModal(modalHtml);
+
+        // Generar QR
+        setTimeout(() => {
+            if (window.QRCode) {
+                new window.QRCode(document.getElementById(\`qrcode-\${socio.id}\`), {
+                    text: socio.id,
+                    width: 70,
+                    height: 70,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : window.QRCode.CorrectLevel.L
+                });
+            }
+        }, 100);
+
+        // Bind check-in button inside modal
+        const btnCheck = document.querySelector('#globalModal .btn-checkin-row');
+        if (btnCheck) {
+            btnCheck.addEventListener('click', () => {
+                addCheckin(socio.id, socio.nombre);
+                window.closeModal();
+                window.showToast(\`Check-in registrado para \${socio.nombre}\`, 'success');
+                renderTable(); // Update main view
+            });
+        }
     }
 };
 

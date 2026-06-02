@@ -5,12 +5,12 @@ export const render = () => {
         <div class="checkin-container">
             <div class="card scanner-card">
                 <h3>ESCANEAR CÓDIGO QR</h3>
-                <div class="qr-placeholder">
+                <div class="qr-placeholder" id="qr-reader" style="width: 100%; border: none; min-height: 250px;">
                     <span class="material-icons-round" style="font-size: 120px; color: var(--color-primary);">qr_code_scanner</span>
                     <p style="margin-top: 20px; color: var(--color-text-secondary);">Acerca el código del socio a la cámara</p>
                 </div>
-                <button class="btn btn-primary btn-large" id="btnSimularCheckin">
-                    SIMULAR ESCANEO
+                <button class="btn btn-primary btn-large" id="btnActivarCamara">
+                    <span class="material-icons-round">camera_alt</span> ACTIVAR CÁMARA
                 </button>
             </div>
 
@@ -130,47 +130,64 @@ export const init = () => {
     const brandTicket = document.querySelector('.brand-name-ticket');
     if (brandTicket) brandTicket.textContent = (settings.brandName || 'NEXFIT') + ' GYM';
 
-    const btnSimular = document.getElementById('btnSimularCheckin');
+    const btnCamara = document.getElementById('btnActivarCamara');
     const ticketContainer = document.getElementById('ticketContainer');
     let lastCheckedSocio = null;
+    let html5QrcodeScanner = null;
 
-    if (btnSimular) {
-        btnSimular.addEventListener('click', () => {
-            const socios = getSocios();
-            if (socios.length === 0) {
-                window.showToast('No hay socios registrados', 'danger');
-                return;
-            }
+    const procesarEscaneo = (qrCodeMessage) => {
+        const socios = getSocios();
+        const socio = socios.find(s => s.id === qrCodeMessage);
+        
+        if (!socio) {
+            window.showToast('Código no reconocido', 'danger');
+            return;
+        }
 
-            btnSimular.innerHTML = '<span class="material-icons-round">hourglass_empty</span> ESCANEANDO...';
+        lastCheckedSocio = socio;
+        ticketContainer.style.opacity = '1';
+        ticketContainer.style.pointerEvents = 'auto';
+        
+        document.getElementById('tktSocio').textContent = socio.nombre;
+        document.getElementById('tktPlan').textContent = \`Plan \${socio.membresia}\`;
+        document.getElementById('tktVenc').textContent = formatFecha(socio.fechaVencimiento);
+        
+        const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('tktFecha').textContent = new Date().toLocaleDateString('es-ES', dateOptions);
+        
+        const statusEl = document.getElementById('tktStatus');
+        if (socio.estado === 'Activo') {
+            statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
+            statusEl.className = 'ticket-status success';
+            addCheckin(socio.id, socio.nombre);
+            window.showToast(\`Acceso concedido a \${socio.nombre}\`, 'success');
+        } else {
+            statusEl.textContent = '❌ MEMBRESÍA VENCIDA';
+            statusEl.className = 'ticket-status denied';
+            window.showToast(\`Atención: Membresía de \${socio.nombre} vencida\`, 'danger');
+        }
+        
+        // Pausar escáner un momento
+        if(html5QrcodeScanner) {
+            html5QrcodeScanner.pause(true);
+            setTimeout(() => html5QrcodeScanner.resume(), 3000);
+        }
+    };
+
+    if (btnCamara) {
+        btnCamara.addEventListener('click', () => {
+            if (html5QrcodeScanner) return; // ya activo
             
-            setTimeout(() => {
-                // Pick a random socio
-                const socio = socios[Math.floor(Math.random() * socios.length)];
-                lastCheckedSocio = socio;
-                
-                btnSimular.innerHTML = 'SIMULAR ESCANEO';
-                ticketContainer.style.opacity = '1';
-                ticketContainer.style.pointerEvents = 'auto';
-                
-                document.getElementById('tktSocio').textContent = socio.nombre;
-                document.getElementById('tktPlan').textContent = `Plan ${socio.membresia}`;
-                document.getElementById('tktVenc').textContent = formatFecha(socio.fechaVencimiento);
-                
-                const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-                document.getElementById('tktFecha').textContent = new Date().toLocaleDateString('es-ES', dateOptions);
-                
-                const statusEl = document.getElementById('tktStatus');
-                if (socio.estado === 'Activo') {
-                    statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
-                    statusEl.className = 'ticket-status success';
-                    // Register check-in
-                    addCheckin(socio.id, socio.nombre);
-                } else {
-                    statusEl.textContent = '❌ MEMBRESÍA VENCIDA';
-                    statusEl.className = 'ticket-status denied';
-                }
-            }, 800);
+            document.getElementById('qr-reader').innerHTML = ''; // Clear placeholder
+            btnCamara.style.display = 'none';
+
+            html5QrcodeScanner = new window.Html5QrcodeScanner(
+                "qr-reader", { fps: 10, qrbox: 250 }, false);
+            
+            html5QrcodeScanner.render(
+                (decodedText) => procesarEscaneo(decodedText),
+                (err) => { /* ignore */ }
+            );
         });
     }
 

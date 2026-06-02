@@ -1,4 +1,4 @@
-import { initDataStore, getSettings } from './dataStore.js';
+import { initDataStore, getSettings, getCurrentUser, loginUsuario, logoutUsuario } from './dataStore.js';
 
 // Global Toast Function
 window.showToast = (msg, type = 'info') => {
@@ -39,6 +39,13 @@ window.closeModal = () => {
 
 // Global navigation function (used by topbar buttons)
 window.navigateTo = (viewName) => {
+    // Control de roles
+    const user = getCurrentUser();
+    if (viewName === 'configuracion' && user && user.role === 'Empleado') {
+        window.showToast('Acceso denegado: Requiere nivel Administrador', 'danger');
+        return;
+    }
+
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(b => {
         b.classList.remove('active');
@@ -162,8 +169,51 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
     setupModalOverlay();
     
-    // Load Dashboard by default
-    loadView('dashboard');
+    // Autenticación Flow
+    const overlay = document.getElementById('loginOverlay');
+    const navConfig = document.getElementById('navConfiguracion');
+    
+    const applyAuthUI = () => {
+        const user = getCurrentUser();
+        if (!user) {
+            overlay.style.display = 'flex';
+        } else {
+            overlay.style.display = 'none';
+            document.getElementById('sidebarUserName').textContent = user.nombre;
+            document.getElementById('sidebarUserRole').textContent = user.role;
+            document.getElementById('sidebarAvatar').innerHTML = `<span style="font-size:16px; font-weight:700;">${user.nombre.substring(0,2).toUpperCase()}</span>`;
+            
+            if (user.role === 'Empleado' && navConfig) {
+                navConfig.style.display = 'none';
+            } else if (navConfig) {
+                navConfig.style.display = 'flex';
+            }
+        }
+    };
+
+    document.getElementById('btnLoginSubmit').addEventListener('click', () => {
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        if (loginUsuario(u, p)) {
+            window.showToast('Sesión iniciada correctamente', 'success');
+            applyAuthUI();
+            loadView('dashboard');
+        } else {
+            window.showToast('Usuario o contraseña incorrectos', 'danger');
+        }
+    });
+
+    document.getElementById('userProfileBtn').addEventListener('click', () => {
+        logoutUsuario();
+        window.location.reload();
+    });
+
+    applyAuthUI();
+
+    // Load view only if logged in
+    if(getCurrentUser()) {
+        loadView('dashboard');
+    }
 
     // Quick check-in button
     const btnCheckinRapido = document.getElementById('btnCheckinRapido');

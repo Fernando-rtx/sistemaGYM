@@ -1,4 +1,4 @@
-import { getSocios, getResumenCaja, getCheckinsHoy, calcularRachas, sociosNuevosHoy, sociosPorVencer, updateSocio, calcularVencimiento, addTransaccion, formatFecha, getSettings } from '../js/dataStore.js';
+import { getSocios, getResumenCaja, getCheckinsHoy, calcularRachas, sociosNuevosHoy, sociosPorVencer, updateSocio, calcularVencimiento, addTransaccion, formatFecha, getSettings, getCheckins } from '../js/dataStore.js';
 
 export const render = () => {
     return `
@@ -29,6 +29,15 @@ export const render = () => {
                     </div>
                     <div class="alerts-list" id="alertsList">
                         <!-- Generado en JS -->
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h3>ASISTENCIA SEMANAL</h3>
+                    </div>
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="weeklyChart"></canvas>
                     </div>
                 </div>
 
@@ -244,6 +253,48 @@ export const init = () => {
         } else {
             checkinsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); width: 100%;">Ningún ingreso registrado hoy.</div>';
         }
+    }
+
+    // Dibujar gráfico
+    const allCheckins = getCheckins();
+    const ctx = document.getElementById('weeklyChart');
+    if (ctx && window.Chart) {
+        // Preparar últimos 7 días
+        const dias = [];
+        const conteos = [];
+        for(let i=6; i>=0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
+            const nameDay = d.toLocaleDateString('es-ES', {weekday: 'short'}).toUpperCase();
+            dias.push(nameDay);
+            const sum = allCheckins.filter(c => c.fecha === dateStr).length;
+            conteos.push(sum);
+        }
+        
+        new window.Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dias,
+                datasets: [{
+                    label: 'Check-ins',
+                    data: conteos,
+                    backgroundColor: '#94ff00',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1, color: '#aaa' } },
+                    x: { grid: { display: false }, ticks: { color: '#aaa' } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     }
 };
 
