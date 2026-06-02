@@ -1,7 +1,4 @@
-import { getSocios, addSocio, updateSocio, deleteSocio, addCheckin, calcularVencimiento, formatFecha, addTransaccion, getSettings } from '../js/dataStore.js';
-
-export const render = () => {
-    return `
+import{a as e,d as t,g as n,n as r,o as i,r as a,s as o,t as s,u as c}from"./index-BBDbYyKX.js";var l=()=>`
         <div class="socios-header">
             <div class="filters">
                 <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
@@ -127,125 +124,40 @@ export const render = () => {
             .btn-icon:hover { border-color: var(--color-primary); color: var(--color-primary); }
             .btn-icon.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
         </style>
-    `;
-};
-
-export const init = () => {
-    let socios = getSocios();
-    let currentFilter = 'TODOS';
-    let searchQuery = '';
-
-    const tbody = document.getElementById('sociosTbody');
-    const searchInput = document.querySelector('.search-input');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const settings = getSettings();
-    const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
-
-    const renderTable = () => {
-        socios = getSocios(); // Refresh
-        if (!tbody) return;
-        
-        let filtrados = socios.filter(s => {
-            const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
-            const matchesFilter = currentFilter === 'TODOS' || s.estado.toUpperCase() === currentFilter;
-            return matchesSearch && matchesFilter;
-        });
-
-        tbody.innerHTML = filtrados.map(s => `
+    `,u=()=>{let l=t(),u=`TODOS`,f=``,p=document.getElementById(`sociosTbody`),m=document.querySelector(`.search-input`),h=document.querySelectorAll(`.filter-btn`),g=c().precios||{Mensual:20,Quincenal:10,Diario:3},_=()=>{if(l=t(),!p)return;p.innerHTML=l.filter(e=>{let t=e.nombre.toLowerCase().includes(f.toLowerCase())||e.id.includes(f),n=u===`TODOS`||e.estado.toUpperCase()===u;return t&&n}).map(e=>`
             <tr>
-                <td style="color: var(--color-text-secondary);">#${s.id.substring(0,6)}</td>
+                <td style="color: var(--color-text-secondary);">#${e.id.substring(0,6)}</td>
                 <td>
                     <div style="display: flex; align-items: center;">
-                        <span class="avatar-sm">${s.nombre.substring(0,2).toUpperCase()}</span>
+                        <span class="avatar-sm">${e.nombre.substring(0,2).toUpperCase()}</span>
                         <div>
-                            <div>${s.nombre}</div>
-                            ${s.telefono ? `<div style="font-size: 12px; color: var(--color-text-secondary);">${s.telefono}</div>` : ''}
+                            <div>${e.nombre}</div>
+                            ${e.telefono?`<div style="font-size: 12px; color: var(--color-text-secondary);">${e.telefono}</div>`:``}
                         </div>
                     </div>
                 </td>
-                <td>${s.membresia}</td>
-                <td>${formatFecha(s.fechaVencimiento)}</td>
+                <td>${e.membresia}</td>
+                <td>${o(e.fechaVencimiento)}</td>
                 <td>
-                    <span class="status-badge ${s.estado === 'Activo' ? 'status-activo' : 'status-vencido'}">
-                        ${s.estado.toUpperCase()}
+                    <span class="status-badge ${e.estado===`Activo`?`status-activo`:`status-vencido`}">
+                        ${e.estado.toUpperCase()}
                     </span>
                 </td>
                 <td>
                     <div class="action-btns">
-                        <button class="btn-icon btn-checkin-row" data-id="${s.id}" data-nombre="${s.nombre}" title="Check-in">
+                        <button class="btn-icon btn-checkin-row" data-id="${e.id}" data-nombre="${e.nombre}" title="Check-in">
                             <span class="material-icons-round" style="font-size: 16px;">login</span>
                         </button>
-                        <button class="btn-icon btn-edit-row" data-id="${s.id}" title="Editar">
+                        <button class="btn-icon btn-edit-row" data-id="${e.id}" title="Editar">
                             <span class="material-icons-round" style="font-size: 16px;">edit</span>
                         </button>
-                        <button class="btn-icon danger btn-delete-row" data-id="${s.id}" data-nombre="${s.nombre}" title="Eliminar">
+                        <button class="btn-icon danger btn-delete-row" data-id="${e.id}" data-nombre="${e.nombre}" title="Eliminar">
                             <span class="material-icons-round" style="font-size: 16px;">delete</span>
                         </button>
                     </div>
                 </td>
             </tr>
-        `).join('');
-
-        // Contadores
-        const countTodos = socios.length;
-        const countActivos = socios.filter(s => s.estado === 'Activo').length;
-        const countVencidos = socios.filter(s => s.estado === 'Vencido').length;
-        filterBtns[0].textContent = `TODOS (${countTodos})`;
-        filterBtns[1].textContent = `ACTIVOS (${countActivos})`;
-        filterBtns[2].textContent = `VENCIDOS (${countVencidos})`;
-
-        // Attach row action handlers
-        document.querySelectorAll('.btn-checkin-row').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const nombre = btn.getAttribute('data-nombre');
-                addCheckin(id, nombre);
-                window.showToast(`Check-in registrado para ${nombre}`, 'success');
-            });
-        });
-
-        document.querySelectorAll('.btn-edit-row').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                openEditModal(id);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete-row').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const nombre = btn.getAttribute('data-nombre');
-                openDeleteModal(id, nombre);
-            });
-        });
-    };
-
-    // Search
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            renderTable();
-        });
-    }
-
-    // Filters
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            const text = e.currentTarget.textContent;
-            if (text.includes('TODOS')) currentFilter = 'TODOS';
-            if (text.includes('ACTIVOS')) currentFilter = 'ACTIVO';
-            if (text.includes('VENCIDOS')) currentFilter = 'VENCIDO';
-            renderTable();
-        });
-    });
-
-    renderTable();
-
-    // New Socio Button
-    document.getElementById('btnNuevoSocio').addEventListener('click', () => {
-        const modalHtml = `
+        `).join(``);let e=l.length,n=l.filter(e=>e.estado===`Activo`).length,r=l.filter(e=>e.estado===`Vencido`).length;h[0].textContent=`TODOS (${e})`,h[1].textContent=`ACTIVOS (${n})`,h[2].textContent=`VENCIDOS (${r})`,document.querySelectorAll(`.btn-checkin-row`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.getAttribute(`data-id`),n=e.getAttribute(`data-nombre`);s(t,n),window.showToast(`Check-in registrado para ${n}`,`success`)})}),document.querySelectorAll(`.btn-edit-row`).forEach(e=>{e.addEventListener(`click`,()=>{v(e.getAttribute(`data-id`))})}),document.querySelectorAll(`.btn-delete-row`).forEach(e=>{e.addEventListener(`click`,()=>{y(e.getAttribute(`data-id`),e.getAttribute(`data-nombre`))})})};m&&m.addEventListener(`input`,e=>{f=e.target.value,_()}),h.forEach(e=>{e.addEventListener(`click`,e=>{h.forEach(e=>e.classList.remove(`active`)),e.currentTarget.classList.add(`active`);let t=e.currentTarget.textContent;t.includes(`TODOS`)&&(u=`TODOS`),t.includes(`ACTIVOS`)&&(u=`ACTIVO`),t.includes(`VENCIDOS`)&&(u=`VENCIDO`),_()})}),_(),document.getElementById(`btnNuevoSocio`).addEventListener(`click`,()=>{let t=`
             <div class="modal-header">
                 <h3 class="modal-title">NUEVO SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
@@ -261,17 +173,17 @@ export const init = () => {
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+                    <div class="plan-card selected" data-plan="Mensual" data-precio="${g.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
                         <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">MENSUAL</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
+                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${g.Mensual.toFixed(2)}</div>
                     </div>
-                    <div class="plan-card" data-plan="Quincenal" data-precio="${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                    <div class="plan-card" data-plan="Quincenal" data-precio="${g.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                         <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">QUINCENAL</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)}</div>
+                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${g.Quincenal.toFixed(2)}</div>
                     </div>
-                    <div class="plan-card" data-plan="Diario" data-precio="${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                    <div class="plan-card" data-plan="Diario" data-precio="${g.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                         <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">DIARIO</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Diario.toFixed(2)}</div>
+                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${g.Diario.toFixed(2)}</div>
                     </div>
                 </div>
             </div>
@@ -279,117 +191,35 @@ export const init = () => {
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                 <button class="btn btn-primary" id="btnGuardarSocio" style="flex: 1; justify-content: center;">REGISTRAR</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-        setupPlanSelection();
-
-        document.getElementById('btnGuardarSocio').addEventListener('click', () => {
-            const nombre = document.getElementById('inpSocioNombre').value.trim();
-            if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
-            const telefono = document.getElementById('inpSocioTel').value.trim();
-            const selectedCard = document.querySelector('.plan-card.selected');
-            const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
-            const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
-
-            const newSocio = addSocio({
-                nombre,
-                telefono,
-                membresia: plan,
-                precio,
-                fechaVencimiento: calcularVencimiento(plan),
-            });
-
-            addTransaccion({
-                tipo: 'ingreso',
-                concepto: `Membresía ${plan} - ${nombre}`,
-                monto: precio,
-            });
-
-            window.closeModal();
-            window.showToast(`${nombre} registrado con éxito`, 'success');
-            renderTable();
-        });
-    });
-
-    // Edit Modal
-    function openEditModal(id) {
-        const socio = socios.find(s => s.id === id);
-        if (!socio) return;
-        const modalHtml = `
+        `;window.openModal(t),d(),document.getElementById(`btnGuardarSocio`).addEventListener(`click`,()=>{let t=document.getElementById(`inpSocioNombre`).value.trim();if(!t){window.showToast(`El nombre es obligatorio`,`danger`);return}let n=document.getElementById(`inpSocioTel`).value.trim(),i=document.querySelector(`.plan-card.selected`),o=i?i.getAttribute(`data-plan`):`Mensual`,s=i?parseFloat(i.getAttribute(`data-precio`)):g.Mensual;r({nombre:t,telefono:n,membresia:o,precio:s,fechaVencimiento:e(o)}),a({tipo:`ingreso`,concepto:`Membresía ${o} - ${t}`,monto:s}),window.closeModal(),window.showToast(`${t} registrado con éxito`,`success`),_()})});function v(e){let t=l.find(t=>t.id===e);if(!t)return;let r=`
             <div class="modal-header">
                 <h3 class="modal-title">EDITAR SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
             </div>
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Nombre completo</label>
-                <input type="text" id="editNombre" value="${socio.nombre}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+                <input type="text" id="editNombre" value="${t.nombre}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
             </div>
             <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono</label>
-                <input type="tel" id="editTel" value="${socio.telefono || ''}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+                <input type="tel" id="editTel" value="${t.telefono||``}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                 <button class="btn btn-primary" id="btnUpdateSocio" style="flex: 1; justify-content: center;">GUARDAR</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-        document.getElementById('btnUpdateSocio').addEventListener('click', () => {
-            const nombre = document.getElementById('editNombre').value.trim();
-            const telefono = document.getElementById('editTel').value.trim();
-            if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
-            updateSocio(id, { nombre, telefono });
-            window.closeModal();
-            window.showToast('Socio actualizado', 'success');
-            renderTable();
-        });
-    }
-
-    // Delete Modal
-    function openDeleteModal(id, nombre) {
-        const modalHtml = `
+        `;window.openModal(r),document.getElementById(`btnUpdateSocio`).addEventListener(`click`,()=>{let t=document.getElementById(`editNombre`).value.trim(),r=document.getElementById(`editTel`).value.trim();if(!t){window.showToast(`El nombre es obligatorio`,`danger`);return}n(e,{nombre:t,telefono:r}),window.closeModal(),window.showToast(`Socio actualizado`,`success`),_()})}function y(e,t){let n=`
             <div class="modal-header">
                 <h3 class="modal-title">ELIMINAR SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
             </div>
             <div style="text-align: center; padding: 20px 0;">
                 <span class="material-icons-round" style="font-size: 48px; color: var(--color-danger);">warning</span>
-                <p style="margin-top: 15px; font-size: 16px;">¿Estás seguro de eliminar a <strong>${nombre}</strong>?</p>
+                <p style="margin-top: 15px; font-size: 16px;">¿Estás seguro de eliminar a <strong>${t}</strong>?</p>
                 <p style="color: var(--color-text-secondary); font-size: 13px; margin-top: 8px;">Esta acción no se puede deshacer.</p>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                 <button class="btn btn-primary" id="btnConfirmDelete" style="flex: 1; justify-content: center; background-color: var(--color-danger);">ELIMINAR</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-        document.getElementById('btnConfirmDelete').addEventListener('click', () => {
-            deleteSocio(id);
-            window.closeModal();
-            window.showToast(`${nombre} eliminado`, 'success');
-            renderTable();
-        });
-    }
-};
-
-function setupPlanSelection() {
-    const planCards = document.querySelectorAll('.plan-card');
-    planCards.forEach(card => {
-        card.addEventListener('click', function() {
-            planCards.forEach(c => {
-                c.classList.remove('selected');
-                c.style.border = '1px solid rgba(255,255,255,0.1)';
-                c.style.backgroundColor = 'transparent';
-                c.style.opacity = '0.5';
-                c.querySelector('.plan-name').style.color = 'var(--color-text-secondary)';
-                c.querySelector('.plan-price').style.color = 'var(--color-text-primary)';
-            });
-            this.classList.add('selected');
-            this.style.border = '2px solid var(--color-primary)';
-            this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
-            this.style.opacity = '1';
-            this.querySelector('.plan-name').style.color = 'var(--color-primary)';
-            this.querySelector('.plan-price').style.color = 'var(--color-primary)';
-        });
-    });
-}
+        `;window.openModal(n),document.getElementById(`btnConfirmDelete`).addEventListener(`click`,()=>{i(e),window.closeModal(),window.showToast(`${t} eliminado`,`success`),_()})}};function d(){let e=document.querySelectorAll(`.plan-card`);e.forEach(t=>{t.addEventListener(`click`,function(){e.forEach(e=>{e.classList.remove(`selected`),e.style.border=`1px solid rgba(255,255,255,0.1)`,e.style.backgroundColor=`transparent`,e.style.opacity=`0.5`,e.querySelector(`.plan-name`).style.color=`var(--color-text-secondary)`,e.querySelector(`.plan-price`).style.color=`var(--color-text-primary)`}),this.classList.add(`selected`),this.style.border=`2px solid var(--color-primary)`,this.style.backgroundColor=`rgba(148, 255, 0, 0.05)`,this.style.opacity=`1`,this.querySelector(`.plan-name`).style.color=`var(--color-primary)`,this.querySelector(`.plan-price`).style.color=`var(--color-primary)`})})}export{u as init,l as render};

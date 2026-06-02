@@ -1,3 +1,5 @@
+import { initDataStore, getSettings } from './dataStore.js';
+
 // Global Toast Function
 window.showToast = (msg, type = 'info') => {
     const container = document.getElementById('toastContainer');
@@ -35,29 +37,29 @@ window.closeModal = () => {
     if (modal) modal.classList.remove('active');
 };
 
-// Mock Store inicialización (Persistencia local)
-const initStore = () => {
-    if (!localStorage.getItem('gym_settings')) {
-        localStorage.setItem('gym_settings', JSON.stringify({
-            brandName: 'NEXFIT',
-            brandColor: '#94ff00'
-        }));
+// Global navigation function (used by topbar buttons)
+window.navigateTo = (viewName) => {
+    const navBtns = document.querySelectorAll('.nav-btn');
+    navBtns.forEach(b => {
+        b.classList.remove('active');
+        b.style.borderLeft = 'none';
+        b.style.backgroundColor = 'transparent';
+    });
+    
+    const targetBtn = document.querySelector(`.nav-btn[data-view="${viewName}"]`);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+        targetBtn.style.borderLeft = '3px solid var(--color-primary)';
+        targetBtn.style.backgroundColor = 'rgba(148, 255, 0, 0.1)';
     }
-    // Cargar configuraciones globales
-    const settings = JSON.stringify(localStorage.getItem('gym_settings') || '{}');
-    try {
-        const parsed = JSON.parse(settings);
-        const settingsObj = JSON.parse(parsed); // double parse in case of stringified JSON string
-        applySettings(settingsObj);
-    } catch(e) {
-        applySettings({brandName: 'NEXFIT', brandColor: '#94ff00'});
-    }
+    
+    loadView(viewName);
 };
 
+// Apply settings to the UI
 const applySettings = (settings) => {
     if (settings.brandColor) {
         document.documentElement.style.setProperty('--color-primary', settings.brandColor);
-        // Opcional: calcular color oscuro
     }
     if (settings.brandName) {
         const brandEls = document.querySelectorAll('.brand-name');
@@ -82,7 +84,6 @@ const loadView = async (viewName) => {
     
     container.innerHTML = `<div style="text-align: center; color: var(--color-text-secondary); margin-top: 50px;">Cargando...</div>`;
     
-    // Cambiar Título del Topbar
     const titles = {
         'dashboard': 'Panel General',
         'socios': 'Socios',
@@ -92,9 +93,6 @@ const loadView = async (viewName) => {
     };
     viewTitle.textContent = titles[viewName] || 'Vista';
     
-    // Cargar contenido dinámicamente
-    // Para simplificar, insertaremos HTML directamente según la vista
-    // En un caso real, esto vendría de módulos separados
     try {
         let viewModule;
         switch(viewName) {
@@ -107,7 +105,6 @@ const loadView = async (viewName) => {
         }
         container.innerHTML = viewModule.render();
         container.className = 'view-container fade-in';
-        // Forzar reflow para reiniciar animación
         void container.offsetWidth;
         
         if (typeof viewModule.init === 'function') {
@@ -124,18 +121,14 @@ const setupNavigation = () => {
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Remove active from all
             navBtns.forEach(b => {
                 b.classList.remove('active');
                 b.style.borderLeft = 'none';
                 b.style.backgroundColor = 'transparent';
             });
             
-            // Add active to clicked
             const current = e.currentTarget;
             current.classList.add('active');
-            
-            // Restablecer estilos JS (en css ya están pero el hover puede molestar)
             current.style.borderLeft = '3px solid var(--color-primary)';
             current.style.backgroundColor = 'rgba(148, 255, 0, 0.1)';
             
@@ -145,11 +138,82 @@ const setupNavigation = () => {
     });
 };
 
+// Close modal when clicking on overlay
+const setupModalOverlay = () => {
+    const modal = document.getElementById('globalModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                window.closeModal();
+            }
+        });
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    initStore();
+    // Initialize centralized data store
+    initDataStore();
+    
+    // Apply saved settings
+    const settings = getSettings();
+    applySettings(settings);
+    
     updateDate();
     setupNavigation();
+    setupModalOverlay();
     
-    // Cargar Dashboard por defecto
+    // Load Dashboard by default
     loadView('dashboard');
+
+    // Quick check-in button
+    const btnCheckinRapido = document.getElementById('btnCheckinRapido');
+    if (btnCheckinRapido) {
+        btnCheckinRapido.addEventListener('click', async () => {
+            const { getSocios, addCheckin } = await import('./dataStore.js');
+            const socios = getSocios();
+            
+            const modalHtml = `
+                <div class="modal-header">
+                    <h3 class="modal-title">CHECK-IN RÁPIDO</h3>
+                    <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="quickSearchSocio" placeholder="🔍 Buscar socio por nombre..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+                </div>
+                <div id="quickSociosList" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+            `;
+            window.openModal(modalHtml);
+
+            const listEl = document.getElementById('quickSociosList');
+            const searchEl = document.getElementById('quickSearchSocio');
+
+            const renderList = (filter = '') => {
+                const filtered = socios.filter(s => s.nombre.toLowerCase().includes(filter.toLowerCase())).slice(0, 8);
+                listEl.innerHTML = filtered.map(s => `
+                    <div class="quick-socio-item" data-id="${s.id}" data-nombre="${s.nombre}" style="display: flex; align-items: center; gap: 12px; background: var(--color-bg-base); padding: 12px; border-radius: var(--border-radius-sm); cursor: pointer; transition: all 0.2s;">
+                        <div style="width: 36px; height: 36px; background: var(--color-bg-surface-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0;">${s.nombre.substring(0,2).toUpperCase()}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;">${s.nombre}</div>
+                            <div style="font-size: 12px; color: var(--color-text-secondary);">${s.membresia}</div>
+                        </div>
+                        <span class="material-icons-round" style="color: var(--color-primary);">login</span>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.quick-socio-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const id = item.getAttribute('data-id');
+                        const nombre = item.getAttribute('data-nombre');
+                        addCheckin(id, nombre);
+                        window.closeModal();
+                        window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                    });
+                });
+            };
+
+            renderList();
+            searchEl.addEventListener('input', (e) => renderList(e.target.value));
+            searchEl.focus();
+        });
+    }
 });

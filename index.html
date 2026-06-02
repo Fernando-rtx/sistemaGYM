@@ -56,10 +56,10 @@
         <h2 class="view-title" id="viewTitle">Panel General</h2>
         <div class="topbar-actions">
           <div class="date-display" id="currentDate"></div>
-          <button class="btn btn-outline" onclick="window.showToast('Escáner activado', 'info')">
+          <button class="btn btn-outline" onclick="window.navigateTo('checkin')">
             <span class="material-icons-round">qr_code</span> Escanear QR
           </button>
-          <button class="btn btn-primary" onclick="window.showToast('Abriendo check-in rápido', 'success')">
+          <button class="btn btn-primary" id="btnCheckinRapido">
             <span class="material-icons-round">add</span> Check-in Rápido
           </button>
         </div>

@@ -1,7 +1,4 @@
-import { getSettings, saveSettings } from '../js/dataStore.js';
-
-export const render = () => {
-    return `
+import{p as e,u as t}from"./index-BBDbYyKX.js";var n=()=>`
         <div class="config-container">
             <div class="card" style="max-width: 600px;">
                 <h3 style="margin-bottom: 30px; color: var(--color-text-secondary);">IDENTIDAD DEL GIMNASIO</h3>
@@ -115,69 +112,7 @@ export const render = () => {
                 text-transform: uppercase;
             }
         </style>
-    `;
-};
-
-export const init = () => {
-    const inpName = document.getElementById('inpGymName');
-    const inpColor = document.getElementById('inpBrandColor');
-    const hexDisplay = document.getElementById('hexDisplay');
-    const btnGuardar = document.getElementById('btnGuardarConfig');
-    const precioMensual = document.getElementById('precioMensual');
-    const precioQuincenal = document.getElementById('precioQuincenal');
-    const precioDiario = document.getElementById('precioDiario');
-
-    // Load current values
-    const settings = getSettings();
-    inpName.value = settings.brandName || 'NEXFIT';
-    inpColor.value = settings.brandColor || '#94ff00';
-    hexDisplay.textContent = (settings.brandColor || '#94ff00').toUpperCase();
-    
-    const precios = settings.precios || { Mensual: 20, Quincenal: 10, Diario: 3 };
-    precioMensual.value = precios.Mensual;
-    precioQuincenal.value = precios.Quincenal;
-    precioDiario.value = precios.Diario;
-
-    // Live color preview
-    inpColor.addEventListener('input', (e) => {
-        hexDisplay.textContent = e.target.value.toUpperCase();
-    });
-
-    // Save brand settings
-    btnGuardar.addEventListener('click', () => {
-        saveSettings({
-            brandName: inpName.value || 'NEXFIT',
-            brandColor: inpColor.value,
-        });
-        
-        // Apply immediately
-        document.documentElement.style.setProperty('--color-primary', inpColor.value);
-        document.querySelectorAll('.brand-name').forEach(el => el.textContent = inpName.value);
-        
-        const originalText = btnGuardar.innerHTML;
-        btnGuardar.innerHTML = '<span class="material-icons-round">check</span> GUARDADO';
-        btnGuardar.style.backgroundColor = 'var(--color-success)';
-        setTimeout(() => {
-            btnGuardar.innerHTML = originalText;
-            btnGuardar.style.backgroundColor = '';
-        }, 2000);
-    });
-
-    // Save prices
-    document.getElementById('btnGuardarPrecios').addEventListener('click', () => {
-        saveSettings({
-            precios: {
-                Mensual: parseFloat(precioMensual.value) || 20,
-                Quincenal: parseFloat(precioQuincenal.value) || 10,
-                Diario: parseFloat(precioDiario.value) || 3,
-            }
-        });
-        window.showToast('Precios actualizados', 'success');
-    });
-
-    // Reset defaults
-    document.getElementById('btnReset').addEventListener('click', () => {
-        const modalHtml = `
+    `,r=()=>{let n=document.getElementById(`inpGymName`),i=document.getElementById(`inpBrandColor`),a=document.getElementById(`hexDisplay`),o=document.getElementById(`btnGuardarConfig`),s=document.getElementById(`precioMensual`),c=document.getElementById(`precioQuincenal`),l=document.getElementById(`precioDiario`),u=t();n.value=u.brandName||`NEXFIT`,i.value=u.brandColor||`#94ff00`,a.textContent=(u.brandColor||`#94ff00`).toUpperCase();let d=u.precios||{Mensual:20,Quincenal:10,Diario:3};s.value=d.Mensual,c.value=d.Quincenal,l.value=d.Diario,i.addEventListener(`input`,e=>{a.textContent=e.target.value.toUpperCase()}),o.addEventListener(`click`,()=>{e({brandName:n.value||`NEXFIT`,brandColor:i.value}),document.documentElement.style.setProperty(`--color-primary`,i.value),document.querySelectorAll(`.brand-name`).forEach(e=>e.textContent=n.value);let t=o.innerHTML;o.innerHTML=`<span class="material-icons-round">check</span> GUARDADO`,o.style.backgroundColor=`var(--color-success)`,setTimeout(()=>{o.innerHTML=t,o.style.backgroundColor=``},2e3)}),document.getElementById(`btnGuardarPrecios`).addEventListener(`click`,()=>{e({precios:{Mensual:parseFloat(s.value)||20,Quincenal:parseFloat(c.value)||10,Diario:parseFloat(l.value)||3}}),window.showToast(`Precios actualizados`,`success`)}),document.getElementById(`btnReset`).addEventListener(`click`,()=>{window.openModal(`
             <div class="modal-header">
                 <h3 class="modal-title">RESTAURAR VALORES</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
@@ -190,20 +125,4 @@ export const init = () => {
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                 <button class="btn btn-primary" id="btnConfirmReset" style="flex: 1; justify-content: center;">RESTAURAR</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-        document.getElementById('btnConfirmReset').addEventListener('click', () => {
-            saveSettings({
-                brandName: 'NEXFIT',
-                brandColor: '#94ff00',
-                precios: { Mensual: 20, Quincenal: 10, Diario: 3 },
-            });
-            document.documentElement.style.setProperty('--color-primary', '#94ff00');
-            document.querySelectorAll('.brand-name').forEach(el => el.textContent = 'NEXFIT');
-            window.closeModal();
-            window.showToast('Valores restaurados', 'success');
-            // Reload view
-            init();
-        });
-    });
-};
+        `),document.getElementById(`btnConfirmReset`).addEventListener(`click`,()=>{e({brandName:`NEXFIT`,brandColor:`#94ff00`,precios:{Mensual:20,Quincenal:10,Diario:3}}),document.documentElement.style.setProperty(`--color-primary`,`#94ff00`),document.querySelectorAll(`.brand-name`).forEach(e=>e.textContent=`NEXFIT`),window.closeModal(),window.showToast(`Valores restaurados`,`success`),r()})})};export{r as init,n as render};

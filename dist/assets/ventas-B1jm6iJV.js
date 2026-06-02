@@ -1,7 +1,4 @@
-import { getTransaccionesHoy, addTransaccion, getResumenCaja } from '../js/dataStore.js';
-
-export const render = () => {
-    return `
+import{f as e,l as t,r as n}from"./index-BBDbYyKX.js";var r=()=>`
         <div class="ventas-grid">
             <div class="pos-panel">
                 <div class="card">
@@ -169,116 +166,23 @@ export const render = () => {
                 font-size: 14px;
             }
         </style>
-    `;
-};
-
-export const init = () => {
-    let carrito = [];
-
-    const carritoSection = document.getElementById('carritoSection');
-    const carritoItems = document.getElementById('carritoItems');
-    const carritoTotal = document.getElementById('carritoTotal');
-
-    // ===== Render functions =====
-    const renderCaja = () => {
-        const caja = getResumenCaja();
-        document.getElementById('cajaTotal').textContent = '$' + caja.total.toFixed(2);
-        document.getElementById('cajaIngresos').textContent = '$' + caja.ingresos.toFixed(2);
-        document.getElementById('cajaSalidas').textContent = '-$' + caja.salidas.toFixed(2);
-    };
-
-    const renderTransacciones = () => {
-        const trans = getTransaccionesHoy();
-        const tbody = document.getElementById('transTbody');
-        const empty = document.getElementById('transEmpty');
-
-        if (trans.length === 0) {
-            tbody.innerHTML = '';
-            empty.style.display = 'block';
-            return;
-        }
-        empty.style.display = 'none';
-        tbody.innerHTML = trans.map(t => `
+    `,i=()=>{let r=[],i=document.getElementById(`carritoSection`),a=document.getElementById(`carritoItems`),o=document.getElementById(`carritoTotal`),s=()=>{let e=t();document.getElementById(`cajaTotal`).textContent=`$`+e.total.toFixed(2),document.getElementById(`cajaIngresos`).textContent=`$`+e.ingresos.toFixed(2),document.getElementById(`cajaSalidas`).textContent=`-$`+e.salidas.toFixed(2)},c=()=>{let t=e(),n=document.getElementById(`transTbody`),r=document.getElementById(`transEmpty`);if(t.length===0){n.innerHTML=``,r.style.display=`block`;return}r.style.display=`none`,n.innerHTML=t.map(e=>`
             <tr>
-                <td>${t.hora}</td>
-                <td>${t.concepto}</td>
-                <td class="${t.tipo === 'ingreso' ? 'text-success' : 'text-danger'}">${t.tipo === 'ingreso' ? '+' : '-'}$${t.monto.toFixed(2)}</td>
+                <td>${e.hora}</td>
+                <td>${e.concepto}</td>
+                <td class="${e.tipo===`ingreso`?`text-success`:`text-danger`}">${e.tipo===`ingreso`?`+`:`-`}$${e.monto.toFixed(2)}</td>
             </tr>
-        `).join('');
-    };
-
-    const renderCarrito = () => {
-        if (carrito.length === 0) {
-            carritoSection.style.display = 'none';
-            return;
-        }
-        carritoSection.style.display = 'block';
-        const total = carrito.reduce((s, i) => s + i.price * i.qty, 0);
-        carritoTotal.textContent = '$' + total.toFixed(2);
-        carritoItems.innerHTML = carrito.map((item, idx) => `
+        `).join(``)},l=()=>{if(r.length===0){i.style.display=`none`;return}i.style.display=`block`,o.textContent=`$`+r.reduce((e,t)=>e+t.price*t.qty,0).toFixed(2),a.innerHTML=r.map((e,t)=>`
             <div class="carrito-item">
-                <span>${item.name} x${item.qty}</span>
+                <span>${e.name} x${e.qty}</span>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color: var(--color-primary); font-weight: 600;">$${(item.price * item.qty).toFixed(2)}</span>
-                    <button class="btn-remove-item" data-idx="${idx}" style="background: transparent; border: none; color: var(--color-danger); cursor: pointer; font-size: 18px; line-height: 1;">×</button>
+                    <span style="color: var(--color-primary); font-weight: 600;">$${(e.price*e.qty).toFixed(2)}</span>
+                    <button class="btn-remove-item" data-idx="${t}" style="background: transparent; border: none; color: var(--color-danger); cursor: pointer; font-size: 18px; line-height: 1;">×</button>
                 </div>
             </div>
-        `).join('');
-
-        document.querySelectorAll('.btn-remove-item').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = parseInt(btn.getAttribute('data-idx'));
-                carrito.splice(idx, 1);
-                renderCarrito();
-            });
-        });
-    };
-
-    // ===== Product click =====
-    document.querySelectorAll('.product-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const name = item.getAttribute('data-name');
-            const price = parseFloat(item.getAttribute('data-price'));
-            item.style.transform = 'scale(0.95)';
-            setTimeout(() => { item.style.transform = ''; }, 150);
-
-            const existing = carrito.find(c => c.name === name);
-            if (existing) {
-                existing.qty++;
-            } else {
-                carrito.push({ name, price, qty: 1 });
-            }
-            renderCarrito();
-            window.showToast(`${name} añadido al carrito`, 'success');
-        });
-    });
-
-    // Clear cart
-    document.getElementById('btnLimpiarCarrito').addEventListener('click', () => {
-        carrito = [];
-        renderCarrito();
-    });
-
-    // Cobrar
-    document.getElementById('btnCobrar').addEventListener('click', () => {
-        if (carrito.length === 0) return;
-        const total = carrito.reduce((s, i) => s + i.price * i.qty, 0);
-        const items = carrito.map(i => `${i.name} x${i.qty}`).join(', ');
-        addTransaccion({ tipo: 'ingreso', concepto: `Venta: ${items}`, monto: total });
-        window.showToast(`Venta cobrada: $${total.toFixed(2)}`, 'success');
-        carrito = [];
-        renderCarrito();
-        renderTransacciones();
-        renderCaja();
-    });
-
-    // Entrada / Salida
-    const openMovimientoModal = (tipo) => {
-        const isEntrada = tipo === 'ENTRADA';
-        const color = isEntrada ? 'var(--color-success)' : 'var(--color-danger)';
-        const modalHtml = `
+        `).join(``),document.querySelectorAll(`.btn-remove-item`).forEach(e=>{e.addEventListener(`click`,()=>{let t=parseInt(e.getAttribute(`data-idx`));r.splice(t,1),l()})})};document.querySelectorAll(`.product-item`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.getAttribute(`data-name`),n=parseFloat(e.getAttribute(`data-price`));e.style.transform=`scale(0.95)`,setTimeout(()=>{e.style.transform=``},150);let i=r.find(e=>e.name===t);i?i.qty++:r.push({name:t,price:n,qty:1}),l(),window.showToast(`${t} añadido al carrito`,`success`)})}),document.getElementById(`btnLimpiarCarrito`).addEventListener(`click`,()=>{r=[],l()}),document.getElementById(`btnCobrar`).addEventListener(`click`,()=>{if(r.length===0)return;let e=r.reduce((e,t)=>e+t.price*t.qty,0);n({tipo:`ingreso`,concepto:`Venta: ${r.map(e=>`${e.name} x${e.qty}`).join(`, `)}`,monto:e}),window.showToast(`Venta cobrada: $${e.toFixed(2)}`,`success`),r=[],l(),c(),s()});let u=e=>{let t=e===`ENTRADA`,r=`
             <div class="modal-header">
-                <h3 class="modal-title">REGISTRAR ${tipo} DE EFECTIVO</h3>
+                <h3 class="modal-title">REGISTRAR ${e} DE EFECTIVO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
             </div>
             <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
@@ -287,64 +191,27 @@ export const init = () => {
             </div>
             <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Monto</label>
-                <input type="number" id="movMonto" placeholder="0.00" min="0.01" step="0.01" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: ${color}; padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 24px; font-weight: 800; width: 100%; box-sizing: border-box; outline: none;">
+                <input type="number" id="movMonto" placeholder="0.00" min="0.01" step="0.01" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: ${t?`var(--color-success)`:`var(--color-danger)`}; padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 24px; font-weight: 800; width: 100%; box-sizing: border-box; outline: none;">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
-                <button class="btn btn-primary" id="btnRegistrarMov" style="flex: 1; justify-content: center;">REGISTRAR ${tipo}</button>
+                <button class="btn btn-primary" id="btnRegistrarMov" style="flex: 1; justify-content: center;">REGISTRAR ${e}</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-
-        document.getElementById('btnRegistrarMov').addEventListener('click', () => {
-            const concepto = document.getElementById('movConcepto').value.trim() || `${tipo} de efectivo`;
-            const monto = parseFloat(document.getElementById('movMonto').value);
-            if (!monto || monto <= 0) { window.showToast('Ingresa un monto válido', 'danger'); return; }
-
-            addTransaccion({
-                tipo: isEntrada ? 'ingreso' : 'salida',
-                concepto,
-                monto,
-            });
-            window.closeModal();
-            window.showToast(`${tipo} registrada: $${monto.toFixed(2)}`, 'success');
-            renderTransacciones();
-            renderCaja();
-        });
-    };
-
-    document.getElementById('btnEntradaCaja').addEventListener('click', () => openMovimientoModal('ENTRADA'));
-    document.getElementById('btnSalidaCaja').addEventListener('click', () => openMovimientoModal('SALIDA'));
-
-    // Cerrar caja
-    document.getElementById('btnCerrarCaja').addEventListener('click', () => {
-        const caja = getResumenCaja();
-        const modalHtml = `
+        `;window.openModal(r),document.getElementById(`btnRegistrarMov`).addEventListener(`click`,()=>{let r=document.getElementById(`movConcepto`).value.trim()||`${e} de efectivo`,i=parseFloat(document.getElementById(`movMonto`).value);if(!i||i<=0){window.showToast(`Ingresa un monto válido`,`danger`);return}n({tipo:t?`ingreso`:`salida`,concepto:r,monto:i}),window.closeModal(),window.showToast(`${e} registrada: $${i.toFixed(2)}`,`success`),c(),s()})};document.getElementById(`btnEntradaCaja`).addEventListener(`click`,()=>u(`ENTRADA`)),document.getElementById(`btnSalidaCaja`).addEventListener(`click`,()=>u(`SALIDA`)),document.getElementById(`btnCerrarCaja`).addEventListener(`click`,()=>{let e=t(),n=`
             <div class="modal-header">
                 <h3 class="modal-title">CERRAR CAJA</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
             </div>
             <div style="text-align: center; padding: 20px 0;">
-                <div style="font-size: 48px; font-weight: 800; color: var(--color-primary); margin-bottom: 10px;">$${caja.total.toFixed(2)}</div>
-                <p style="color: var(--color-text-secondary); margin-bottom: 20px;">${caja.numTransacciones} transacciones hoy</p>
+                <div style="font-size: 48px; font-weight: 800; color: var(--color-primary); margin-bottom: 10px;">$${e.total.toFixed(2)}</div>
+                <p style="color: var(--color-text-secondary); margin-bottom: 20px;">${e.numTransacciones} transacciones hoy</p>
                 <div style="background: var(--color-bg-base); padding: 15px; border-radius: var(--border-radius-sm); display: flex; justify-content: space-around;">
-                    <div><div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">Ingresos</div><div style="color: var(--color-success); font-weight: 700;">$${caja.ingresos.toFixed(2)}</div></div>
-                    <div><div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">Salidas</div><div style="color: var(--color-danger); font-weight: 700;">$${caja.salidas.toFixed(2)}</div></div>
+                    <div><div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">Ingresos</div><div style="color: var(--color-success); font-weight: 700;">$${e.ingresos.toFixed(2)}</div></div>
+                    <div><div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">Salidas</div><div style="color: var(--color-danger); font-weight: 700;">$${e.salidas.toFixed(2)}</div></div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                 <button class="btn btn-primary" id="btnConfirmarCierre" style="flex: 1; justify-content: center;">CONFIRMAR CIERRE</button>
             </div>
-        `;
-        window.openModal(modalHtml);
-        document.getElementById('btnConfirmarCierre').addEventListener('click', () => {
-            window.closeModal();
-            window.showToast('Caja cerrada exitosamente. Corte Z generado.', 'success');
-        });
-    });
-
-    // Initial render
-    renderTransacciones();
-    renderCaja();
-};
+        `;window.openModal(n),document.getElementById(`btnConfirmarCierre`).addEventListener(`click`,()=>{window.closeModal(),window.showToast(`Caja cerrada exitosamente. Corte Z generado.`,`success`)})}),c(),s()};export{i as init,r as render};

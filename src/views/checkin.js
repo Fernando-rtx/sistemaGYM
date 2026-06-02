@@ -1,3 +1,5 @@
+import { getSocios, addCheckin, getSettings, formatFecha } from '../js/dataStore.js';
+
 export const render = () => {
     return `
         <div class="checkin-container">
@@ -21,14 +23,15 @@ export const render = () => {
                     <div class="ticket-body">
                         <div class="ticket-row"><span>Socio:</span> <strong id="tktSocio">---</strong></div>
                         <div class="ticket-row"><span>Plan:</span> <strong id="tktPlan">---</strong></div>
+                        <div class="ticket-row"><span>Vencimiento:</span> <strong id="tktVenc">---</strong></div>
                         <div class="ticket-row"><span>Fecha:</span> <strong id="tktFecha">---</strong></div>
                         <div class="ticket-divider"></div>
-                        <div class="ticket-status success" id="tktStatus">ESPERANDO...</div>
+                        <div class="ticket-status" id="tktStatus">ESPERANDO...</div>
                     </div>
                 </div>
                 <div class="ticket-actions">
-                    <button class="btn btn-outline" style="width: 100%;" onclick="window.showToast('Enviando a impresora térmica...', 'info')"><span class="material-icons-round">print</span> IMPRIMIR</button>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="window.showToast('Abriendo WhatsApp Web...', 'success')"><span class="material-icons-round">send</span> WHATSAPP</button>
+                    <button class="btn btn-outline" style="width: 100%;" id="btnImprimir"><span class="material-icons-round">print</span> IMPRIMIR</button>
+                    <button class="btn btn-primary" style="width: 100%;" id="btnWhatsapp"><span class="material-icons-round">send</span> WHATSAPP</button>
                 </div>
             </div>
         </div>
@@ -66,7 +69,6 @@ export const render = () => {
                 font-size: 16px;
             }
             
-            /* Ticket Styles */
             .ticket-card {
                 display: flex;
                 flex-direction: column;
@@ -112,6 +114,7 @@ export const render = () => {
                 font-size: 20px;
             }
             .ticket-status.success { color: #10b981; }
+            .ticket-status.denied { color: #ef4444; }
             
             .ticket-actions {
                 display: flex;
@@ -122,35 +125,96 @@ export const render = () => {
 };
 
 export const init = () => {
-    // Sincronizar nombre del gimnasio en el ticket
-    const settingsStr = localStorage.getItem('gym_settings');
-    if (settingsStr) {
-        try {
-            const settings = JSON.parse(JSON.parse(settingsStr));
-            if (settings.brandName) {
-                document.querySelector('.brand-name-ticket').textContent = settings.brandName + ' GYM';
-            }
-        } catch(e) {}
-    }
+    // Sync gym name to ticket
+    const settings = getSettings();
+    const brandTicket = document.querySelector('.brand-name-ticket');
+    if (brandTicket) brandTicket.textContent = (settings.brandName || 'NEXFIT') + ' GYM';
 
     const btnSimular = document.getElementById('btnSimularCheckin');
     const ticketContainer = document.getElementById('ticketContainer');
-    
+    let lastCheckedSocio = null;
+
     if (btnSimular) {
         btnSimular.addEventListener('click', () => {
+            const socios = getSocios();
+            if (socios.length === 0) {
+                window.showToast('No hay socios registrados', 'danger');
+                return;
+            }
+
             btnSimular.innerHTML = '<span class="material-icons-round">hourglass_empty</span> ESCANEANDO...';
             
             setTimeout(() => {
+                // Pick a random socio
+                const socio = socios[Math.floor(Math.random() * socios.length)];
+                lastCheckedSocio = socio;
+                
                 btnSimular.innerHTML = 'SIMULAR ESCANEO';
                 ticketContainer.style.opacity = '1';
                 ticketContainer.style.pointerEvents = 'auto';
                 
-                document.getElementById('tktSocio').textContent = 'Fernando Aguilar';
-                document.getElementById('tktPlan').textContent = 'Plan Mensual';
+                document.getElementById('tktSocio').textContent = socio.nombre;
+                document.getElementById('tktPlan').textContent = `Plan ${socio.membresia}`;
+                document.getElementById('tktVenc').textContent = formatFecha(socio.fechaVencimiento);
+                
                 const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
                 document.getElementById('tktFecha').textContent = new Date().toLocaleDateString('es-ES', dateOptions);
-                document.getElementById('tktStatus').textContent = '¡ACCESO PERMITIDO!';
+                
+                const statusEl = document.getElementById('tktStatus');
+                if (socio.estado === 'Activo') {
+                    statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
+                    statusEl.className = 'ticket-status success';
+                    // Register check-in
+                    addCheckin(socio.id, socio.nombre);
+                } else {
+                    statusEl.textContent = '❌ MEMBRESÍA VENCIDA';
+                    statusEl.className = 'ticket-status denied';
+                }
             }, 800);
         });
     }
+
+    // Print button
+    document.getElementById('btnImprimir').addEventListener('click', () => {
+        const ticketEl = document.querySelector('.ticket');
+        if (!ticketEl) return;
+        const printWin = window.open('', '_blank', 'width=400,height=600');
+        printWin.document.write(`
+            <html><head><title>Ticket</title>
+            <style>
+                body { font-family: 'Inter', Arial, sans-serif; padding: 20px; }
+                .ticket-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+                .ticket-row span { color: #666; }
+                .ticket-header { text-align: center; margin-bottom: 20px; }
+                .ticket-header h2 { font-size: 22px; margin-bottom: 4px; }
+                .ticket-header p { color: #666; font-size: 13px; }
+                .ticket-divider { border-top: 2px dashed #ccc; margin: 15px 0; }
+                .ticket-status { text-align: center; font-weight: 800; font-size: 18px; margin-top: 10px; }
+            </style></head><body>
+            ${ticketEl.innerHTML}
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+            </body></html>
+        `);
+        printWin.document.close();
+    });
+
+    // WhatsApp button
+    document.getElementById('btnWhatsapp').addEventListener('click', () => {
+        if (!lastCheckedSocio) {
+            window.showToast('Primero escanea un socio', 'info');
+            return;
+        }
+        const socio = lastCheckedSocio;
+        const msg = encodeURIComponent(
+            `🏋️ *${settings.brandName || 'NEXFIT'} GYM*\n` +
+            `Comprobante de Ingreso\n\n` +
+            `Socio: ${socio.nombre}\n` +
+            `Plan: ${socio.membresia}\n` +
+            `Fecha: ${new Date().toLocaleDateString('es-ES')}\n` +
+            `Estado: ${socio.estado === 'Activo' ? '✅ Acceso Permitido' : '❌ Membresía Vencida'}`
+        );
+        const tel = socio.telefono ? socio.telefono.replace(/[^0-9]/g, '') : '';
+        const url = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+        window.open(url, '_blank');
+    });
 };

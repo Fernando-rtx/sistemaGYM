@@ -1,4 +1,4 @@
-var e=()=>`
+import{d as e,s as t,t as n,u as r}from"./index-BBDbYyKX.js";var i=()=>`
         <div class="checkin-container">
             <div class="card scanner-card">
                 <h3>ESCANEAR CÓDIGO QR</h3>
@@ -20,14 +20,15 @@ var e=()=>`
                     <div class="ticket-body">
                         <div class="ticket-row"><span>Socio:</span> <strong id="tktSocio">---</strong></div>
                         <div class="ticket-row"><span>Plan:</span> <strong id="tktPlan">---</strong></div>
+                        <div class="ticket-row"><span>Vencimiento:</span> <strong id="tktVenc">---</strong></div>
                         <div class="ticket-row"><span>Fecha:</span> <strong id="tktFecha">---</strong></div>
                         <div class="ticket-divider"></div>
-                        <div class="ticket-status success" id="tktStatus">ESPERANDO...</div>
+                        <div class="ticket-status" id="tktStatus">ESPERANDO...</div>
                     </div>
                 </div>
                 <div class="ticket-actions">
-                    <button class="btn btn-outline" style="width: 100%;" onclick="window.showToast('Enviando a impresora térmica...', 'info')"><span class="material-icons-round">print</span> IMPRIMIR</button>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="window.showToast('Abriendo WhatsApp Web...', 'success')"><span class="material-icons-round">send</span> WHATSAPP</button>
+                    <button class="btn btn-outline" style="width: 100%;" id="btnImprimir"><span class="material-icons-round">print</span> IMPRIMIR</button>
+                    <button class="btn btn-primary" style="width: 100%;" id="btnWhatsapp"><span class="material-icons-round">send</span> WHATSAPP</button>
                 </div>
             </div>
         </div>
@@ -65,7 +66,6 @@ var e=()=>`
                 font-size: 16px;
             }
             
-            /* Ticket Styles */
             .ticket-card {
                 display: flex;
                 flex-direction: column;
@@ -111,10 +111,26 @@ var e=()=>`
                 font-size: 20px;
             }
             .ticket-status.success { color: #10b981; }
+            .ticket-status.denied { color: #ef4444; }
             
             .ticket-actions {
                 display: flex;
                 gap: 16px;
             }
         </style>
-    `,t=()=>{let e=localStorage.getItem(`gym_settings`);if(e)try{let t=JSON.parse(JSON.parse(e));t.brandName&&(document.querySelector(`.brand-name-ticket`).textContent=t.brandName+` GYM`)}catch{}let t=document.getElementById(`btnSimularCheckin`),n=document.getElementById(`ticketContainer`);t&&t.addEventListener(`click`,()=>{t.innerHTML=`<span class="material-icons-round">hourglass_empty</span> ESCANEANDO...`,setTimeout(()=>{t.innerHTML=`SIMULAR ESCANEO`,n.style.opacity=`1`,n.style.pointerEvents=`auto`,document.getElementById(`tktSocio`).textContent=`Fernando Aguilar`,document.getElementById(`tktPlan`).textContent=`Plan Mensual`;let e={day:`2-digit`,month:`2-digit`,year:`numeric`,hour:`2-digit`,minute:`2-digit`};document.getElementById(`tktFecha`).textContent=new Date().toLocaleDateString(`es-ES`,e),document.getElementById(`tktStatus`).textContent=`¡ACCESO PERMITIDO!`},800)})};export{t as init,e as render};
+    `,a=()=>{let i=r(),a=document.querySelector(`.brand-name-ticket`);a&&(a.textContent=(i.brandName||`NEXFIT`)+` GYM`);let o=document.getElementById(`btnSimularCheckin`),s=document.getElementById(`ticketContainer`),c=null;o&&o.addEventListener(`click`,()=>{let r=e();if(r.length===0){window.showToast(`No hay socios registrados`,`danger`);return}o.innerHTML=`<span class="material-icons-round">hourglass_empty</span> ESCANEANDO...`,setTimeout(()=>{let e=r[Math.floor(Math.random()*r.length)];c=e,o.innerHTML=`SIMULAR ESCANEO`,s.style.opacity=`1`,s.style.pointerEvents=`auto`,document.getElementById(`tktSocio`).textContent=e.nombre,document.getElementById(`tktPlan`).textContent=`Plan ${e.membresia}`,document.getElementById(`tktVenc`).textContent=t(e.fechaVencimiento);let i={day:`2-digit`,month:`2-digit`,year:`numeric`,hour:`2-digit`,minute:`2-digit`};document.getElementById(`tktFecha`).textContent=new Date().toLocaleDateString(`es-ES`,i);let a=document.getElementById(`tktStatus`);e.estado===`Activo`?(a.textContent=`✅ ¡ACCESO PERMITIDO!`,a.className=`ticket-status success`,n(e.id,e.nombre)):(a.textContent=`❌ MEMBRESÍA VENCIDA`,a.className=`ticket-status denied`)},800)}),document.getElementById(`btnImprimir`).addEventListener(`click`,()=>{let e=document.querySelector(`.ticket`);if(!e)return;let t=window.open(``,`_blank`,`width=400,height=600`);t.document.write(`
+            <html><head><title>Ticket</title>
+            <style>
+                body { font-family: 'Inter', Arial, sans-serif; padding: 20px; }
+                .ticket-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+                .ticket-row span { color: #666; }
+                .ticket-header { text-align: center; margin-bottom: 20px; }
+                .ticket-header h2 { font-size: 22px; margin-bottom: 4px; }
+                .ticket-header p { color: #666; font-size: 13px; }
+                .ticket-divider { border-top: 2px dashed #ccc; margin: 15px 0; }
+                .ticket-status { text-align: center; font-weight: 800; font-size: 18px; margin-top: 10px; }
+            </style></head><body>
+            ${e.innerHTML}
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+            </body></html>
+        `),t.document.close()}),document.getElementById(`btnWhatsapp`).addEventListener(`click`,()=>{if(!c){window.showToast(`Primero escanea un socio`,`info`);return}let e=c,t=encodeURIComponent(`🏋️ *${i.brandName||`NEXFIT`} GYM*\nComprobante de Ingreso\n\nSocio: ${e.nombre}\nPlan: ${e.membresia}\nFecha: ${new Date().toLocaleDateString(`es-ES`)}\nEstado: ${e.estado===`Activo`?`✅ Acceso Permitido`:`❌ Membresía Vencida`}`),n=e.telefono?e.telefono.replace(/[^0-9]/g,``):``,r=n?`https://wa.me/${n}?text=${t}`:`https://wa.me/?text=${t}`;window.open(r,`_blank`)})};export{a as init,i as render};
