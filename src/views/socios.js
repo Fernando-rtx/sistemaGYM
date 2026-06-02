@@ -598,7 +598,7 @@ export const init = () => {
                         <div style="display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 13px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
                             <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">person</span> ${socio.edad ? socio.edad + ' años' : '-'}</span>
                             <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">phone</span> ${socio.telefono || 'Sin teléfono'}</span>
-                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${formatFecha(socio.fechaRegistro)}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${(formatFecha(socio.fechaRegistro) || '')}</span>
                             <span class="status-badge ${socio.estado === 'Vencido' ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo')}" style="padding: 2px 8px;">
                                 ${socio.estado === 'Vencido' ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO')}
                             </span>
@@ -641,11 +641,11 @@ export const init = () => {
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <!-- Plan Status -->
                     <div class="card" style="padding: 24px;">
-                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ESTADO DEL PLAN <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">Plan ${socio.membresia} · $${socio.precio.toFixed(2)}</span></div>
+                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ESTADO DEL PLAN <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">Plan ${socio.membresia} · $${(socio.precio || 0).toFixed(2)}</span></div>
                         
                         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 1px; margin-bottom: 8px;">
-                            <span>INICIO · ${formatFecha(socio.fechaRegistro).toUpperCase()}</span>
-                            <span>VENCE · ${formatFecha(socio.fechaVencimiento).toUpperCase()}</span>
+                            <span>INICIO · ${(formatFecha(socio.fechaRegistro) || '').toUpperCase()}</span>
+                            <span>VENCE · ${(formatFecha(socio.fechaVencimiento) || '').toUpperCase()}</span>
                         </div>
                         
                         <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
