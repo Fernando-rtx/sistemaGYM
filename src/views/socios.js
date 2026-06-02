@@ -459,7 +459,19 @@ export const init = async () => {
                 </div>
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">TELÉFONO</label>
-                    <input type="tel" id="inpSocioTel" placeholder="+1 555 000 0000" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
+                    <div style="display: flex; gap: 8px;">
+                        <select id="inpSocioTelPrefix" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 8px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; transition: border-color 0.2s; cursor: pointer;">
+                            <option value="+503" selected>🇸🇻 +503</option>
+                            <option value="+52">🇲🇽 +52</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+504">🇭🇳 +504</option>
+                            <option value="+502">🇬🇹 +502</option>
+                            <option value="+505">🇳🇮 +505</option>
+                            <option value="+506">🇨🇷 +506</option>
+                            <option value="+507">🇵🇦 +507</option>
+                        </select>
+                        <input type="text" id="inpSocioTel" placeholder="12345678" maxlength="8" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
                 </div>
             </div>
             
@@ -550,7 +562,9 @@ export const init = async () => {
         document.getElementById('btnGuardarSocio').addEventListener('click', async () => {
             const nombre = document.getElementById('inpSocioNombre').value.trim();
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
-            const telefono = document.getElementById('inpSocioTel').value.trim();
+            const prefijo = document.getElementById('inpSocioTelPrefix').value;
+            const numeroTel = document.getElementById('inpSocioTel').value.trim();
+            const telefono = numeroTel ? `${prefijo} ${numeroTel}` : '';
             const selectedCard = document.querySelector('.plan-card-ns.selected');
             const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
             const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
@@ -597,6 +611,17 @@ export const init = async () => {
     function openEditModal(id) {
         const socio = socios.find(s => s.id === id);
         if (!socio) return;
+        
+        const parts = (socio.telefono || '').split(' ');
+        let currentPrefix = '+503';
+        let currentNum = socio.telefono || '';
+        if (parts.length > 1 && parts[0].startsWith('+')) {
+            currentPrefix = parts[0];
+            currentNum = parts.slice(1).join('').replace(/[^0-9]/g, '');
+        } else {
+            currentNum = currentNum.replace(/[^0-9]/g, '');
+        }
+
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">EDITAR SOCIO</h3>
@@ -610,7 +635,17 @@ export const init = async () => {
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono / Edad</label>
                 <div style="display: flex; gap: 10px;">
                     <input type="number" id="editEdad" value="${socio.edad || ''}" placeholder="Edad" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
-                    <input type="tel" id="editTel" value="${socio.telefono || ''}" placeholder="7777-1234" style="flex: 2; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+                    <select id="editTelPrefix" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 8px; border-radius: var(--border-radius-md); font-size: 15px; outline: none; cursor: pointer;">
+                        <option value="+503" ${currentPrefix === '+503' ? 'selected' : ''}>🇸🇻 +503</option>
+                        <option value="+52" ${currentPrefix === '+52' ? 'selected' : ''}>🇲🇽 +52</option>
+                        <option value="+1" ${currentPrefix === '+1' ? 'selected' : ''}>🇺🇸 +1</option>
+                        <option value="+504" ${currentPrefix === '+504' ? 'selected' : ''}>🇭🇳 +504</option>
+                        <option value="+502" ${currentPrefix === '+502' ? 'selected' : ''}>🇬🇹 +502</option>
+                        <option value="+505" ${currentPrefix === '+505' ? 'selected' : ''}>🇳🇮 +505</option>
+                        <option value="+506" ${currentPrefix === '+506' ? 'selected' : ''}>🇨🇷 +506</option>
+                        <option value="+507" ${currentPrefix === '+507' ? 'selected' : ''}>🇵🇦 +507</option>
+                    </select>
+                    <input type="text" id="editTel" value="${currentNum}" placeholder="12345678" maxlength="8" style="flex: 2; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
@@ -621,7 +656,9 @@ export const init = async () => {
         window.openModal(modalHtml);
         document.getElementById('btnUpdateSocio').addEventListener('click', async () => {
             const nombre = document.getElementById('editNombre').value.trim();
-            const telefono = document.getElementById('editTel').value.trim();
+            const editTelPrefix = document.getElementById('editTelPrefix').value;
+            const editTelNum = document.getElementById('editTel').value.trim();
+            const telefono = editTelNum ? `${editTelPrefix} ${editTelNum}` : '';
             const edad = document.getElementById('editEdad').value ? parseInt(document.getElementById('editEdad').value) : null;
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
             await updateSocio(id, { nombre, telefono, edad });
