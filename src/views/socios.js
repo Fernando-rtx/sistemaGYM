@@ -120,12 +120,93 @@ export const render = () => {
 };
 
 export const init = () => {
-    // Mock Data
-    const socios = [
+    const defaultSocios = [
         { id: '001', nombre: 'Carlos Mendoza', membresia: 'Mensual', vencimiento: '18 May', estado: 'Vencido' },
         { id: '002', nombre: 'María Fernanda López', membresia: 'Mensual', vencimiento: '09 Jun', estado: 'Activo' },
         { id: '003', nombre: 'Roberto Castillo', membresia: 'Anual', vencimiento: '15 Dic', estado: 'Activo' },
+        { id: '004', nombre: 'Miguel Vargas', membresia: 'Mensual', vencimiento: '03 Jun', estado: 'Vencido' },
+        { id: '005', nombre: 'Sofía Méndez', membresia: 'Quincenal', vencimiento: '01 Jun', estado: 'Vencido' },
     ];
+
+    if (!localStorage.getItem('gym_socios')) {
+        localStorage.setItem('gym_socios', JSON.stringify(defaultSocios));
+    }
+
+    let socios = JSON.parse(localStorage.getItem('gym_socios'));
+    let currentFilter = 'TODOS';
+    let searchQuery = '';
+
+    const tbody = document.getElementById('sociosTbody');
+    const searchInput = document.querySelector('.search-input');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+
+    const renderTable = () => {
+        if (!tbody) return;
+        
+        let filtrados = socios.filter(s => {
+            const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
+            const matchesFilter = currentFilter === 'TODOS' || s.estado.toUpperCase() === currentFilter;
+            return matchesSearch && matchesFilter;
+        });
+
+        tbody.innerHTML = filtrados.map(s => `
+            <tr>
+                <td style="color: var(--color-text-secondary);">#${s.id}</td>
+                <td>
+                    <div style="display: flex; align-items: center;">
+                        <span class="avatar-sm">${s.nombre.substring(0,2).toUpperCase()}</span>
+                        ${s.nombre}
+                    </div>
+                </td>
+                <td>${s.membresia}</td>
+                <td>${s.vencimiento}</td>
+                <td>
+                    <span class="status-badge ${s.estado === 'Activo' ? 'status-activo' : 'status-vencido'}">
+                        ${s.estado.toUpperCase()}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="window.showToast('Check-in manual registrado para ${s.nombre}', 'success')">CHECK-IN</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Actualizar contadores en los botones
+        const countTodos = socios.length;
+        const countActivos = socios.filter(s => s.estado === 'Activo').length;
+        const countVencidos = socios.filter(s => s.estado === 'Vencido').length;
+
+        filterBtns[0].textContent = \`TODOS (\${countTodos})\`;
+        filterBtns[1].textContent = \`ACTIVOS (\${countActivos})\`;
+        filterBtns[2].textContent = \`VENCIDOS (\${countVencidos})\`;
+    };
+
+    // Eventos de búsqueda y filtro
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTable();
+        });
+    }
+
+    filterBtns.forEach(btn => {
+        // Remover el onclick original del HTML para no tener conflictos
+        btn.removeAttribute('onclick');
+        
+        btn.addEventListener('click', (e) => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            
+            const text = e.currentTarget.textContent;
+            if (text.includes('TODOS')) currentFilter = 'TODOS';
+            if (text.includes('ACTIVOS')) currentFilter = 'ACTIVO';
+            if (text.includes('VENCIDOS')) currentFilter = 'VENCIDO';
+            
+            renderTable();
+        });
+    });
+
+    renderTable();
 
     const btnNuevoSocio = document.getElementById('btnNuevoSocio');
     if (btnNuevoSocio) {
@@ -137,27 +218,20 @@ export const init = () => {
                 </div>
                 <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Nombres</label>
-                    <input type="text" class="form-input" placeholder="Nombres del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
-                </div>
-                <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-                    <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Apellidos</label>
-                    <input type="text" class="form-input" placeholder="Apellidos del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
+                    <input type="text" id="inpSocioNombre" class="form-input" placeholder="Nombres del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
                 </div>
                 <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
                     <div style="display: flex; gap: 10px; margin-top: 5px;">
-                        <!-- MENSUAL -->
-                        <div class="plan-card selected" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+                        <div class="plan-card selected" data-plan="Mensual" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
                             <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">PLAN MENSUAL</div>
                             <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$20.00</div>
                         </div>
-                        <!-- QUINCENAL -->
-                        <div class="plan-card" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                        <div class="plan-card" data-plan="Quincenal" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                             <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN QUINCENAL</div>
                             <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$10.00</div>
                         </div>
-                        <!-- DIARIO -->
-                        <div class="plan-card" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                        <div class="plan-card" data-plan="Diario" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
                             <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">PLAN DIARIO</div>
                             <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$3.00</div>
                         </div>
@@ -165,16 +239,15 @@ export const init = () => {
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 30px;">
                     <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
-                    <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.closeModal(); window.showToast('Socio registrado con éxito', 'success')">REGISTRAR</button>
+                    <button class="btn btn-primary" id="btnGuardarSocio" style="flex: 1; justify-content: center;">REGISTRAR</button>
                 </div>
             `;
             window.openModal(modalHtml);
             
-            // Logic for plan selection
+            let selectedPlan = 'Mensual';
             const planCards = document.querySelectorAll('.plan-card');
             planCards.forEach(card => {
                 card.addEventListener('click', function() {
-                    // Reset all
                     planCards.forEach(c => {
                         c.classList.remove('selected');
                         c.style.border = '1px solid rgba(255,255,255,0.1)';
@@ -184,40 +257,34 @@ export const init = () => {
                         c.querySelector('.plan-price').style.color = 'var(--color-text-primary)';
                     });
                     
-                    // Set active
                     this.classList.add('selected');
                     this.style.border = '2px solid var(--color-primary)';
                     this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
                     this.style.opacity = '1';
                     this.querySelector('.plan-name').style.color = 'var(--color-primary)';
                     this.querySelector('.plan-price').style.color = 'var(--color-primary)';
+                    selectedPlan = this.getAttribute('data-plan');
                 });
+            });
+
+            document.getElementById('btnGuardarSocio').addEventListener('click', () => {
+                const nombre = document.getElementById('inpSocioNombre').value || 'Nuevo Socio';
+                const id = String(socios.length + 1).padStart(3, '0');
+                
+                socios.unshift({
+                    id,
+                    nombre,
+                    membresia: selectedPlan,
+                    vencimiento: 'Próximo mes',
+                    estado: 'Activo'
+                });
+                
+                localStorage.setItem('gym_socios', JSON.stringify(socios));
+                renderTable();
+                
+                window.closeModal();
+                window.showToast('Socio registrado con éxito', 'success');
             });
         });
     }
-
-    const tbody = document.getElementById('sociosTbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = socios.map(s => `
-        <tr>
-            <td style="color: var(--color-text-secondary);">#${s.id}</td>
-            <td>
-                <div style="display: flex; align-items: center;">
-                    <span class="avatar-sm">${s.nombre.substring(0,2).toUpperCase()}</span>
-                    ${s.nombre}
-                </div>
-            </td>
-            <td>${s.membresia}</td>
-            <td>${s.vencimiento}</td>
-            <td>
-                <span class="status-badge ${s.estado === 'Activo' ? 'status-activo' : 'status-vencido'}">
-                    ${s.estado.toUpperCase()}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="window.showToast('Check-in manual registrado para ${s.nombre}', 'success')">CHECK-IN</button>
-            </td>
-        </tr>
-    `).join('');
 };

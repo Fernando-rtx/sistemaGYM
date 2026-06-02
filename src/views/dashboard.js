@@ -4,17 +4,17 @@ export const render = () => {
             <div class="stats-cards">
                 <div class="card stat-card">
                     <h3>INGRESOS HOY</h3>
-                    <div class="stat-value">$145.00</div>
+                    <div class="stat-value" id="dashIngresos">$0.00</div>
                     <div class="stat-trend success">+12% vs ayer</div>
                 </div>
                 <div class="card stat-card">
                     <h3>SOCIOS ACTIVOS</h3>
-                    <div class="stat-value">124</div>
+                    <div class="stat-value" id="dashActivos">0</div>
                     <div class="stat-trend success">+3 nuevos</div>
                 </div>
                 <div class="card stat-card">
                     <h3>POR VENCER (7D)</h3>
-                    <div class="stat-value">18</div>
+                    <div class="stat-value" id="dashVencer">0</div>
                     <div class="stat-trend danger">Requiere atención</div>
                 </div>
             </div>
@@ -25,23 +25,8 @@ export const render = () => {
                         <h3>ALERTAS DE RENOVACIÓN</h3>
                         <button class="btn btn-outline" onclick="window.showToast('Cargando historial de alertas...', 'info')">VER TODOS</button>
                     </div>
-                    <div class="alerts-list">
-                        <div class="alert-item">
-                            <div class="alert-avatar">MV</div>
-                            <div class="alert-info">
-                                <h4>Miguel Vargas</h4>
-                                <span>Vence mañana</span>
-                            </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para Miguel...', 'success')">Renovar</button>
-                        </div>
-                        <div class="alert-item">
-                            <div class="alert-avatar">SM</div>
-                            <div class="alert-info">
-                                <h4>Sofía Méndez</h4>
-                                <span>Venció ayer</span>
-                            </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para Sofía...', 'success')">Renovar</button>
-                        </div>
+                    <div class="alerts-list" id="alertsList">
+                        <!-- Generado en JS -->
                     </div>
                 </div>
 
@@ -155,5 +140,37 @@ export const render = () => {
 };
 
 export const init = () => {
-    // Aquí iría la lógica del dashboard, como animar números
+    const socios = JSON.parse(localStorage.getItem('gym_socios')) || [];
+    
+    // Calcular datos reales
+    const activos = socios.filter(s => s.estado === 'Activo').length;
+    const vencidos = socios.filter(s => s.estado === 'Vencido');
+    
+    // Actualizar números del dashboard
+    const elActivos = document.getElementById('dashActivos');
+    const elVencer = document.getElementById('dashVencer');
+    const elIngresos = document.getElementById('dashIngresos');
+    const alertsList = document.getElementById('alertsList');
+    
+    if (elActivos) elActivos.textContent = activos;
+    if (elVencer) elVencer.textContent = vencidos.length;
+    
+    // Ingresos mock dinámicos basados en activos
+    if (elIngresos) elIngresos.textContent = '$' + (activos * 14.5).toFixed(2);
+    
+    // Llenar Alertas de Renovación dinámicamente con los socios vencidos
+    if (alertsList && vencidos.length > 0) {
+        alertsList.innerHTML = vencidos.slice(0, 4).map(v => `
+            <div class="alert-item">
+                <div class="alert-avatar">${v.nombre.substring(0,2).toUpperCase()}</div>
+                <div class="alert-info">
+                    <h4>${v.nombre}</h4>
+                    <span>Vencimiento: ${v.vencimiento}</span>
+                </div>
+                <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para ${v.nombre}...', 'success')">Renovar</button>
+            </div>
+        `).join('');
+    } else if (alertsList) {
+        alertsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">No hay alertas pendientes.</div>';
+    }
 };
