@@ -2,37 +2,43 @@ import { getSocios, addSocio, updateSocio, deleteSocio, addCheckin, calcularVenc
 
 export const render = () => {
     return `
-        <div class="socios-header">
-            <div class="filters">
-                <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
-                <div class="status-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="filter-btn active">TODOS (0)</button>
-                    <button class="filter-btn text-success">ACTIVOS (0)</button>
-                    <button class="filter-btn text-warning" style="color: #eab308;">POR RENOVAR (0)</button>
-                    <button class="filter-btn text-danger">VENCIDOS (0)</button>
-                    <button class="filter-btn" style="color: #a8a29e;">AUSENTES (0)</button>
+        <div id="sociosMainView">
+            <div class="socios-header">
+                <div class="filters">
+                    <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
+                    <div class="status-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="filter-btn active">TODOS (0)</button>
+                        <button class="filter-btn text-success">ACTIVOS (0)</button>
+                        <button class="filter-btn text-warning" style="color: #eab308;">POR RENOVAR (0)</button>
+                        <button class="filter-btn text-danger">VENCIDOS (0)</button>
+                        <button class="filter-btn" style="color: #a8a29e;">AUSENTES (0)</button>
+                    </div>
                 </div>
+                <button class="btn btn-primary" id="btnNuevoSocio">
+                    <span class="material-icons-round">add</span> NUEVO SOCIO
+                </button>
             </div>
-            <button class="btn btn-primary" id="btnNuevoSocio">
-                <span class="material-icons-round">add</span> NUEVO SOCIO
-            </button>
+
+            <div class="card socios-table-container">
+                <table class="socios-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NOMBRE</th>
+                            <th>MEMBRESÍA</th>
+                            <th>VENCIMIENTO</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sociosTbody">
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="card socios-table-container">
-            <table class="socios-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>NOMBRE</th>
-                        <th>MEMBRESÍA</th>
-                        <th>VENCIMIENTO</th>
-                        <th>ESTADO</th>
-                        <th>ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="sociosTbody">
-                </tbody>
-            </table>
+        <div id="sociosProfileView" style="display: none;">
+            <!-- Profile content will be injected here -->
         </div>
 
         <style>
@@ -110,6 +116,7 @@ export const render = () => {
             }
             .status-activo { background-color: rgba(16, 185, 129, 0.1); color: var(--color-success); }
             .status-vencido { background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+            .status-ausente { background-color: rgba(255, 255, 255, 0.1); color: var(--color-text-secondary); }
             
             .avatar-sm {
                 display: inline-flex; width: 30px; height: 30px;
@@ -128,6 +135,23 @@ export const render = () => {
             }
             .btn-icon:hover { border-color: var(--color-primary); color: var(--color-primary); }
             .btn-icon.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+            
+            /* Profile View Specific Styles */
+            .profile-stat-card {
+                background: var(--color-bg-surface);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: var(--border-radius-md);
+                padding: 20px;
+            }
+            .heatmap-grid {
+                display: grid;
+                grid-template-columns: repeat(15, 1fr);
+                gap: 6px;
+            }
+            .heatmap-cell {
+                aspect-ratio: 1;
+                border-radius: 4px;
+            }
         </style>
     `;
 };
@@ -193,7 +217,16 @@ export const init = () => {
 
         const user = getCurrentUser();
 
-        tbody.innerHTML = filtrados.map(s => `
+        tbody.innerHTML = filtrados.map(s => {
+            // Recalcular estado local para el badge (si es ausente lo mostramos en gris)
+            const checksSocio = checkins.filter(c => c.socioId === s.id);
+            let dAusente = 999;
+            if(checksSocio.length > 0) {
+                dAusente = (hoy - new Date(checksSocio[0].fecha + "T00:00:00")) / (1000 * 60 * 60 * 24);
+            }
+            const isAusenteBadge = dAusente > 5 && s.estado !== 'Vencido';
+
+            return `
             <tr style="cursor: pointer;" class="socio-row" data-id="${s.id}">
                 <td style="color: var(--color-text-secondary);">#${s.id.substring(0,6)}</td>
                 <td>
@@ -208,8 +241,8 @@ export const init = () => {
                 <td>${s.membresia}</td>
                 <td>${formatFecha(s.fechaVencimiento)}</td>
                 <td>
-                    <span class="status-badge ${s.estado === 'Activo' ? 'status-activo' : 'status-vencido'}">
-                        ${s.estado.toUpperCase()}
+                    <span class="status-badge ${s.estado === 'Vencido' ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo')}">
+                        ${s.estado === 'Vencido' ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO')}
                     </span>
                 </td>
                 <td>
@@ -228,7 +261,8 @@ export const init = () => {
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
 
         // Contadores
         filterBtns[0].textContent = `TODOS (${countTodos})`;
@@ -239,16 +273,19 @@ export const init = () => {
 
         // Attach row action handlers
         document.querySelectorAll('.btn-checkin-row').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 const nombre = btn.getAttribute('data-nombre');
                 addCheckin(id, nombre);
                 window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                renderTable(); // Update table stats
             });
         });
 
         document.querySelectorAll('.btn-edit-row').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 openEditModal(id);
             });
@@ -263,13 +300,13 @@ export const init = () => {
             });
         });
 
-        // Row click for Profile
+        // Row click for Profile Full View
         document.querySelectorAll('.socio-row').forEach(row => {
             row.addEventListener('click', (e) => {
                 // Ignore clicks on buttons
-                if(e.target.closest('button')) return;
+                if(e.target.closest('button') || e.target.closest('.action-btns')) return;
                 const id = row.getAttribute('data-id');
-                openProfileModal(id);
+                openProfileView(id);
             });
         });
     };
@@ -351,7 +388,7 @@ export const init = () => {
             const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
 
             const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
-            const newSocio = addSocio({
+            addSocio({
                 nombre,
                 telefono,
                 edad,
@@ -407,6 +444,12 @@ export const init = () => {
             window.closeModal();
             window.showToast('Socio actualizado', 'success');
             renderTable();
+            
+            // If profile is open, refresh it
+            const profileView = document.getElementById('sociosProfileView');
+            if (profileView && profileView.style.display === 'block') {
+                openProfileView(id);
+            }
         });
     }
 
@@ -432,104 +475,285 @@ export const init = () => {
             deleteSocio(id);
             window.closeModal();
             window.showToast(`${nombre} eliminado`, 'success');
+            
+            // Go back if profile is open
+            const profileView = document.getElementById('sociosProfileView');
+            if (profileView && profileView.style.display === 'block') {
+                document.getElementById('sociosProfileView').style.display = 'none';
+                document.getElementById('sociosMainView').style.display = 'block';
+            }
             renderTable();
         });
     }
 
-    // Profile Modal
-    function openProfileModal(id) {
+    // Full Page Profile View
+    function openProfileView(id) {
         const socio = socios.find(s => s.id === id);
         if (!socio) return;
         
-        // Calcular info membresía
-        const fReg = new Date(socio.fechaRegistro);
-        const fVenc = new Date(socio.fechaVencimiento);
-        const hoy = new Date();
-        const totalDias = Math.max(1, Math.ceil((fVenc - fReg) / (1000 * 60 * 60 * 24)));
-        const diasPasados = Math.max(0, Math.ceil((hoy - fReg) / (1000 * 60 * 60 * 24)));
-        let porcentaje = (diasPasados / totalDias) * 100;
-        if(porcentaje > 100) porcentaje = 100;
+        // Hide Main View, Show Profile View
+        document.getElementById('sociosMainView').style.display = 'none';
+        const profileView = document.getElementById('sociosProfileView');
+        profileView.style.display = 'block';
+        profileView.innerHTML = '<div style="text-align:center; padding: 50px;">Cargando perfil...</div>';
         
-        // Heatmap últimos 30 días
-        const checkins = getCheckins().filter(c => c.socioId === id);
-        const setFechas = new Set(checkins.map(c => c.fecha));
+        const hoy = new Date();
+        const fReg = new Date(socio.fechaRegistro + "T00:00:00");
+        const fVenc = new Date(socio.fechaVencimiento + "T00:00:00");
+        
+        // 1. Estadísticas básicas
+        const diasComoSocio = Math.max(0, Math.floor((hoy - fReg) / (1000 * 60 * 60 * 24)));
+        const totalDiasPlan = Math.max(1, Math.ceil((fVenc - fReg) / (1000 * 60 * 60 * 24)));
+        const diasRestantes = Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+        let porcentaje = ((totalDiasPlan - Math.max(0, diasRestantes)) / totalDiasPlan) * 100;
+        if(porcentaje > 100) porcentaje = 100;
+        if(porcentaje < 0) porcentaje = 0;
+
+        // 2. Historial de checkins
+        const checkins = getCheckins().filter(c => c.socioId === id).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+        let rachaActual = 0;
+        let ultimaVisitaFormateada = '-';
+        let isAusenteBadge = false;
+
+        if (checkins.length > 0) {
+            ultimaVisitaFormateada = formatFecha(checkins[0].fecha);
+            
+            // Calc racha actual
+            let currentCheckDate = new Date(hoy);
+            let checkSet = new Set(checkins.map(c => c.fecha));
+            
+            // if today is not checked, start from yesterday
+            const todayStr = `${currentCheckDate.getFullYear()}-${String(currentCheckDate.getMonth()+1).padStart(2,'0')}-${String(currentCheckDate.getDate()).padStart(2,'0')}`;
+            if (!checkSet.has(todayStr)) {
+                currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+            }
+            
+            while(true) {
+                const dateStr = `${currentCheckDate.getFullYear()}-${String(currentCheckDate.getMonth()+1).padStart(2,'0')}-${String(currentCheckDate.getDate()).padStart(2,'0')}`;
+                if(checkSet.has(dateStr)) {
+                    rachaActual++;
+                    currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            // Ausente calc
+            const diffDiasAusente = (hoy - new Date(checkins[0].fecha + "T00:00:00")) / (1000 * 60 * 60 * 24);
+            isAusenteBadge = diffDiasAusente > 5;
+        } else {
+            const diffDiasAusente = (hoy - fReg) / (1000 * 60 * 60 * 24);
+            isAusenteBadge = diffDiasAusente > 5;
+        }
+
+        // 3. Heatmap
         let heatmapHtml = '';
+        const setFechas = new Set(checkins.map(c => c.fecha));
+        let diasAsistidos30 = 0;
         for(let i = 29; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const vino = setFechas.has(dateStr);
-            heatmapHtml += `<div style="width: 15px; height: 15px; border-radius: 3px; background-color: ${vino ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)'};" title="${dateStr}${vino?' (Asistió)':''}"></div>`;
+            if (vino) diasAsistidos30++;
+            heatmapHtml += `<div class="heatmap-cell" style="background-color: ${vino ? 'var(--color-primary)' : 'rgba(255,255,255,0.05)'};" title="${dateStr}${vino?' (Asistió)':''}"></div>`;
         }
 
-        const modalHtml = `
-            <div class="modal-header">
-                <h3 class="modal-title">PERFIL DEL SOCIO</h3>
-                <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
-            </div>
-            
-            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 25px;">
-                <div style="width: 80px; height: 80px; background: var(--color-bg-base); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700;">\${socio.nombre.substring(0,2).toUpperCase()}</div>
-                <div style="flex: 1;">
-                    <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">\${socio.nombre} <span class="status-badge \${socio.estado === 'Activo' ? 'status-activo' : 'status-vencido'}" style="font-size:10px;">\${socio.estado.toUpperCase()}</span></h2>
-                    <div style="color: var(--color-text-secondary); font-size: 14px; margin-top: 5px;">\${socio.edad ? socio.edad + ' años • ' : ''}\${socio.telefono || 'Sin teléfono'}</div>
+        // Historial list HTML
+        const historialHtml = checkins.slice(0, 8).map(c => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.1); color: var(--color-success); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <span class="material-icons-round" style="font-size: 16px;">login</span>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;">Check-in</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary);">${formatFecha(c.fecha)}</div>
+                    </div>
                 </div>
-                <div id="qrcode-\${socio.id}" style="background: white; padding: 5px; border-radius: 5px;"></div>
+                <div style="font-size: 12px; color: var(--color-success); font-weight: 600;">Acceso concedido</div>
             </div>
+        `).join('');
 
-            <div style="background: var(--color-bg-base); padding: 20px; border-radius: var(--border-radius-md); margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
-                    <span style="color: var(--color-text-secondary);">Plan \${socio.membresia}</span>
-                    <span style="\${porcentaje >= 100 ? 'color: var(--color-danger);' : ''}">Vence: \${formatFecha(socio.fechaVencimiento)}</span>
-                </div>
-                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-                    <div style="height: 100%; width: \${porcentaje}%; background: \${porcentaje >= 100 ? 'var(--color-danger)' : 'var(--color-primary)'}; border-radius: 4px;"></div>
-                </div>
-            </div>
+        const user = getCurrentUser();
+        const isAdmin = user && user.role !== 'Empleado';
 
-            <div style="margin-bottom: 25px;">
-                <h4 style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px;">ASISTENCIA (ÚLTIMOS 30 DÍAS)</h4>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    \${heatmapHtml}
-                </div>
-                <div style="margin-top: 10px; font-size: 12px; color: var(--color-text-secondary);">Total de visitas: <strong style="color:var(--color-text-primary);">\${checkins.length}</strong></div>
-            </div>
-
-            <div style="display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CERRAR</button>
-                <button class="btn btn-primary btn-checkin-row" data-id="\${socio.id}" data-nombre="\${socio.nombre}" style="flex: 1; justify-content: center;">
-                    <span class="material-icons-round">login</span> CHECK-IN
+        const profileHtml = `
+            <!-- Navigation Header -->
+            <div class="profile-nav" style="display: flex; align-items: center; margin-bottom: 24px; gap: 16px;">
+                <button class="btn btn-outline" id="btnVolverSocios" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-secondary); padding: 8px 16px; border-radius: var(--border-radius-sm); font-weight: 600;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 4px;">arrow_back</span> VOLVER
                 </button>
+                <div style="color: var(--color-text-secondary); font-size: 13px; font-weight: 600; letter-spacing: 1px;">
+                    CLIENTES / <span style="color: var(--color-text-primary);">${socio.nombre.toUpperCase()}</span>
+                </div>
+            </div>
+
+            <!-- Top Header Card -->
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 24px; flex-wrap: wrap; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 80px; height: 80px; background: rgba(148, 255, 0, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: var(--color-primary);">${socio.nombre.substring(0,2).toUpperCase()}</div>
+                    <div>
+                        <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${socio.nombre.toUpperCase()}</h1>
+                        <div style="display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 13px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">person</span> ${socio.edad ? socio.edad + ' años' : '-'}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">phone</span> ${socio.telefono || 'Sin teléfono'}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${formatFecha(socio.fechaRegistro)}</span>
+                            <span class="status-badge ${socio.estado === 'Vencido' ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo')}" style="padding: 2px 8px;">
+                                ${socio.estado === 'Vencido' ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-outline" id="btnDeudaProfile"><span class="material-icons-round" style="font-size:18px;">add</span> AÑADIR DEUDA</button>
+                    <button class="btn btn-outline" id="btnVerQrProfile"><span class="material-icons-round" style="font-size:18px;">qr_code</span> VER QR</button>
+                    ${isAdmin ? `<button class="btn btn-outline danger" id="btnEliminarProfile" style="border-color: rgba(239, 68, 68, 0.2); color: var(--color-danger);"><span class="material-icons-round" style="font-size:18px;">delete</span> ELIMINAR</button>` : ''}
+                    <button class="btn btn-outline" id="btnRenovarProfile"><span class="material-icons-round" style="font-size:18px;">autorenew</span> RENOVAR PLAN</button>
+                    <button class="btn btn-primary" id="btnCheckinProfile"><span class="material-icons-round" style="font-size:18px;">flash_on</span> CHECK-IN</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px;">
+                <div class="profile-stat-card">
+                    <div style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px;">RACHA ACTUAL</div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--color-primary);">${rachaActual} <span style="font-size: 14px; font-weight: 500; color: var(--color-text-secondary);">días</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <div style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px;">ASISTENCIAS TOTALES</div>
+                    <div style="font-size: 28px; font-weight: 800;">${checkins.length}</div>
+                </div>
+                <div class="profile-stat-card">
+                    <div style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px;">DÍAS COMO SOCIO</div>
+                    <div style="font-size: 28px; font-weight: 800;">${diasComoSocio}</div>
+                </div>
+                <div class="profile-stat-card">
+                    <div style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px;">ÚLTIMA VISITA</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 8px;">${ultimaVisitaFormateada}</div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                
+                <!-- Left Column -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Plan Status -->
+                    <div class="card" style="padding: 24px;">
+                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ESTADO DEL PLAN <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">Plan ${socio.membresia} · $${socio.precio.toFixed(2)}</span></div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 1px; margin-bottom: 8px;">
+                            <span>INICIO · ${formatFecha(socio.fechaRegistro).toUpperCase()}</span>
+                            <span>VENCE · ${formatFecha(socio.fechaVencimiento).toUpperCase()}</span>
+                        </div>
+                        
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
+                            <div style="height: 100%; width: ${porcentaje}%; background: ${porcentaje >= 100 ? 'var(--color-danger)' : 'var(--color-primary)'}; border-radius: 3px; transition: width 0.5s ease;"></div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                            <span style="${porcentaje >= 100 ? 'color: var(--color-danger);' : ''}">${diasRestantes > 0 ? diasRestantes + ' días restantes' : 'Plan Vencido'}</span>
+                            <span style="color: var(--color-text-secondary); font-weight: 500;">${Math.floor(porcentaje)}% transcurrido</span>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div class="card" style="padding: 24px;">
+                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ASISTENCIA · ÚLTIMOS 30 DÍAS <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">${diasAsistidos30} días</span></div>
+                        <div class="heatmap-grid">
+                            ${heatmapHtml}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Historial -->
+                <div class="card" style="padding: 24px; min-height: 400px; display: flex; flex-direction: column;">
+                    <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">HISTORIAL <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">${checkins.length} visitas</span></div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding-right: 5px;">
+                        ${checkins.length === 0 ? `
+                            <div style="text-align: center; color: var(--color-text-secondary); margin-top: 60px;">
+                                <div style="font-weight: 700; color: var(--color-text-primary); margin-bottom: 8px; font-size: 13px;">SIN ASISTENCIAS</div>
+                                <div style="font-size: 12px;">Registra el primer check-in.</div>
+                            </div>
+                        ` : historialHtml}
+                    </div>
+                </div>
+
             </div>
         `;
-        
-        window.openModal(modalHtml);
 
-        // Generar QR
-        setTimeout(() => {
-            if (window.QRCode) {
-                new window.QRCode(document.getElementById(`qrcode-${socio.id}`), {
-                    text: socio.id,
-                    width: 70,
-                    height: 70,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : window.QRCode.CorrectLevel.L
+        profileView.innerHTML = profileHtml;
+
+        // Bindings for Profile Buttons
+        document.getElementById('btnVolverSocios').addEventListener('click', () => {
+            profileView.style.display = 'none';
+            document.getElementById('sociosMainView').style.display = 'block';
+            renderTable(); // Update stats in table just in case
+        });
+
+        document.getElementById('btnCheckinProfile').addEventListener('click', () => {
+            addCheckin(socio.id, socio.nombre);
+            window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
+            openProfileView(id); // Reload profile view to show updated stats
+        });
+
+        if (isAdmin) {
+            const btnDelProf = document.getElementById('btnEliminarProfile');
+            if(btnDelProf) {
+                btnDelProf.addEventListener('click', () => {
+                    openDeleteModal(id, socio.nombre);
                 });
             }
-        }, 100);
-
-        // Bind check-in button inside modal
-        const btnCheck = document.querySelector('#globalModal .btn-checkin-row');
-        if (btnCheck) {
-            btnCheck.addEventListener('click', () => {
-                addCheckin(socio.id, socio.nombre);
-                window.closeModal();
-                window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
-                renderTable(); // Update main view
-            });
         }
+
+        document.getElementById('btnRenovarProfile').addEventListener('click', () => {
+            // Re-utilize Edit Plan logic or simply renew for 30 days
+            const nuevoVencimiento = calcularVencimiento(socio.membresia);
+            updateSocio(socio.id, { fechaVencimiento: nuevoVencimiento, estado: 'Activo' });
+            addTransaccion({
+                tipo: 'ingreso',
+                concepto: `Renovación Membresía ${socio.membresia} - ${socio.nombre}`,
+                monto: socio.precio,
+            });
+            window.showToast('Plan renovado con éxito', 'success');
+            openProfileView(id); // Reload
+        });
+
+        document.getElementById('btnVerQrProfile').addEventListener('click', () => {
+            const qrModalHtml = `
+                <div class="modal-header">
+                    <h3 class="modal-title">CÓDIGO QR - ${socio.nombre.toUpperCase()}</h3>
+                    <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                    <div id="qrcode-large-${socio.id}" style="background: white; padding: 15px; border-radius: 8px;"></div>
+                    <p style="margin-top: 20px; font-size: 14px; color: var(--color-text-secondary); text-align: center;">Este código permite el acceso automático por la cámara.</p>
+                </div>
+            `;
+            window.openModal(qrModalHtml);
+            
+            setTimeout(() => {
+                if (window.QRCode) {
+                    new window.QRCode(document.getElementById(`qrcode-large-${socio.id}`), {
+                        text: socio.id,
+                        width: 200,
+                        height: 200,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : window.QRCode.CorrectLevel.H
+                    });
+                }
+            }, 100);
+        });
+
+        document.getElementById('btnDeudaProfile').addEventListener('click', () => {
+            window.showToast('Función de AÑADIR DEUDA en desarrollo', 'info');
+            // Here you can open another modal to add a debt
+        });
     }
+
 };
 
 function setupPlanSelection() {
