@@ -77,10 +77,10 @@ export const render = () => {
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button class="btn btn-outline" style="flex: 1;">ENTRADA</button>
-                        <button class="btn btn-outline" style="flex: 1;">SALIDA</button>
+                        <button class="btn btn-outline" style="flex: 1;" onclick="window.showToast('Abriendo formulario de entrada de efectivo', 'info')">ENTRADA</button>
+                        <button class="btn btn-outline" style="flex: 1;" onclick="window.showToast('Abriendo formulario de salida de efectivo', 'info')">SALIDA</button>
                     </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">CERRAR CAJA</button>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;" onclick="window.showToast('Caja cerrada. Imprimiendo corte Z...', 'success')">CERRAR CAJA</button>
                 </div>
             </div>
         </div>
@@ -165,6 +165,7 @@ export const init = () => {
             const name = item.querySelector('.prod-name').textContent;
             // Solo una animación visual para indicar que se añadió
             item.style.transform = 'scale(0.95)';
+            window.showToast('Añadido al carrito: ' + name, 'success');
             setTimeout(() => item.style.transform = '', 150);
         });
     });

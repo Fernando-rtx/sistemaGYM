@@ -4,12 +4,12 @@ export const render = () => {
             <div class="filters">
                 <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
                 <div class="status-filters">
-                    <button class="filter-btn active">TODOS (25)</button>
-                    <button class="filter-btn text-success">ACTIVOS (18)</button>
-                    <button class="filter-btn text-danger">VENCIDOS (7)</button>
+                    <button class="filter-btn active" onclick="window.showToast('Filtro aplicado: TODOS', 'success')">TODOS (25)</button>
+                    <button class="filter-btn text-success" onclick="window.showToast('Filtro aplicado: ACTIVOS', 'success')">ACTIVOS (18)</button>
+                    <button class="filter-btn text-danger" onclick="window.showToast('Filtro aplicado: VENCIDOS', 'success')">VENCIDOS (7)</button>
                 </div>
             </div>
-            <button class="btn btn-primary" id="btnNuevoSocio">
+            <button class="btn btn-primary" id="btnNuevoSocio" onclick="window.showToast('Abriendo formulario de Nuevo Socio...', 'info')">
                 <span class="material-icons-round">add</span> NUEVO SOCIO
             </button>
         </div>
@@ -147,7 +147,7 @@ export const init = () => {
                 </span>
             </td>
             <td>
-                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">CHECK-IN</button>
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="window.showToast('Check-in manual registrado para ${s.nombre}', 'success')">CHECK-IN</button>
             </td>
         </tr>
     `).join('');

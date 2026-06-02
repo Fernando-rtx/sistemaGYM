@@ -1,3 +1,22 @@
+// Global Toast Function
+window.showToast = (msg, type = 'info') => {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = { success: 'check_circle', danger: 'error', info: 'info' };
+    toast.innerHTML = `<span class="material-icons-round">${icons[type]}</span> ${msg}`;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};
+
 // Mock Store inicialización (Persistencia local)
 const initStore = () => {
     if (!localStorage.getItem('gym_settings')) {

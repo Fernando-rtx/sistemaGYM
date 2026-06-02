@@ -23,7 +23,7 @@ export const render = () => {
                 <div class="card">
                     <div class="card-header">
                         <h3>ALERTAS DE RENOVACIÓN</h3>
-                        <button class="btn btn-outline">VER TODOS</button>
+                        <button class="btn btn-outline" onclick="window.showToast('Cargando historial de alertas...', 'info')">VER TODOS</button>
                     </div>
                     <div class="alerts-list">
                         <div class="alert-item">
@@ -32,7 +32,7 @@ export const render = () => {
                                 <h4>Miguel Vargas</h4>
                                 <span>Vence mañana</span>
                             </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;">Renovar</button>
+                            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para Miguel...', 'success')">Renovar</button>
                         </div>
                         <div class="alert-item">
                             <div class="alert-avatar">SM</div>
@@ -40,7 +40,7 @@ export const render = () => {
                                 <h4>Sofía Méndez</h4>
                                 <span>Venció ayer</span>
                             </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;">Renovar</button>
+                            <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para Sofía...', 'success')">Renovar</button>
                         </div>
                     </div>
                 </div>
