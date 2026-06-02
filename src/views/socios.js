@@ -338,73 +338,148 @@ export const init = () => {
 
     // New Socio Button
     document.getElementById('btnNuevoSocio').addEventListener('click', () => {
-        const modalHtml = `
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        const modalHtml = \`
             <div class="modal-header">
-                <h3 class="modal-title">NUEVO SOCIO</h3>
+                <h3 class="modal-title" style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">NUEVO SOCIO</h3>
                 <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
             </div>
-            <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Nombre completo</label>
-                <input type="text" id="inpSocioNombre" placeholder="Nombre del socio" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
+            
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">NOMBRE COMPLETO</label>
+                <input type="text" id="inpSocioNombre" placeholder="Ej. María Fernanda Castillo" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
             </div>
-            <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Teléfono</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="inpSocioEdad" placeholder="Edad" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
-                    <input type="tel" id="inpSocioTel" placeholder="7777-1234" style="flex: 2; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; outline: none;">
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">EDAD</label>
+                    <input type="number" id="inpSocioEdad" placeholder="25" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
+                </div>
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">TELÉFONO</label>
+                    <input type="tel" id="inpSocioTel" placeholder="+1 555 000 0000" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
                 </div>
             </div>
-            <div class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Plan de Membresía</label>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
-                        <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 600;">MENSUAL</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
+            
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">PLAN CONTRATADO</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
+                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="\${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s; position: relative;">
+                        <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
+                        <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-primary); font-weight: 900;">PLAN MENSUAL</div>
+                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">30 días de acceso</div>
+                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-primary);">$\${precios.Mensual.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
-                    <div class="plan-card" data-plan="Quincenal" data-precio="${precios.Quincenal}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
-                        <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">QUINCENAL</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)}</div>
-                    </div>
-                    <div class="plan-card" data-plan="Diario" data-precio="${precios.Diario}" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
-                        <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-text-secondary); font-weight: 600;">DIARIO</div>
-                        <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-text-primary);">$${precios.Diario.toFixed(2)}</div>
+                    <div class="plan-card-ns" data-plan="Quincenal" data-precio="\${precios.Quincenal}" data-dias="15" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.6;">
+                        <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: transparent; font-size: 20px;">check_circle</span>
+                        <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-secondary); font-weight: 900;">PLAN QUINCENAL</div>
+                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">15 días de acceso</div>
+                        <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-text-primary);">$\${precios.Quincenal.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 30px;">
-                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
-                <button class="btn btn-primary" id="btnGuardarSocio" style="flex: 1; justify-content: center;">REGISTRAR</button>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">FECHA DE INICIO</label>
+                    <div style="position: relative;">
+                        <input type="date" id="inpFechaInicio" value="\${todayStr}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 600; outline: none; width: 100%; box-sizing: border-box; cursor: pointer;">
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">VENCIMIENTO (AUTO)</label>
+                    <input type="text" id="inpFechaVencimiento" readonly style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); color: var(--color-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 800; outline: none; width: 100%; box-sizing: border-box; text-transform: uppercase;">
+                </div>
             </div>
-        `;
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-outline" onclick="window.closeModal()" style="padding: 12px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">CANCELAR</button>
+                <button class="btn btn-primary" id="btnGuardarSocio" style="padding: 12px 24px; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">check</span> REGISTRAR</button>
+            </div>
+        \`;
+        
         window.openModal(modalHtml);
-        setupPlanSelection();
+        
+        const fechaInicioInp = document.getElementById('inpFechaInicio');
+        const fechaVencInp = document.getElementById('inpFechaVencimiento');
+        const planCards = document.querySelectorAll('.plan-card-ns');
+
+        // Logic to update Vencimiento dynamically
+        const updateVencimiento = () => {
+            const dateVal = fechaInicioInp.value;
+            const selectedCard = document.querySelector('.plan-card-ns.selected');
+            const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : 30;
+            
+            if (!dateVal) return;
+            const d = new Date(dateVal + "T00:00:00");
+            d.setDate(d.getDate() + dias);
+            
+            const str = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+            fechaVencInp.value = str;
+        };
+
+        fechaInicioInp.addEventListener('change', updateVencimiento);
+
+        // Plan Selection Logic
+        planCards.forEach(card => {
+            card.addEventListener('click', function() {
+                planCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.style.border = '1px solid rgba(255,255,255,0.1)';
+                    c.style.backgroundColor = 'transparent';
+                    c.style.opacity = '0.6';
+                    c.querySelector('.plan-name-ns').style.color = 'var(--color-text-secondary)';
+                    c.querySelector('.plan-price-ns').style.color = 'var(--color-text-primary)';
+                    c.querySelector('.check-icon-ns').style.color = 'transparent';
+                });
+                this.classList.add('selected');
+                this.style.border = '2px solid var(--color-primary)';
+                this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
+                this.style.opacity = '1';
+                this.querySelector('.plan-name-ns').style.color = 'var(--color-text-primary)';
+                this.querySelector('.plan-price-ns').style.color = 'var(--color-primary)';
+                this.querySelector('.check-icon-ns').style.color = 'var(--color-primary)';
+                updateVencimiento();
+            });
+        });
+        
+        updateVencimiento();
 
         document.getElementById('btnGuardarSocio').addEventListener('click', () => {
             const nombre = document.getElementById('inpSocioNombre').value.trim();
             if (!nombre) { window.showToast('El nombre es obligatorio', 'danger'); return; }
             const telefono = document.getElementById('inpSocioTel').value.trim();
-            const selectedCard = document.querySelector('.plan-card.selected');
+            const selectedCard = document.querySelector('.plan-card-ns.selected');
             const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
             const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
-
+            const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : 30;
+            
             const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
+            const fechaInicio = fechaInicioInp.value;
+            
+            const dVenc = new Date(fechaInicio + "T00:00:00");
+            dVenc.setDate(dVenc.getDate() + dias);
+            const fechaVencimiento = \`\${dVenc.getFullYear()}-\${String(dVenc.getMonth() + 1).padStart(2, '0')}-\${String(dVenc.getDate()).padStart(2, '0')}\`;
+
             addSocio({
                 nombre,
                 telefono,
                 edad,
                 membresia: plan,
                 precio,
-                fechaVencimiento: calcularVencimiento(plan),
+                fechaRegistro: fechaInicio,
+                fechaVencimiento: fechaVencimiento,
             });
 
             addTransaccion({
                 tipo: 'ingreso',
-                concepto: `Membresía ${plan} - ${nombre}`,
+                concepto: \`Membresía \${plan} - \${nombre}\`,
                 monto: precio,
             });
 
             window.closeModal();
-            window.showToast(`${nombre} registrado con éxito`, 'success');
+            window.showToast(\`\${nombre} registrado con éxito\`, 'success');
             renderTable();
         });
     });
