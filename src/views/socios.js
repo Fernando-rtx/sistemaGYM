@@ -1,4 +1,105 @@
 import { getSocios, addSocio, updateSocio, deleteSocio, addCheckin, calcularVencimiento, formatFecha, addTransaccion, getSettings, getCheckins, getCurrentUser } from '../js/dataStore.js';
+import html2canvas from 'html2canvas';
+
+// Helper for Tickets
+const generarTicketModal = async (socioInfo) => {
+    const settings = await getSettings();
+    const gymName = settings.brandName || 'NEXFIT';
+    
+    // Formatear fechas a DD/MM/YYYY
+    const formatD = (dateStr) => {
+        if(!dateStr) return '';
+        const parts = dateStr.split('-');
+        return `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
+    };
+
+    const modalHtml = `
+        <div class="modal-header" style="justify-content: center; position: relative;">
+            <h3 class="modal-title" style="letter-spacing: 1px;">TICKET GENERADO</h3>
+            <button class="btn-close" onclick="window.closeModal()" style="position: absolute; right: 0;"><span class="material-icons-round">close</span></button>
+        </div>
+        
+        <div style="background: #111; padding: 20px; border-radius: 8px; display: flex; justify-content: center; margin-bottom: 20px;">
+            <div id="ticketCaptureArea" style="background: white; color: black; padding: 30px; width: 300px; font-family: monospace; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; font-family: 'Inter', sans-serif;">${gymName.toUpperCase()}</h2>
+                    <div style="font-size: 12px; color: #555; margin-top: 4px;">Comprobante de Inscripción</div>
+                </div>
+                
+                <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #666;">Fecha:</span>
+                    <span style="font-weight: bold;">${formatD(socioInfo.fechaRegistro)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #666;">Socio:</span>
+                    <span style="font-weight: bold;">${socioInfo.nombre}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #666;">Plan:</span>
+                    <span style="font-weight: bold;">Plan ${socioInfo.plan}</span>
+                </div>
+                
+                <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #666;">Válido desde:</span>
+                    <span style="font-weight: bold;">${formatD(socioInfo.fechaRegistro)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #666;">Vencimiento:</span>
+                    <span style="font-weight: bold;">${formatD(socioInfo.fechaVencimiento)}</span>
+                </div>
+                
+                <div style="border-top: 2px solid black; margin: 15px 0;"></div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span style="font-weight: 900; font-size: 18px;">TOTAL:</span>
+                    <span style="font-weight: 900; font-size: 18px;">$${socioInfo.precio.toFixed(2)}</span>
+                </div>
+                
+                <div style="text-align: center; font-size: 10px; color: #888; line-height: 1.4;">
+                    ¡Gracias por tu preferencia!<br>
+                    Este comprobante es para control interno.
+                </div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-outline" onclick="window.closeModal()" style="padding: 12px 24px;">CERRAR</button>
+            <button class="btn btn-outline" id="btnSendWaTicket" style="padding: 12px 24px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="font-size: 18px;">chat</span> ENVIAR POR WA
+            </button>
+            <button class="btn btn-primary" id="btnDownloadTicket" style="padding: 12px 24px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="font-size: 18px;">check</span> DESCARGAR IMAGEN
+            </button>
+        </div>
+    `;
+    
+    window.openModal(modalHtml);
+    
+    document.getElementById('btnDownloadTicket').addEventListener('click', async () => {
+        const ticketEl = document.getElementById('ticketCaptureArea');
+        const canvas = await html2canvas(ticketEl, { scale: 2, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const a = document.createElement('a');
+        a.href = imgData;
+        a.download = `Ticket_${socioInfo.nombre.replace(/\s+/g, '_')}_${formatD(socioInfo.fechaRegistro).replace(/\//g, '-')}.png`;
+        a.click();
+    });
+    
+    document.getElementById('btnSendWaTicket').addEventListener('click', () => {
+        const msg = `*${gymName.toUpperCase()}*\nComprobante de Inscripción\n\nSocio: ${socioInfo.nombre}\nPlan: ${socioInfo.plan}\nVálido hasta: ${formatD(socioInfo.fechaVencimiento)}\nTotal: $${socioInfo.precio.toFixed(2)}\n\n¡Gracias por tu preferencia!`;
+        const phone = socioInfo.telefono ? socioInfo.telefono.replace(/[^0-9]/g, '') : '';
+        if (phone) {
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        } else {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+    });
+};
 
 export const render = () => {
     return `
@@ -478,9 +579,17 @@ export const init = async () => {
                 monto: precio,
             });
 
-            window.closeModal();
-            window.showToast(`${nombre} registrado con éxito`, 'success');
             await renderTable();
+            window.showToast(`${nombre} registrado con éxito`, 'success');
+            
+            generarTicketModal({
+                nombre,
+                telefono,
+                plan,
+                precio,
+                fechaRegistro: fechaInicio,
+                fechaVencimiento: fechaVencimiento
+            });
         });
     });
 
