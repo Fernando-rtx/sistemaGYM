@@ -3,17 +3,17 @@ var e=()=>`
             <div class="stats-cards">
                 <div class="card stat-card">
                     <h3>INGRESOS HOY</h3>
-                    <div class="stat-value">$145.00</div>
+                    <div class="stat-value" id="dashIngresos">$0.00</div>
                     <div class="stat-trend success">+12% vs ayer</div>
                 </div>
                 <div class="card stat-card">
                     <h3>SOCIOS ACTIVOS</h3>
-                    <div class="stat-value">124</div>
+                    <div class="stat-value" id="dashActivos">0</div>
                     <div class="stat-trend success">+3 nuevos</div>
                 </div>
                 <div class="card stat-card">
                     <h3>POR VENCER (7D)</h3>
-                    <div class="stat-value">18</div>
+                    <div class="stat-value" id="dashVencer">0</div>
                     <div class="stat-trend danger">Requiere atención</div>
                 </div>
             </div>
@@ -22,25 +22,10 @@ var e=()=>`
                 <div class="card">
                     <div class="card-header">
                         <h3>ALERTAS DE RENOVACIÓN</h3>
-                        <button class="btn btn-outline">VER TODOS</button>
+                        <button class="btn btn-outline" onclick="window.showToast('Cargando historial de alertas...', 'info')">VER TODOS</button>
                     </div>
-                    <div class="alerts-list">
-                        <div class="alert-item">
-                            <div class="alert-avatar">MV</div>
-                            <div class="alert-info">
-                                <h4>Miguel Vargas</h4>
-                                <span>Vence mañana</span>
-                            </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;">Renovar</button>
-                        </div>
-                        <div class="alert-item">
-                            <div class="alert-avatar">SM</div>
-                            <div class="alert-info">
-                                <h4>Sofía Méndez</h4>
-                                <span>Venció ayer</span>
-                            </div>
-                            <button class="btn btn-primary" style="padding: 5px 15px;">Renovar</button>
-                        </div>
+                    <div class="alerts-list" id="alertsList">
+                        <!-- Generado en JS -->
                     </div>
                 </div>
 
@@ -150,4 +135,13 @@ var e=()=>`
                 color: var(--color-primary);
             }
         </style>
-    `,t=()=>{};export{t as init,e as render};
+    `,t=()=>{let e=JSON.parse(localStorage.getItem(`gym_socios`))||[],t=e.filter(e=>e.estado===`Activo`).length,n=e.filter(e=>e.estado===`Vencido`),r=document.getElementById(`dashActivos`),i=document.getElementById(`dashVencer`),a=document.getElementById(`dashIngresos`),o=document.getElementById(`alertsList`);r&&(r.textContent=t),i&&(i.textContent=n.length),a&&(a.textContent=`$`+(t*14.5).toFixed(2)),o&&n.length>0?o.innerHTML=n.slice(0,4).map(e=>`
+            <div class="alert-item">
+                <div class="alert-avatar">${e.nombre.substring(0,2).toUpperCase()}</div>
+                <div class="alert-info">
+                    <h4>${e.nombre}</h4>
+                    <span>Vencimiento: ${e.vencimiento}</span>
+                </div>
+                <button class="btn btn-primary" style="padding: 5px 15px;" onclick="window.showToast('Procesando renovación para ${e.nombre}...', 'success')">Renovar</button>
+            </div>
+        `).join(``):o&&(o.innerHTML=`<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">No hay alertas pendientes.</div>`)};export{t as init,e as render};

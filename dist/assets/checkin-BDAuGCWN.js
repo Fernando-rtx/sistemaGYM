@@ -26,8 +26,8 @@ var e=()=>`
                     </div>
                 </div>
                 <div class="ticket-actions">
-                    <button class="btn btn-outline" style="width: 100%;"><span class="material-icons-round">print</span> IMPRIMIR</button>
-                    <button class="btn btn-primary" style="width: 100%;"><span class="material-icons-round">send</span> WHATSAPP</button>
+                    <button class="btn btn-outline" style="width: 100%;" onclick="window.showToast('Enviando a impresora térmica...', 'info')"><span class="material-icons-round">print</span> IMPRIMIR</button>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="window.showToast('Abriendo WhatsApp Web...', 'success')"><span class="material-icons-round">send</span> WHATSAPP</button>
                 </div>
             </div>
         </div>

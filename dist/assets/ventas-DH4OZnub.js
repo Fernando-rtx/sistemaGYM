@@ -76,10 +76,10 @@ var e=()=>`
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button class="btn btn-outline" style="flex: 1;">ENTRADA</button>
-                        <button class="btn btn-outline" style="flex: 1;">SALIDA</button>
+                        <button class="btn btn-outline" style="flex: 1;" id="btnEntradaCaja">ENTRADA</button>
+                        <button class="btn btn-outline" style="flex: 1;" id="btnSalidaCaja">SALIDA</button>
                     </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">CERRAR CAJA</button>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;" onclick="window.showToast('Caja cerrada. Imprimiendo corte Z...', 'success')">CERRAR CAJA</button>
                 </div>
             </div>
         </div>
@@ -153,4 +153,21 @@ var e=()=>`
                 font-weight: 500;
             }
         </style>
-    `,t=()=>{document.querySelectorAll(`.product-item`).forEach(e=>{e.addEventListener(`click`,()=>{e.querySelector(`.prod-name`).textContent,e.style.transform=`scale(0.95)`,setTimeout(()=>e.style.transform=``,150)})})};export{t as init,e as render};
+    `,t=()=>{document.querySelectorAll(`.product-item`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.querySelector(`.prod-name`).textContent;e.style.transform=`scale(0.95)`,window.showToast(`Añadido al carrito: `+t,`success`),setTimeout(()=>e.style.transform=``,150)})});let e=e=>{let t=`
+            <div class="modal-header">
+                <h3 class="modal-title">REGISTRAR ${e} DE EFECTIVO</h3>
+                <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Concepto / Motivo</label>
+                <input type="text" class="form-input" placeholder="Ej. Pago a proveedor" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box;">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Monto</label>
+                <input type="number" class="form-input" placeholder="$ 0.00" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: ${e===`ENTRADA`?`var(--color-success)`:`var(--color-danger)`}; padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 24px; font-weight: 800; width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
+                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.closeModal(); window.showToast('${e} registrada con éxito', 'success')">REGISTRAR ${e}</button>
+            </div>
+        `;window.openModal(t)},t=document.getElementById(`btnEntradaCaja`),n=document.getElementById(`btnSalidaCaja`);t&&t.addEventListener(`click`,()=>e(`ENTRADA`)),n&&n.addEventListener(`click`,()=>e(`SALIDA`))};export{t as init,e as render};

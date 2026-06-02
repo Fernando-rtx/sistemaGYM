@@ -7,8 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Material Icons para íconos -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-C2HzAhJd.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DZoRWVpS.css">
+  <script type="module" crossorigin src="/assets/index-C4DGRL1n.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B_7akKC3.css">
 </head>
 <body>
   <div class="app-container">
@@ -57,10 +57,10 @@
         <h2 class="view-title" id="viewTitle">Panel General</h2>
         <div class="topbar-actions">
           <div class="date-display" id="currentDate"></div>
-          <button class="btn btn-outline">
+          <button class="btn btn-outline" onclick="window.showToast('Escáner activado', 'info')">
             <span class="material-icons-round">qr_code</span> Escanear QR
           </button>
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" onclick="window.showToast('Abriendo check-in rápido', 'success')">
             <span class="material-icons-round">add</span> Check-in Rápido
           </button>
         </div>
@@ -72,5 +72,7 @@
       </div>
     </main>
   </div>
+  <div id="globalModal" class="modal-overlay"></div>
+  <div id="toastContainer" class="toast-container"></div>
 </body>
 </html>

@@ -1,5 +1,4 @@
-export const render = () => {
-    return `
+var e=()=>`
         <div class="socios-header">
             <div class="filters">
                 <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
@@ -116,102 +115,27 @@ export const render = () => {
                 font-size: 12px; font-weight: 600;
             }
         </style>
-    `;
-};
-
-export const init = () => {
-    const defaultSocios = [
-        { id: '001', nombre: 'Carlos Mendoza', membresia: 'Mensual', vencimiento: '18 May', estado: 'Vencido' },
-        { id: '002', nombre: 'María Fernanda López', membresia: 'Mensual', vencimiento: '09 Jun', estado: 'Activo' },
-        { id: '003', nombre: 'Roberto Castillo', membresia: 'Anual', vencimiento: '15 Dic', estado: 'Activo' },
-        { id: '004', nombre: 'Miguel Vargas', membresia: 'Mensual', vencimiento: '03 Jun', estado: 'Vencido' },
-        { id: '005', nombre: 'Sofía Méndez', membresia: 'Quincenal', vencimiento: '01 Jun', estado: 'Vencido' },
-    ];
-
-    if (!localStorage.getItem('gym_socios')) {
-        localStorage.setItem('gym_socios', JSON.stringify(defaultSocios));
-    }
-
-    let socios = JSON.parse(localStorage.getItem('gym_socios'));
-    let currentFilter = 'TODOS';
-    let searchQuery = '';
-
-    const tbody = document.getElementById('sociosTbody');
-    const searchInput = document.querySelector('.search-input');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-
-    const renderTable = () => {
-        if (!tbody) return;
-        
-        let filtrados = socios.filter(s => {
-            const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
-            const matchesFilter = currentFilter === 'TODOS' || s.estado.toUpperCase() === currentFilter;
-            return matchesSearch && matchesFilter;
-        });
-
-        tbody.innerHTML = filtrados.map(s => `
+    `,t=()=>{localStorage.getItem(`gym_socios`)||localStorage.setItem(`gym_socios`,JSON.stringify([{id:`001`,nombre:`Carlos Mendoza`,membresia:`Mensual`,vencimiento:`18 May`,estado:`Vencido`},{id:`002`,nombre:`María Fernanda López`,membresia:`Mensual`,vencimiento:`09 Jun`,estado:`Activo`},{id:`003`,nombre:`Roberto Castillo`,membresia:`Anual`,vencimiento:`15 Dic`,estado:`Activo`},{id:`004`,nombre:`Miguel Vargas`,membresia:`Mensual`,vencimiento:`03 Jun`,estado:`Vencido`},{id:`005`,nombre:`Sofía Méndez`,membresia:`Quincenal`,vencimiento:`01 Jun`,estado:`Vencido`}]));let e=JSON.parse(localStorage.getItem(`gym_socios`)),t=`TODOS`,n=``,r=document.getElementById(`sociosTbody`),i=document.querySelector(`.search-input`),a=document.querySelectorAll(`.filter-btn`),o=()=>{if(!r)return;r.innerHTML=e.filter(e=>{let r=e.nombre.toLowerCase().includes(n.toLowerCase())||e.id.includes(n),i=t===`TODOS`||e.estado.toUpperCase()===t;return r&&i}).map(e=>`
             <tr>
-                <td style="color: var(--color-text-secondary);">#${s.id}</td>
+                <td style="color: var(--color-text-secondary);">#${e.id}</td>
                 <td>
                     <div style="display: flex; align-items: center;">
-                        <span class="avatar-sm">${s.nombre.substring(0,2).toUpperCase()}</span>
-                        ${s.nombre}
+                        <span class="avatar-sm">${e.nombre.substring(0,2).toUpperCase()}</span>
+                        ${e.nombre}
                     </div>
                 </td>
-                <td>${s.membresia}</td>
-                <td>${s.vencimiento}</td>
+                <td>${e.membresia}</td>
+                <td>${e.vencimiento}</td>
                 <td>
-                    <span class="status-badge ${s.estado === 'Activo' ? 'status-activo' : 'status-vencido'}">
-                        ${s.estado.toUpperCase()}
+                    <span class="status-badge ${e.estado===`Activo`?`status-activo`:`status-vencido`}">
+                        ${e.estado.toUpperCase()}
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="window.showToast('Check-in manual registrado para ${s.nombre}', 'success')">CHECK-IN</button>
+                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="window.showToast('Check-in manual registrado para ${e.nombre}', 'success')">CHECK-IN</button>
                 </td>
             </tr>
-        `).join('');
-
-        // Actualizar contadores en los botones
-        const countTodos = socios.length;
-        const countActivos = socios.filter(s => s.estado === 'Activo').length;
-        const countVencidos = socios.filter(s => s.estado === 'Vencido').length;
-
-        filterBtns[0].textContent = `TODOS (${countTodos})`;
-        filterBtns[1].textContent = `ACTIVOS (${countActivos})`;
-        filterBtns[2].textContent = `VENCIDOS (${countVencidos})`;
-    };
-
-    // Eventos de búsqueda y filtro
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            renderTable();
-        });
-    }
-
-    filterBtns.forEach(btn => {
-        // Remover el onclick original del HTML para no tener conflictos
-        btn.removeAttribute('onclick');
-        
-        btn.addEventListener('click', (e) => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            
-            const text = e.currentTarget.textContent;
-            if (text.includes('TODOS')) currentFilter = 'TODOS';
-            if (text.includes('ACTIVOS')) currentFilter = 'ACTIVO';
-            if (text.includes('VENCIDOS')) currentFilter = 'VENCIDO';
-            
-            renderTable();
-        });
-    });
-
-    renderTable();
-
-    const btnNuevoSocio = document.getElementById('btnNuevoSocio');
-    if (btnNuevoSocio) {
-        btnNuevoSocio.addEventListener('click', () => {
-            const modalHtml = `
+        `).join(``);let i=e.length,o=e.filter(e=>e.estado===`Activo`).length,s=e.filter(e=>e.estado===`Vencido`).length;a[0].textContent=`TODOS (${i})`,a[1].textContent=`ACTIVOS (${o})`,a[2].textContent=`VENCIDOS (${s})`};i&&i.addEventListener(`input`,e=>{n=e.target.value,o()}),a.forEach(e=>{e.removeAttribute(`onclick`),e.addEventListener(`click`,e=>{a.forEach(e=>e.classList.remove(`active`)),e.currentTarget.classList.add(`active`);let n=e.currentTarget.textContent;n.includes(`TODOS`)&&(t=`TODOS`),n.includes(`ACTIVOS`)&&(t=`ACTIVO`),n.includes(`VENCIDOS`)&&(t=`VENCIDO`),o()})}),o();let s=document.getElementById(`btnNuevoSocio`);s&&s.addEventListener(`click`,()=>{window.openModal(`
                 <div class="modal-header">
                     <h3 class="modal-title">NUEVO SOCIO</h3>
                     <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
@@ -241,50 +165,4 @@ export const init = () => {
                     <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="window.closeModal()">CANCELAR</button>
                     <button class="btn btn-primary" id="btnGuardarSocio" style="flex: 1; justify-content: center;">REGISTRAR</button>
                 </div>
-            `;
-            window.openModal(modalHtml);
-            
-            let selectedPlan = 'Mensual';
-            const planCards = document.querySelectorAll('.plan-card');
-            planCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    planCards.forEach(c => {
-                        c.classList.remove('selected');
-                        c.style.border = '1px solid rgba(255,255,255,0.1)';
-                        c.style.backgroundColor = 'transparent';
-                        c.style.opacity = '0.5';
-                        c.querySelector('.plan-name').style.color = 'var(--color-text-secondary)';
-                        c.querySelector('.plan-price').style.color = 'var(--color-text-primary)';
-                    });
-                    
-                    this.classList.add('selected');
-                    this.style.border = '2px solid var(--color-primary)';
-                    this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
-                    this.style.opacity = '1';
-                    this.querySelector('.plan-name').style.color = 'var(--color-primary)';
-                    this.querySelector('.plan-price').style.color = 'var(--color-primary)';
-                    selectedPlan = this.getAttribute('data-plan');
-                });
-            });
-
-            document.getElementById('btnGuardarSocio').addEventListener('click', () => {
-                const nombre = document.getElementById('inpSocioNombre').value || 'Nuevo Socio';
-                const id = String(socios.length + 1).padStart(3, '0');
-                
-                socios.unshift({
-                    id,
-                    nombre,
-                    membresia: selectedPlan,
-                    vencimiento: 'Próximo mes',
-                    estado: 'Activo'
-                });
-                
-                localStorage.setItem('gym_socios', JSON.stringify(socios));
-                renderTable();
-                
-                window.closeModal();
-                window.showToast('Socio registrado con éxito', 'success');
-            });
-        });
-    }
-};
+            `);let t=`Mensual`,n=document.querySelectorAll(`.plan-card`);n.forEach(e=>{e.addEventListener(`click`,function(){n.forEach(e=>{e.classList.remove(`selected`),e.style.border=`1px solid rgba(255,255,255,0.1)`,e.style.backgroundColor=`transparent`,e.style.opacity=`0.5`,e.querySelector(`.plan-name`).style.color=`var(--color-text-secondary)`,e.querySelector(`.plan-price`).style.color=`var(--color-text-primary)`}),this.classList.add(`selected`),this.style.border=`2px solid var(--color-primary)`,this.style.backgroundColor=`rgba(148, 255, 0, 0.05)`,this.style.opacity=`1`,this.querySelector(`.plan-name`).style.color=`var(--color-primary)`,this.querySelector(`.plan-price`).style.color=`var(--color-primary)`,t=this.getAttribute(`data-plan`)})}),document.getElementById(`btnGuardarSocio`).addEventListener(`click`,()=>{let n=document.getElementById(`inpSocioNombre`).value||`Nuevo Socio`,r=String(e.length+1).padStart(3,`0`);e.unshift({id:r,nombre:n,membresia:t,vencimiento:`Próximo mes`,estado:`Activo`}),localStorage.setItem(`gym_socios`,JSON.stringify(e)),o(),window.closeModal(),window.showToast(`Socio registrado con éxito`,`success`)})})};export{t as init,e as render};
