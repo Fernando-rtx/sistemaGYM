@@ -43,28 +43,49 @@ export const render = () => {
 };
 
 export const init = async () => {
-    const settings = await getSettings();
-    const socios = await getSocios();
-    const caja = await getResumenCaja();
-    const checkinsHoy = await getCheckinsHoy();
-    const checkins = await getCheckins();
-    const trans = await getTransacciones();
-    const rachas = await calcularRachas();
-    const nuevosHoy = await sociosNuevosHoy();
-    const porVencer = await sociosPorVencer(3); // ≤ 3 días según diseño
+    // 1. Paralelizar todas las consultas independientes
+    const [
+        settings,
+        socios,
+        caja,
+        checkinsHoy,
+        checkins,
+        trans,
+        nuevosHoy,
+        porVencer
+    ] = await Promise.all([
+        getSettings(),
+        getSocios(),
+        getResumenCaja(),
+        getCheckinsHoy(),
+        getCheckins(),
+        getTransacciones(),
+        sociosNuevosHoy(),
+        sociosPorVencer(3)
+    ]);
+    
+    // 2. Dependencias que reutilizan datos ya descargados
+    const rachas = await calcularRachas(checkins);
     
     const activos = socios.filter(s => s.estado === 'Activo').length;
     const vencidos = socios.filter(s => s.estado === 'Vencido');
     
     const hoy = new Date();
     
-    // Calcular ausentes (>5 dias)
+    // 3. Calcular ausentes (>5 dias) con complejidad O(N + M) en vez de O(N * M)
+    const ultimoCheckinMap = new Map();
+    for (const c of checkins) {
+        if (!ultimoCheckinMap.has(c.socioId)) {
+            ultimoCheckinMap.set(c.socioId, new Date(c.fecha + "T00:00:00"));
+        }
+    }
+
     const ausentes = socios.filter(s => {
         if(s.estado === 'Vencido') return false;
-        const checksSocio = checkins.filter(c => c.socioId === s.id);
+        
         let diffDiasAusente = 999;
-        if(checksSocio.length > 0) {
-            const ultimo = new Date(checksSocio[0].fecha + "T00:00:00");
+        if(ultimoCheckinMap.has(s.id)) {
+            const ultimo = ultimoCheckinMap.get(s.id);
             diffDiasAusente = (hoy - ultimo) / (1000 * 60 * 60 * 24);
         } else {
             const fRegStr = s.fechaRegistro ? s.fechaRegistro : (hoy.toISOString().split('T')[0]);

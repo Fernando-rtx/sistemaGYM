@@ -210,8 +210,8 @@ export const getCheckinsHoy = async () => {
     }));
 };
 
-export const calcularRachas = async () => {
-    const checkins = await getCheckins();
+export const calcularRachas = async (checkinsList = null) => {
+    const checkins = checkinsList || await getCheckins();
     const socioMap = {};
 
     checkins.forEach(c => {
@@ -296,16 +296,33 @@ export const sociosNuevosHoy = async () => {
 };
 
 export const sociosPorVencer = async (dias = 7) => {
-    const socios = await getSocios();
     const hoy = new Date();
     const limite = new Date();
     limite.setDate(hoy.getDate() + dias);
 
-    return socios.filter(s => {
-        if (s.estado !== 'Activo') return false;
-        const venc = new Date(s.fechaVencimiento);
-        return venc >= hoy && venc <= limite;
-    });
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const limiteStr = `${limite.getFullYear()}-${String(limite.getMonth() + 1).padStart(2, '0')}-${String(limite.getDate()).padStart(2, '0')}`;
+
+    const { data, error } = await supabase.from('socios')
+        .select('*')
+        .eq('estado', 'Activo')
+        .gte('fecha_vencimiento', hoyStr)
+        .lte('fecha_vencimiento', limiteStr);
+        
+    if (error) return [];
+    
+    return data.map(s => ({
+        id: s.id,
+        nombre: s.nombre,
+        telefono: s.telefono,
+        edad: s.edad,
+        membresia: s.membresia,
+        precio: s.precio,
+        fechaRegistro: s.fecha_registro,
+        fechaVencimiento: s.fecha_vencimiento,
+        estado: s.estado,
+        deuda: s.deuda
+    }));
 };
 
 // ==================== INVENTARIO ====================
