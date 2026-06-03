@@ -120,6 +120,26 @@ export const render = () => {
                 display: flex;
                 gap: 16px;
             }
+            
+            /* Carrusel Responsivo para Celulares */
+            @media (max-width: 768px) {
+                .checkin-container {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    overflow-x: auto !important;
+                    scroll-snap-type: x mandatory !important;
+                    gap: 20px !important;
+                    padding-bottom: 20px !important;
+                    scroll-behavior: smooth !important;
+                }
+                .checkin-container::-webkit-scrollbar {
+                    display: none; /* Ocultar barra de scroll para estética nativa */
+                }
+                .scanner-card, .ticket-card {
+                    min-width: 100% !important;
+                    scroll-snap-align: center !important;
+                }
+            }
         </style>
     `;
 };
@@ -182,6 +202,13 @@ export const init = async () => {
             statusEl.textContent = '❌ ACCESO DENEGADO';
             statusEl.className = 'ticket-status denied';
             window.showToast(`Membresía de ${socio.nombre} vencida. No se registró la asistencia.`, 'danger');
+        }
+        
+        // Auto-scroll en celulares hacia el ticket
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                ticketContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }, 100);
         }
         
         // Pausar escáner un momento para evitar dobles lecturas
