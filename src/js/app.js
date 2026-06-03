@@ -90,8 +90,12 @@ const updateDate = () => {
     dateDisplay.textContent = '📅 HOY - ' + date;
 };
 
-// Simple Router
+let currentLoadId = 0;
+
 const loadView = async (viewName) => {
+    currentLoadId++;
+    const loadId = currentLoadId;
+    
     const container = document.getElementById('viewContainer');
     const viewTitle = document.getElementById('viewTitle');
     
@@ -116,6 +120,9 @@ const loadView = async (viewName) => {
             case 'configuracion': viewModule = await import('../views/configuracion.js'); break;
             default: throw new Error('Vista no implementada');
         }
+        
+        if (loadId !== currentLoadId) return; // Abortar si el usuario cambió de vista rápido
+        
         container.innerHTML = viewModule.render();
         container.className = 'view-container fade-in';
         void container.offsetWidth;
@@ -124,6 +131,7 @@ const loadView = async (viewName) => {
             await viewModule.init();
         }
     } catch(e) {
+        if (loadId !== currentLoadId) return; // Ignorar errores de vistas abortadas
         console.error(e);
         container.innerHTML = `<div style="color: var(--color-danger); text-align: center; margin-top: 50px;">Error al cargar la vista. ¿Está implementada?<br><br>${e.message}<br><pre style="text-align:left; background:#111; padding:20px; border-radius:8px; overflow:auto;">${e.stack}</pre></div>`;
     }
