@@ -64,18 +64,27 @@ export const saveSettings = async (newSettings) => {
 export const getSocios = async () => {
     const { data, error } = await supabase.from('socios').select('*').order('created_at', { ascending: false });
     if (error) { console.error(error); return []; }
-    return data.map(s => ({
-        id: s.id,
-        nombre: s.nombre,
-        telefono: s.telefono,
-        edad: s.edad,
-        membresia: s.membresia,
-        precio: s.precio,
-        fechaRegistro: s.fecha_registro,
-        fechaVencimiento: s.fecha_vencimiento,
-        estado: s.estado,
-        deuda: s.deuda
-    }));
+    const hoyStr = _today();
+    return data.map(s => {
+        let estadoReal = s.estado;
+        if (estadoReal === 'Activo' && s.fecha_vencimiento < hoyStr) {
+            estadoReal = 'Vencido';
+            // Sincronizar en DB silenciosamente
+            supabase.from('socios').update({estado: 'Vencido'}).eq('id', s.id).then();
+        }
+        return {
+            id: s.id,
+            nombre: s.nombre,
+            telefono: s.telefono,
+            edad: s.edad,
+            membresia: s.membresia,
+            precio: s.precio,
+            fechaRegistro: s.fecha_registro,
+            fechaVencimiento: s.fecha_vencimiento,
+            estado: estadoReal,
+            deuda: s.deuda
+        };
+    });
 };
 
 export const addSocio = async (socio) => {
@@ -145,6 +154,13 @@ export const deleteSocio = async (id) => {
 export const getSocioById = async (id) => {
     const { data, error } = await supabase.from('socios').select('*').eq('id', id).single();
     if (error) return null;
+    
+    let estadoReal = data.estado;
+    const hoyStr = _today();
+    if (estadoReal === 'Activo' && data.fecha_vencimiento < hoyStr) {
+        estadoReal = 'Vencido';
+    }
+    
     return {
         id: data.id,
         nombre: data.nombre,
@@ -154,7 +170,7 @@ export const getSocioById = async (id) => {
         precio: data.precio,
         fechaRegistro: data.fecha_registro,
         fechaVencimiento: data.fecha_vencimiento,
-        estado: data.estado,
+        estado: estadoReal,
         deuda: data.deuda
     };
 };
