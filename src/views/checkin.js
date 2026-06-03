@@ -134,13 +134,18 @@ export const init = async () => {
     const ticketContainer = document.getElementById('ticketContainer');
     let lastCheckedSocio = null;
     let html5QrcodeScanner = null;
+    let isProcessingScan = false;
 
     const procesarEscaneo = async (qrCodeMessage) => {
+        if (isProcessingScan) return;
+        isProcessingScan = true;
+
         const socios = await getSocios();
         const socio = socios.find(s => s.id === qrCodeMessage);
         
         if (!socio) {
             window.showToast('Código no reconocido', 'danger');
+            isProcessingScan = false;
             return;
         }
 
@@ -179,10 +184,15 @@ export const init = async () => {
             window.showToast(`Membresía de ${socio.nombre} vencida. No se registró la asistencia.`, 'danger');
         }
         
-        // Pausar escáner un momento
+        // Pausar escáner un momento para evitar dobles lecturas
         if(html5QrcodeScanner) {
             html5QrcodeScanner.pause(true);
-            setTimeout(() => html5QrcodeScanner.resume(), 3000);
+            setTimeout(() => {
+                html5QrcodeScanner.resume();
+                isProcessingScan = false;
+            }, 3000);
+        } else {
+            isProcessingScan = false;
         }
     };
 
