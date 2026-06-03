@@ -128,31 +128,56 @@ const generarTicketModal = async (socioInfo) => {
             }
         }
         
-        // 2. Si el navegador no soporta enviar archivos nativamente, enviar solo texto y copiar imagen
-        let clipboardSuccess = false;
+        // 2. Fallback para PC: Copiar al portapapeles y Descargar
         try {
             await navigator.clipboard.write([
                 new ClipboardItem({ 'image/png': preGeneratedBlob })
             ]);
-            clipboardSuccess = true;
-            window.showToast('Tu navegador no permite enviar la imagen automáticamente. Se ha copiado al portapapeles. ¡Pégala en el chat!', 'warning');
-        } catch(e) {
-            window.showToast('Tu navegador no soporta enviar la imagen. Se descargará, por favor adjúntala manualmente en WhatsApp.', 'warning');
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(preGeneratedBlob);
-            a.download = preGeneratedFile.name;
-            a.click();
-        }
+        } catch(e) { console.log('Clipboard fallback falló', e); }
+        
+        // Forzar descarga siempre como respaldo
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(preGeneratedBlob);
+        a.download = preGeneratedFile.name;
+        a.click();
 
-        // 3. Abrir WhatsApp Web/App con el texto prellenado
-        setTimeout(() => {
-            const fallbackMsg = `¡Hola ${socioInfo.nombre}! Te envío tu comprobante de inscripción adjunto.`;
-            if (phone) {
-                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(fallbackMsg)}`, '_blank');
-            } else {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fallbackMsg)}`, '_blank');
-            }
-        }, 2000); // Pausa para leer el toast
+        // 3. Mostrar modal de instrucciones para pegar en WhatsApp
+        const fallbackMsg = `¡Hola ${socioInfo.nombre}! Aquí tienes tu comprobante de inscripción.`;
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(fallbackMsg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(fallbackMsg)}`;
+        
+        const instructionModal = `
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: var(--color-primary);">¡IMAGEN LISTA!</h3>
+                <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
+            </div>
+            <div style="text-align: center; padding: 10px;">
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="text-align: center;">
+                        <span class="material-icons-round" style="font-size: 32px; color: var(--color-text-secondary);">content_copy</span>
+                        <div style="font-size: 12px; margin-top: 8px;">1. Copiado</div>
+                    </div>
+                    <span class="material-icons-round" style="color: var(--color-text-secondary); align-self: center;">arrow_forward</span>
+                    <div style="text-align: center;">
+                        <span class="material-icons-round" style="font-size: 32px; color: var(--color-success);">chat</span>
+                        <div style="font-size: 12px; margin-top: 8px;">2. Abre WhatsApp</div>
+                    </div>
+                    <span class="material-icons-round" style="color: var(--color-text-secondary); align-self: center;">arrow_forward</span>
+                    <div style="text-align: center;">
+                        <span class="material-icons-round" style="font-size: 32px; color: var(--color-primary);">content_paste</span>
+                        <div style="font-size: 12px; margin-top: 8px;">3. Pega (Ctrl+V)</div>
+                    </div>
+                </div>
+                <p style="margin-bottom: 24px; color: var(--color-text-secondary); line-height: 1.5;">
+                    WhatsApp Web no permite adjuntar imágenes de forma automática.<br><br>
+                    Hemos <b>copiado el recibo</b> a tu portapapeles y también lo hemos <b>descargado</b>.<br><br>
+                    Haz clic en Abrir WhatsApp y presiona <b>Ctrl + V</b> en el chat para enviar la imagen.
+                </p>
+                <button class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px; justify-content: center;" onclick="window.open('${waUrl}', '_blank'); window.closeModal();">
+                    <span class="material-icons-round">open_in_new</span> ABRIR WHATSAPP
+                </button>
+            </div>
+        `;
+        window.openModal(instructionModal);
     });
 };
 
