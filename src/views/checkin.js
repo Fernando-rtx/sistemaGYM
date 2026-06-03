@@ -144,7 +144,17 @@ export const render = () => {
     `;
 };
 
+let html5QrcodeScanner = null;
+let isProcessingScan = false;
+
 export const init = async () => {
+    // Limpiar instancia anterior si el usuario navegó a otra vista y volvió
+    if (html5QrcodeScanner) {
+        try { await html5QrcodeScanner.clear(); } catch(e) {}
+        html5QrcodeScanner = null;
+    }
+    isProcessingScan = false;
+
     // Sync gym name to ticket
     const settings = await getSettings();
     const brandTicket = document.querySelector('.brand-name-ticket');
@@ -153,8 +163,6 @@ export const init = async () => {
     const btnCamara = document.getElementById('btnActivarCamara');
     const ticketContainer = document.getElementById('ticketContainer');
     let lastCheckedSocio = null;
-    let html5QrcodeScanner = null;
-    let isProcessingScan = false;
 
     const procesarEscaneo = async (qrCodeMessage) => {
         if (isProcessingScan) return;
@@ -165,7 +173,7 @@ export const init = async () => {
         
         if (!socio) {
             window.showToast('Código no reconocido', 'danger');
-            isProcessingScan = false;
+            setTimeout(() => { isProcessingScan = false; }, 2000);
             return;
         }
 
@@ -211,16 +219,10 @@ export const init = async () => {
             }, 100);
         }
         
-        // Pausar escáner un momento para evitar dobles lecturas
-        if(html5QrcodeScanner) {
-            html5QrcodeScanner.pause(true);
-            setTimeout(() => {
-                html5QrcodeScanner.resume();
-                isProcessingScan = false;
-            }, 3000);
-        } else {
+        // Pausar escáner (sólo lógicamente, sin tocar hardware para evitar NotReadableError en Android)
+        setTimeout(() => {
             isProcessingScan = false;
-        }
+        }, 4000);
     };
 
     if (btnCamara) {
