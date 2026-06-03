@@ -126,6 +126,18 @@ export const updateSocio = async (id, updates) => {
 };
 
 export const deleteSocio = async (id) => {
+    const socio = await getSocioById(id);
+    if (socio) {
+        const concepto = `Membresía ${socio.membresia} - ${socio.nombre}`;
+        const hoy = _today();
+        // Intentar eliminar la transacción de registro si se hizo hoy (evita alterar caja si fue un error)
+        await supabase.from('transacciones').delete().match({ 
+            concepto: concepto, 
+            fecha: hoy, 
+            monto: socio.precio 
+        });
+    }
+
     const { error } = await supabase.from('socios').delete().eq('id', id);
     if (error) console.error(error);
 };
