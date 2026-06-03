@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnCheckinRapido) {
         btnCheckinRapido.addEventListener('click', async () => {
             const { getSocios, addCheckin } = await import('./dataStore.js');
-            const socios = getSocios();
+            const socios = await getSocios();
             
             const modalHtml = `
                 <div class="modal-header">
