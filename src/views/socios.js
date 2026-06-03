@@ -90,13 +90,70 @@ const generarTicketModal = async (socioInfo) => {
         a.click();
     });
     
-    document.getElementById('btnSendWaTicket').addEventListener('click', () => {
-        const msg = `*${gymName.toUpperCase()}*\nComprobante de Inscripción\n\nSocio: ${socioInfo.nombre}\nPlan: ${socioInfo.plan}\nVálido hasta: ${formatD(socioInfo.fechaVencimiento)}\nTotal: $${socioInfo.precio.toFixed(2)}\n\n¡Gracias por tu preferencia!`;
-        const phone = socioInfo.telefono ? socioInfo.telefono.replace(/[^0-9]/g, '') : '';
-        if (phone) {
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-        } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    document.getElementById('btnSendWaTicket').addEventListener('click', async () => {
+        const btn = document.getElementById('btnSendWaTicket');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="material-icons-round rotate-anim">hourglass_empty</span> GENERANDO...';
+        btn.disabled = true;
+
+        try {
+            const ticketEl = document.getElementById('ticketCaptureArea');
+            const canvas = await html2canvas(ticketEl, { scale: 2, backgroundColor: '#ffffff' });
+            
+            canvas.toBlob(async (blob) => {
+                const fileName = `Ticket_${socioInfo.nombre.replace(/\s+/g, '_')}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+                const phone = socioInfo.telefono ? socioInfo.telefono.replace(/[^0-9]/g, '') : '';
+                const msg = `¡Hola ${socioInfo.nombre}! Aquí tienes tu comprobante de inscripción.`;
+                
+                // 1. Intentar usar Web Share API (Ideal para celulares)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Comprobante de Inscripción',
+                            text: msg
+                        });
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        return; // Terminado con éxito en celular
+                    } catch (err) {
+                        console.log('Share cancelado o no soportado', err);
+                    }
+                }
+                
+                // 2. Fallback para PC: Copiar al portapapeles
+                let clipboardSuccess = false;
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    clipboardSuccess = true;
+                    window.showToast('✅ Ticket copiado al portapapeles. Pégalo en el chat de WhatsApp.', 'success');
+                } catch(e) {
+                    console.log('Clipboard falló, descargando imagen en su lugar.', e);
+                    window.showToast('Descargando ticket para que lo envíes manualmente.', 'info');
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    a.click();
+                }
+
+                // 3. Abrir WhatsApp Web/App
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    if (phone) {
+                        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                    } else {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                    }
+                }, 1500); // Pausa para leer el toast
+            }, 'image/png');
+        } catch (error) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            window.showToast('Error al generar la imagen', 'danger');
         }
     });
 };

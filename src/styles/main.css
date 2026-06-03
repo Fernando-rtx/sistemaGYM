@@ -443,3 +443,6 @@ body {
     padding: 20px;
   }
 }
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.rotate-anim { animation: spin 1s linear infinite; display: inline-block; }

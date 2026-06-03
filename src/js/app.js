@@ -281,12 +281,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `).join('');
 
                 document.querySelectorAll('.quick-socio-item').forEach(item => {
-                    item.addEventListener('click', () => {
+                    item.addEventListener('click', async () => {
                         const id = item.getAttribute('data-id');
                         const nombre = item.getAttribute('data-nombre');
-                        addCheckin(id, nombre);
+                        await addCheckin(id, nombre);
                         window.closeModal();
                         window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                        
+                        // Refrescar el dashboard si estamos en él
+                        if (window.location.hash.includes('dashboard') || window.location.hash === '' || window.location.hash === '#') {
+                            loadView('dashboard');
+                        }
                     });
                 });
             };
