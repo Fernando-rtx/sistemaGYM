@@ -155,16 +155,28 @@ export const init = async () => {
         const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
         document.getElementById('tktFecha').textContent = new Date().toLocaleDateString('es-ES', dateOptions);
         
+        const hoy = new Date();
+        const fVenc = new Date((socio.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
+        const diasRestantes = Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+
         const statusEl = document.getElementById('tktStatus');
         if (socio.estado === 'Activo') {
-            statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
-            statusEl.className = 'ticket-status success';
             await addCheckin(socio.id, socio.nombre);
-            window.showToast(`Acceso concedido a ${socio.nombre}`, 'success');
+            
+            if (diasRestantes <= 5 && diasRestantes >= 0) {
+                const diasText = diasRestantes === 0 ? 'HOY' : `EN ${diasRestantes} DÍAS`;
+                statusEl.innerHTML = `✅ ACCESO PERMITIDO<br><span style="font-size: 14px; color: #f59e0b;">⚠️ VENCE ${diasText}</span>`;
+                statusEl.className = 'ticket-status success';
+                window.showToast(`Acceso concedido. Recuerda a ${socio.nombre} que su plan vence ${diasText.toLowerCase()}`, 'warning');
+            } else {
+                statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
+                statusEl.className = 'ticket-status success';
+                window.showToast(`Acceso concedido a ${socio.nombre}`, 'success');
+            }
         } else {
-            statusEl.textContent = '❌ MEMBRESÍA VENCIDA';
+            statusEl.textContent = '❌ ACCESO DENEGADO';
             statusEl.className = 'ticket-status denied';
-            window.showToast(`Atención: Membresía de ${socio.nombre} vencida`, 'danger');
+            window.showToast(`Membresía de ${socio.nombre} vencida. No se registró la asistencia.`, 'danger');
         }
         
         // Pausar escáner un momento
