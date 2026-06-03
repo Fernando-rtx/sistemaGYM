@@ -120,7 +120,7 @@ export const render = () => {
                 </button>
             </div>
 
-            <div class="card socios-table-container">
+            <div class="card socios-table-container table-responsive">
                 <table class="socios-table">
                     <thead>
                         <tr>
@@ -184,6 +184,20 @@ export const render = () => {
             .text-success { color: var(--color-success); }
             .text-danger { color: var(--color-danger); }
             
+            .empty-state span { font-size: 48px; color: rgba(255,255,255,0.1); margin-bottom: 16px; }
+            .empty-state h3 { margin-bottom: 8px; font-size: 20px; }
+            .empty-state p { color: var(--color-text-secondary); max-width: 400px; margin: 0 auto; line-height: 1.5; }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+                .socios-header { flex-direction: column; align-items: stretch; gap: 16px; }
+                .filters { flex-direction: column; width: 100%; align-items: stretch; gap: 10px; }
+                .search-input { width: 100%; }
+                .status-filters { overflow-x: auto; white-space: nowrap; justify-content: flex-start; padding-bottom: 4px; }
+                .filter-btn { flex-shrink: 0; font-size: 12px; }
+                #btnNuevoSocio { width: 100%; justify-content: center; }
+            }
+
             .socios-table-container {
                 padding: 0;
                 overflow: hidden;

@@ -36,7 +36,7 @@ export const render = () => {
                     </div>
                 </div>
 
-                <div class="card mt-4">
+                <div class="card mt-4 table-responsive">
                     <h3 style="margin-bottom: 20px; color: var(--color-text-secondary);">DETALLE DE TRANSACCIONES</h3>
                     <table class="trans-table">
                         <thead>
@@ -136,6 +136,13 @@ export const render = () => {
             .caja-stats { background-color: var(--color-bg-base); padding: 20px; border-radius: var(--border-radius-sm); display: flex; flex-direction: column; gap: 12px; }
             .caja-stat-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 500; }
             .carrito-item { display: flex; justify-content: space-between; align-items: center; background: var(--color-bg-base); padding: 10px 14px; border-radius: var(--border-radius-sm); font-size: 14px; }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+                .ventas-grid { grid-template-columns: 1fr; }
+                .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+                .ventas-header { flex-direction: column; align-items: stretch !important; gap: 15px; }
+            }
         </style>
     `;
 };

@@ -204,7 +204,7 @@ export const init = async () => {
                 </div>
 
                 <!-- Metric Cards 2x2 -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                     <div class="card" style="border-left: 4px solid var(--color-success); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">bolt</span> ACTIVOS</div>
                         <div style="font-size: 36px; font-weight: 800; color: var(--color-success); margin: 8px 0 4px 0;">${activos}</div>

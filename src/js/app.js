@@ -60,6 +60,12 @@ window.navigateTo = (viewName) => {
         targetBtn.style.backgroundColor = 'rgba(148, 255, 0, 0.1)';
     }
     
+    // Cerrar sidebar en móviles si está abierto
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    
     loadView(viewName);
 };
 
@@ -168,6 +174,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateDate();
     setupNavigation();
     setupModalOverlay();
+    
+    // Sidebar Mobile Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (mobileMenuBtn && sidebar && sidebarOverlay) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+        });
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
     
     // Autenticación Flow
     const overlay = document.getElementById('loginOverlay');
