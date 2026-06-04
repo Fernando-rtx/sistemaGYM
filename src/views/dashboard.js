@@ -115,7 +115,7 @@ export const init = async () => {
     const allAlerts = [...porVencer.map(p => ({...p, alertType: 'PorRenovar'}))];
     allAlerts.sort((a,b) => new Date(a.fechaVencimiento + "T00:00:00") - new Date(b.fechaVencimiento + "T00:00:00"));
     
-    const gymName = caja.brandName || 'NEXFIT';
+    const gymName = settings.brandName || 'NEXFIT';
 
     const alertasHtml = allAlerts.length > 0 ? allAlerts.map(v => {
         const fVenc = new Date((v.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
