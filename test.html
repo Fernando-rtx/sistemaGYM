@@ -1,0 +1,167 @@
+
+        <div id="sociosMainView">
+            <div class="socios-header">
+                <div class="filters">
+                    <input type="text" class="search-input" placeholder="🔍 Buscar socio...">
+                    <div class="status-filters" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="filter-btn active">TODOS (0)</button>
+                        <button class="filter-btn text-success">ACTIVOS (0)</button>
+                        <button class="filter-btn text-warning" style="color: #eab308;">POR RENOVAR (0)</button>
+                        <button class="filter-btn text-danger">VENCIDOS (0)</button>
+                        <button class="filter-btn" style="color: #a8a29e;">AUSENTES (0)</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btnNuevoSocio">
+                    <span class="material-icons-round">add</span> NUEVO SOCIO
+                </button>
+            </div>
+
+            <div class="card socios-table-container table-responsive">
+                <table class="socios-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NOMBRE</th>
+                            <th>MEMBRESÍA</th>
+                            <th>VENCIMIENTO</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sociosTbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sociosProfileView" style="display: none;">
+            <!-- Profile content will be injected here -->
+        </div>
+
+        <style>
+            .socios-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+            }
+            .filters {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+            .search-input {
+                background-color: var(--color-bg-surface);
+                border: 1px solid rgba(255,255,255,0.1);
+                color: var(--color-text-primary);
+                padding: 12px 20px;
+                border-radius: var(--border-radius-md);
+                width: 300px;
+                outline: none;
+                transition: border-color var(--transition-fast);
+            }
+            .search-input:focus { border-color: var(--color-primary); }
+            
+            .status-filters {
+                display: flex;
+                gap: 10px;
+                background-color: var(--color-bg-surface);
+                padding: 4px;
+                border-radius: var(--border-radius-md);
+            }
+            .filter-btn {
+                background: transparent; border: none;
+                color: var(--color-text-secondary);
+                padding: 8px 16px;
+                border-radius: var(--border-radius-sm);
+                cursor: pointer; font-size: 13px; font-weight: 600;
+            }
+            .filter-btn.active { background-color: rgba(255,255,255,0.1); color: var(--color-text-primary); }
+            .text-success { color: var(--color-success); }
+            .text-danger { color: var(--color-danger); }
+            
+            .empty-state span { font-size: 48px; color: rgba(255,255,255,0.1); margin-bottom: 16px; }
+            .empty-state h3 { margin-bottom: 8px; font-size: 20px; }
+            .empty-state p { color: var(--color-text-secondary); max-width: 400px; margin: 0 auto; line-height: 1.5; }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+                .socios-header { flex-direction: column; align-items: stretch; gap: 16px; }
+                .filters { flex-direction: column; width: 100%; align-items: stretch; gap: 10px; }
+                .search-input { width: 100%; }
+                .status-filters { overflow-x: auto; white-space: nowrap; justify-content: flex-start; padding-bottom: 4px; }
+                .filter-btn { flex-shrink: 0; font-size: 12px; }
+                #btnNuevoSocio { width: 100%; justify-content: center; }
+            }
+
+            .socios-table-container {
+                padding: 0;
+                overflow: hidden;
+            }
+            .socios-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .socios-table th {
+                text-align: left;
+                padding: 16px 24px;
+                color: var(--color-text-secondary);
+                font-size: 12px;
+                font-weight: 600;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                letter-spacing: 1px;
+            }
+            .socios-table td {
+                padding: 16px 24px;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                font-size: 14px;
+            }
+            .socios-table tbody tr:hover {
+                background-color: rgba(255,255,255,0.02);
+            }
+            .status-badge {
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            .status-activo { background-color: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+            .status-vencido { background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+            .status-ausente { background-color: rgba(255, 255, 255, 0.1); color: var(--color-text-secondary); }
+            
+            .avatar-sm {
+                display: inline-flex; width: 30px; height: 30px;
+                background-color: var(--color-bg-surface-hover);
+                align-items: center; justify-content: center;
+                border-radius: 50%; margin-right: 12px;
+                font-size: 12px; font-weight: 600;
+            }
+            .action-btns { display: flex; gap: 6px; }
+            .btn-icon {
+                background: transparent; border: 1px solid rgba(255,255,255,0.1);
+                color: var(--color-text-secondary); cursor: pointer;
+                width: 32px; height: 32px; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center;
+                transition: all 0.2s;
+            }
+            .btn-icon:hover { border-color: var(--color-primary); color: var(--color-primary); }
+            .btn-icon.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+            
+            /* Profile View Specific Styles */
+            .profile-stat-card {
+                background: var(--color-bg-surface);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: var(--border-radius-md);
+                padding: 20px;
+            }
+            .heatmap-grid {
+                display: grid;
+                grid-template-columns: repeat(15, 1fr);
+                gap: 6px;
+            }
+            .heatmap-cell {
+                aspect-ratio: 1;
+                border-radius: 4px;
+            }
+        </style>
+    
