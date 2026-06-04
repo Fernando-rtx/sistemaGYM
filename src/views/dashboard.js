@@ -61,7 +61,7 @@ export const init = async () => {
         getCheckins(),
         getTransacciones(),
         sociosNuevosHoy(),
-        sociosPorVencer(3)
+        sociosPorVencer(6)
     ]);
     
     // 2. Dependencias que reutilizan datos ya descargados
@@ -111,8 +111,8 @@ export const init = async () => {
     // Fecha Panel
     const fechaHoyFormato = hoy.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
 
-    // Alertas HTML
-    const allAlerts = [...vencidos.map(v => ({...v, alertType: 'Vencido'})), ...porVencer.map(p => ({...p, alertType: 'PorRenovar'}))];
+    // Alertas HTML: solo mostrar los próximos a vencer (<= 6 días)
+    const allAlerts = [...porVencer.map(p => ({...p, alertType: 'PorRenovar'}))];
     allAlerts.sort((a,b) => new Date(a.fechaVencimiento + "T00:00:00") - new Date(b.fechaVencimiento + "T00:00:00"));
     
     const alertasHtml = allAlerts.length > 0 ? allAlerts.map(v => {
