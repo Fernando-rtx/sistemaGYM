@@ -586,7 +586,7 @@ export const init = async () => {
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">PLAN CONTRATADO</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
-                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s; position: relative;">
+                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); transition: all 0.2s; position: relative;">
                         <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
                         <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-primary); font-weight: 900;">PLAN MENSUAL</div>
                         <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">30 días de acceso</div>
@@ -656,7 +656,7 @@ export const init = async () => {
                 });
                 this.classList.add('selected');
                 this.style.border = '2px solid var(--color-primary)';
-                this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
+                this.style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 5%, transparent)';
                 this.style.opacity = '1';
                 this.querySelector('.plan-name-ns').style.color = 'var(--color-text-primary)';
                 this.querySelector('.plan-price-ns').style.color = 'var(--color-primary)';
@@ -922,7 +922,7 @@ export const init = async () => {
             <!-- Top Header Card -->
             <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 24px; flex-wrap: wrap; gap: 20px;">
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="width: 80px; height: 80px; background: rgba(148, 255, 0, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: var(--color-primary);">${socio.nombre.substring(0,2).toUpperCase()}</div>
+                    <div style="width: 80px; height: 80px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: var(--color-primary);">${socio.nombre.substring(0,2).toUpperCase()}</div>
                     <div>
                         <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${socio.nombre.toUpperCase()}</h1>
                         <div style="display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 13px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
@@ -1113,7 +1113,7 @@ function setupPlanSelection() {
             });
             this.classList.add('selected');
             this.style.border = '2px solid var(--color-primary)';
-            this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
+            this.style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 5%, transparent)';
             this.style.opacity = '1';
             this.querySelector('.plan-name').style.color = 'var(--color-primary)';
             this.querySelector('.plan-price').style.color = 'var(--color-primary)';

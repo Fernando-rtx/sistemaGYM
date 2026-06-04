@@ -132,7 +132,7 @@ export const init = async () => {
         return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="width: 44px; height: 44px; background: rgba(148, 255, 0, 0.1); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${v.nombre.substring(0,2).toUpperCase()}</div>
+                <div style="width: 44px; height: 44px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${v.nombre.substring(0,2).toUpperCase()}</div>
                 <div>
                     <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">${v.nombre}</div>
                     <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">${textVencimiento} · Plan ${v.membresia}</div>
@@ -172,16 +172,16 @@ export const init = async () => {
         container.innerHTML = `
             <div class="top-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
                 <!-- Panel de Control Principal -->
-                <div class="main-panel card" style="background: linear-gradient(135deg, rgba(148, 255, 0, 0.03) 0%, rgba(0,0,0,0) 100%); border: 1px solid rgba(148, 255, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+                <div class="main-panel card" style="background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 3%, transparent) 0%, rgba(0,0,0,0) 100%); border: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
                     <!-- Decorativo -->
-                    <div style="position: absolute; top: -50%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, rgba(148, 255, 0, 0.05) 0%, rgba(0,0,0,0) 70%); pointer-events: none;"></div>
+                    <div style="position: absolute; top: -50%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 5%, transparent) 0%, rgba(0,0,0,0) 70%); pointer-events: none;"></div>
                     
                     <div style="padding: 24px; position: relative; z-index: 1;">
                         <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                             <span style="display: inline-block; width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 8px var(--color-primary);"></span>
                             PANEL DE CONTROL · ${fechaHoyFormato}
                         </div>
-                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(148,255,0,0.2);">${settings.brandName.toUpperCase()}</h1>
+                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 20%, transparent);">${settings.brandName.toUpperCase()}</h1>
                         <p style="color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; max-width: 450px; margin: 0;">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
                     </div>
                     
@@ -285,10 +285,14 @@ export const init = async () => {
             }
         }
 
+        // Obtener el color primario para el chart dinámicamente
+        const rootStyles = getComputedStyle(document.documentElement);
+        const chartPrimary = rootStyles.getPropertyValue('--color-primary').trim() || '#94ff00';
+
         // Si todos son 0, highlight current day (last index 6)
         if (maxVal === 0) maxIndex = 6;
         
-        const backgroundColors = conteos.map((_, i) => i === maxIndex ? '#94ff00' : 'rgba(255,255,255,0.1)');
+        const backgroundColors = conteos.map((_, i) => i === maxIndex ? chartPrimary : 'rgba(255,255,255,0.1)');
         
         new window.Chart(ctx, {
             type: 'bar',
@@ -317,7 +321,7 @@ export const init = async () => {
                     tooltip: {
                         backgroundColor: '#1e1e1e',
                         titleColor: '#fff',
-                        bodyColor: '#94ff00',
+                        bodyColor: chartPrimary,
                         displayColors: false,
                         cornerRadius: 8,
                         padding: 10
@@ -350,12 +354,12 @@ async function openRenovarModal(socioId) {
             <button class="btn-close" onclick="window.closeModal()"><span class="material-icons-round">close</span></button>
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; background: rgba(148,255,0,0.1); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${socio.nombre.substring(0,2).toUpperCase()}</div>
+            <div style="width: 60px; height: 60px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${socio.nombre.substring(0,2).toUpperCase()}</div>
             <h3 style="font-size: 18px; font-weight: 800;">${socio.nombre}</h3>
             <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: ${socio.membresia}</p>
         </div>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: rgba(148, 255, 0, 0.05); transition: all 0.2s;">
+            <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); transition: all 0.2s;">
                 <div class="plan-name" style="font-size: 11px; margin-bottom: 5px; color: var(--color-primary); font-weight: 800;">MENSUAL</div>
                 <div class="plan-price" style="font-size: 18px; font-weight: 800; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
             </div>
@@ -392,7 +396,7 @@ async function openRenovarModal(socioId) {
             });
             this.classList.add('selected');
             this.style.border = '2px solid var(--color-primary)';
-            this.style.backgroundColor = 'rgba(148, 255, 0, 0.05)';
+            this.style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 5%, transparent)';
             this.style.opacity = '1';
             this.querySelector('.plan-name').style.color = 'var(--color-primary)';
             this.querySelector('.plan-price').style.color = 'var(--color-primary)';

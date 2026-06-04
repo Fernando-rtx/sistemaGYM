@@ -113,7 +113,7 @@ body {
 }
 
 .nav-btn.active {
-  background-color: rgba(148, 255, 0, 0.1); /* Primary color low opacity */
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); /* Primary color low opacity */
   color: var(--color-primary);
   border-left: 3px solid var(--color-primary);
 }

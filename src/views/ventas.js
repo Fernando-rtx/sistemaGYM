@@ -108,7 +108,7 @@ export const render = () => {
             .product-item:hover {
                 border-color: var(--color-primary);
                 transform: translateY(-2px);
-                background-color: rgba(148, 255, 0, 0.05);
+                background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
             }
             .product-item.disabled {
                 opacity: 0.5;
@@ -278,7 +278,7 @@ export const init = async () => {
                 <div style="font-size: 48px; font-weight: 800; color: var(--color-primary);">$${total.toFixed(2)}</div>
             </div>
             <div style="display: flex; gap: 10px; margin-bottom: 30px;">
-                <div class="payment-method selected" data-method="Efectivo" style="flex: 1; border: 2px solid var(--color-primary); background: rgba(148,255,0,0.05); padding: 15px; border-radius: 8px; text-align: center; cursor: pointer;">
+                <div class="payment-method selected" data-method="Efectivo" style="flex: 1; border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 5%, transparent); padding: 15px; border-radius: 8px; text-align: center; cursor: pointer;">
                     <span class="material-icons-round" style="font-size: 32px; color: var(--color-primary);">payments</span>
                     <div style="margin-top: 5px; font-weight: 600; color: var(--color-primary);">EFECTIVO</div>
                 </div>
@@ -307,7 +307,7 @@ export const init = async () => {
             });
             this.classList.add('selected');
             this.style.border = '2px solid var(--color-primary)';
-            this.style.background = 'rgba(148,255,0,0.05)';
+            this.style.background = 'color-mix(in srgb, var(--color-primary) 5%, transparent)';
             this.style.opacity = '1';
             this.querySelector('span').style.color = 'var(--color-primary)';
             this.querySelector('div').style.color = 'var(--color-primary)';

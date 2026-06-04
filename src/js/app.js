@@ -57,7 +57,7 @@ window.navigateTo = (viewName) => {
     if (targetBtn) {
         targetBtn.classList.add('active');
         targetBtn.style.borderLeft = '3px solid var(--color-primary)';
-        targetBtn.style.backgroundColor = 'rgba(148, 255, 0, 0.1)';
+        targetBtn.style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 10%, transparent)';
     }
     
     // Cerrar sidebar en móviles si está abierto
@@ -151,7 +151,7 @@ const setupNavigation = () => {
             const current = e.currentTarget;
             current.classList.add('active');
             current.style.borderLeft = '3px solid var(--color-primary)';
-            current.style.backgroundColor = 'rgba(148, 255, 0, 0.1)';
+            current.style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 10%, transparent)';
             
             const view = current.getAttribute('data-view');
             loadView(view);
