@@ -284,9 +284,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     item.addEventListener('click', async () => {
                         const id = item.getAttribute('data-id');
                         const nombre = item.getAttribute('data-nombre');
+                        const socio = socios.find(s => s.id === id);
+                        
+                        if (socio && socio.estado !== 'Activo') {
+                            window.showToast(`Acceso denegado. Membresía de ${nombre} está ${socio.estado.toLowerCase()}`, 'danger');
+                            return;
+                        }
+
+                        // Calcular días restantes para aviso
+                        const hoy = new Date();
+                        const fVenc = new Date((socio.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
+                        const diasRestantes = Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+
                         await addCheckin(id, nombre);
                         window.closeModal();
-                        window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                        
+                        if (diasRestantes <= 5 && diasRestantes >= 0) {
+                            window.showToast(`Check-in registrado. AVISO: Membresía vence en ${diasRestantes} días`, 'warning');
+                        } else {
+                            window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                        }
                         
                         // Refrescar el dashboard si estamos en él
                         if (window.location.hash.includes('dashboard') || window.location.hash === '' || window.location.hash === '#') {
