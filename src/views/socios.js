@@ -366,45 +366,50 @@ export const init = async () => {
         if (!tbody) return;
         
         const checkins = await getCheckins();
-        const hoy = new Date();
+        const hoyPlano = new Date();
+        hoyPlano.setHours(0,0,0,0);
         
         let countTodos = 0, countActivos = 0, countVencer = 0, countVencidos = 0, countAusentes = 0;
 
-        let filtrados = socios.filter(s => {
-            const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
-            
-            // Cálculos para contadores
+        // Primero calculamos los estados exactos de cada socio para no duplicar lógica
+        const sociosProcesados = socios.map(s => {
             const isActivo = s.estado === 'Activo';
             const isVencido = s.estado === 'Vencido';
             
-            const fVenc = new Date(s.fechaVencimiento);
-            const diffDiasVenc = (fVenc - hoy) / (1000 * 60 * 60 * 24);
-            const isPorVencer = isActivo && diffDiasVenc >= 0 && diffDiasVenc <= 3;
+            const fVenc = new Date((s.fechaVencimiento || hoyPlano.toISOString().split('T')[0]) + 'T00:00:00');
+            const diffDiasVenc = Math.ceil((fVenc - hoyPlano) / (1000 * 60 * 60 * 24));
+            const isPorVencer = isActivo && diffDiasVenc >= 0 && diffDiasVenc <= 6;
             
             const checksSocio = checkins.filter(c => c.socioId === s.id);
-            let diffDiasAusente = 999;
+            let diffDiasAusente = 0;
             if(checksSocio.length > 0) {
                 const ultimo = new Date(checksSocio[0].fecha + "T00:00:00");
-                diffDiasAusente = (hoy - ultimo) / (1000 * 60 * 60 * 24);
+                diffDiasAusente = Math.floor((hoyPlano - ultimo) / (1000 * 60 * 60 * 24));
             } else {
-                const fReg = new Date(s.fechaRegistro + "T00:00:00");
-                diffDiasAusente = (hoy - fReg) / (1000 * 60 * 60 * 24);
+                const fReg = new Date((s.fechaRegistro || hoyPlano.toISOString().split('T')[0]) + "T00:00:00");
+                diffDiasAusente = Math.floor((hoyPlano - fReg) / (1000 * 60 * 60 * 24));
             }
-            const isAusente = diffDiasAusente > 5;
+            const isAusente = diffDiasAusente > 5 && !isVencido;
 
+            return { ...s, isActivo, isVencido, isPorVencer, isAusente };
+        });
+
+        let filtrados = sociosProcesados.filter(s => {
+            const matchesSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.includes(searchQuery);
+            
             // Increment counters
             countTodos++;
-            if(isActivo) countActivos++;
-            if(isVencido) countVencidos++;
-            if(isPorVencer) countVencer++;
-            if(isAusente) countAusentes++;
+            if(s.isActivo) countActivos++;
+            if(s.isVencido) countVencidos++;
+            if(s.isPorVencer) countVencer++;
+            if(s.isAusente) countAusentes++;
 
             let matchesFilter = false;
             if (currentFilter === 'TODOS') matchesFilter = true;
-            if (currentFilter === 'ACTIVO' && isActivo) matchesFilter = true;
-            if (currentFilter === 'VENCIDO' && isVencido) matchesFilter = true;
-            if (currentFilter === 'POR RENOVAR' && isPorVencer) matchesFilter = true;
-            if (currentFilter === 'AUSENTE' && isAusente) matchesFilter = true;
+            if (currentFilter === 'ACTIVO' && s.isActivo) matchesFilter = true;
+            if (currentFilter === 'VENCIDO' && s.isVencido) matchesFilter = true;
+            if (currentFilter === 'POR RENOVAR' && s.isPorVencer) matchesFilter = true;
+            if (currentFilter === 'AUSENTE' && s.isAusente) matchesFilter = true;
 
             return matchesSearch && matchesFilter;
         });
@@ -412,14 +417,6 @@ export const init = async () => {
         const user = getCurrentUser();
 
         tbody.innerHTML = filtrados.map(s => {
-            // Recalcular estado local para el badge (si es ausente lo mostramos en gris)
-            const checksSocio = checkins.filter(c => c.socioId === s.id);
-            let dAusente = 999;
-            if(checksSocio.length > 0) {
-                dAusente = (hoy - new Date(checksSocio[0].fecha + "T00:00:00")) / (1000 * 60 * 60 * 24);
-            }
-            const isAusenteBadge = dAusente > 5 && s.estado !== 'Vencido';
-
             return `
             <tr style="cursor: pointer;" class="socio-row" data-id="${s.id}">
                 <td style="color: var(--color-text-secondary);">#${s.id.substring(0,6)}</td>
@@ -435,8 +432,8 @@ export const init = async () => {
                 <td>${s.membresia}</td>
                 <td>${formatFecha(s.fechaVencimiento)}</td>
                 <td>
-                    <span class="status-badge ${s.estado === 'Vencido' ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo')}">
-                        ${s.estado === 'Vencido' ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO')}
+                    <span class="status-badge ${s.isVencido ? 'status-vencido' : (s.isAusente ? 'status-ausente' : 'status-activo')}">
+                        ${s.isVencido ? 'VENCIDO' : (s.isAusente ? 'AUSENTE' : 'ACTIVO')}
                     </span>
                 </td>
                 <td>
