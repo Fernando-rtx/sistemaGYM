@@ -55,6 +55,185 @@ export class SociosTable {
                     </table>
                 </div>
             </div>
+
+            <style>
+                .socios-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }
+                .search-input-container {
+                    display: flex;
+                    align-items: center;
+                    background-color: var(--color-bg-base);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: var(--border-radius-md);
+                    padding: 0 16px;
+                    width: 350px;
+                    max-width: 100%;
+                    gap: 12px;
+                    transition: border-color var(--transition-fast);
+                }
+                .search-input-container:focus-within {
+                    border-color: var(--color-primary);
+                }
+                .search-input-container .material-icons-round {
+                    color: var(--color-text-secondary);
+                }
+                .search-input {
+                    background: transparent;
+                    border: none;
+                    color: var(--color-text-primary);
+                    padding: 12px 0;
+                    font-size: 14px;
+                    width: 100%;
+                    outline: none;
+                }
+                .filters {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    flex-wrap: wrap;
+                }
+                .status-filters {
+                    display: flex;
+                    gap: 4px;
+                    background-color: var(--color-bg-base);
+                    padding: 4px;
+                    border-radius: var(--border-radius-md);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .filter-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--color-text-secondary);
+                    padding: 8px 16px;
+                    border-radius: var(--border-radius-sm);
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all var(--transition-fast);
+                }
+                .filter-btn:hover {
+                    color: var(--color-text-primary);
+                }
+                .filter-btn.active {
+                    background-color: var(--color-bg-surface-hover);
+                    color: var(--color-text-primary);
+                }
+                
+                .socios-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .socios-table th {
+                    text-align: left;
+                    padding: 16px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    color: var(--color-text-secondary);
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .socios-table td {
+                    padding: 16px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+                    vertical-align: middle;
+                    font-size: 14px;
+                }
+                .socios-table tbody tr {
+                    transition: background-color var(--transition-fast);
+                }
+                .socios-table tbody tr:hover {
+                    background-color: rgba(255, 255, 255, 0.02);
+                }
+                
+                .avatar-sm {
+                    width: 36px;
+                    height: 36px;
+                    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+                    color: var(--color-primary);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: 800;
+                    margin-right: 12px;
+                    flex-shrink: 0;
+                }
+                
+                .status-badge {
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    display: inline-block;
+                }
+                .status-activo {
+                    background-color: rgba(16, 185, 129, 0.1);
+                    color: #10b981;
+                    border: 1px solid rgba(16, 185, 129, 0.2);
+                }
+                .status-vencido {
+                    background-color: rgba(239, 68, 68, 0.1);
+                    color: #ef4444;
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                }
+                .status-ausente {
+                    background-color: rgba(245, 158, 11, 0.1);
+                    color: #f59e0b;
+                    border: 1px solid rgba(245, 158, 11, 0.2);
+                }
+                
+                .action-btns {
+                    display: flex;
+                    gap: 8px;
+                }
+                .btn-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    border: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all var(--transition-fast);
+                    background-color: rgba(255, 255, 255, 0.05);
+                    color: var(--color-text-secondary);
+                }
+                .btn-icon:hover {
+                    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+                    color: var(--color-primary);
+                }
+                .btn-icon.danger {
+                    background-color: rgba(239, 68, 68, 0.1);
+                    color: #ef4444;
+                }
+                .btn-icon.danger:hover {
+                    background-color: #ef4444;
+                    color: white;
+                }
+                
+                @media (max-width: 900px) {
+                    .socios-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+                    .search-input-container {
+                        width: 100%;
+                    }
+                    .status-filters {
+                        flex-wrap: wrap;
+                    }
+                }
+            </style>
         `;
     }
 
