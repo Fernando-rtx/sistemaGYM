@@ -472,8 +472,23 @@ export const init = async () => {
                 e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 const nombre = btn.getAttribute('data-nombre');
+                
+                const socio = currentSociosState.find(s => s.id === id);
+                if (socio && socio.estado !== 'Activo') {
+                    window.showToast(`Acceso denegado. Membresía de ${nombre} está ${socio.estado.toLowerCase()}`, 'danger');
+                    return;
+                }
+                
+                const hoy = new Date();
+                const fVenc = new Date((socio.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
+                const diasRestantes = Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+
                 await addCheckin(id, nombre);
-                window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                if (diasRestantes <= 5 && diasRestantes >= 0) {
+                    window.showToast(`Check-in registrado. AVISO: Membresía vence en ${diasRestantes} días`, 'warning');
+                } else {
+                    window.showToast(`Check-in registrado para ${nombre}`, 'success');
+                }
                 await renderTable(); // Update table stats
             });
         });
@@ -1010,8 +1025,21 @@ export const init = async () => {
         });
 
         document.getElementById('btnCheckinProfile').addEventListener('click', async () => {
+            if (socio.estado !== 'Activo') {
+                window.showToast(`Acceso denegado. Membresía de ${socio.nombre} está ${socio.estado.toLowerCase()}`, 'danger');
+                return;
+            }
+            
+            const hoy = new Date();
+            const fVenc = new Date((socio.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
+            const diasRestantes = Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+
             await addCheckin(socio.id, socio.nombre);
-            window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
+            if (diasRestantes <= 5 && diasRestantes >= 0) {
+                window.showToast(`Check-in registrado. AVISO: Membresía vence en ${diasRestantes} días`, 'warning');
+            } else {
+                window.showToast(`Check-in registrado para ${socio.nombre}`, 'success');
+            }
             openProfileView(id); // Reload profile view to show updated stats
         });
 
