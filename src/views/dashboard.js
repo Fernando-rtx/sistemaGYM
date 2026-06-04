@@ -115,6 +115,8 @@ export const init = async () => {
     const allAlerts = [...porVencer.map(p => ({...p, alertType: 'PorRenovar'}))];
     allAlerts.sort((a,b) => new Date(a.fechaVencimiento + "T00:00:00") - new Date(b.fechaVencimiento + "T00:00:00"));
     
+    const gymName = caja.brandName || 'NEXFIT';
+
     const alertasHtml = allAlerts.length > 0 ? allAlerts.map(v => {
         const fVenc = new Date((v.fechaVencimiento || hoy.toISOString().split('T')[0]) + "T00:00:00");
         const diffDias = Math.floor((hoy - fVenc) / (1000*60*60*24));
@@ -125,7 +127,7 @@ export const init = async () => {
             : 'color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);';
             
         const phoneClean = v.telefono ? v.telefono.replace(/[^0-9]/g, '') : '';
-        const waLink = phoneClean ? `https://wa.me/${phoneClean}?text=${encodeURIComponent('Hola '+v.nombre+', te contactamos de NEXFIT.\n\nNotamos que tu membresía ' + textVencimiento.toLowerCase() + '. ¡Te invitamos a renovar para seguir entrenando juntos!')}` : '#';
+        const waLink = phoneClean ? `https://wa.me/${phoneClean}?text=${encodeURIComponent('Hola '+v.nombre+', te contactamos de ' + gymName.toUpperCase() + '.\n\nNotamos que tu membresía ' + textVencimiento.toLowerCase() + '. ¡Te invitamos a renovar para seguir entrenando juntos!')}` : '#';
         
         return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">

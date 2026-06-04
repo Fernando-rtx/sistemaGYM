@@ -112,14 +112,14 @@ const generarTicketModal = async (socioInfo) => {
         }
 
         const phone = socioInfo.telefono ? socioInfo.telefono.replace(/[^0-9]/g, '') : '';
-        const msg = `¡Hola ${socioInfo.nombre}! Aquí tienes tu comprobante de inscripción.`;
+        const msg = `¡Hola ${socioInfo.nombre}! Te enviamos desde ${gymName.toUpperCase()} tu comprobante de inscripción.`;
         
         // 1. Intentar usar Web Share API (Nativo en celulares, PUEDE ENVIAR IMÁGENES)
         if (navigator.canShare && navigator.canShare({ files: [preGeneratedFile] })) {
             try {
                 await navigator.share({
                     files: [preGeneratedFile],
-                    title: 'Comprobante de Inscripción',
+                    title: `Comprobante de Inscripción - ${gymName}`,
                     text: msg
                 });
                 return; // Terminado con éxito en celular
@@ -142,8 +142,7 @@ const generarTicketModal = async (socioInfo) => {
         a.click();
 
         // 3. Mostrar modal de instrucciones para pegar en WhatsApp
-        const fallbackMsg = `¡Hola ${socioInfo.nombre}! Aquí tienes tu comprobante de inscripción.`;
-        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(fallbackMsg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(fallbackMsg)}`;
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
         
         const instructionModal = `
             <div class="modal-header">
