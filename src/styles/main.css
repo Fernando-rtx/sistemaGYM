@@ -1,7 +1,6 @@
 :root {
   /* Brand Colors - Variables for dynamic theming */
   --color-primary: #94ff00; /* Neon Green from video */
-  --color-primary-dark: #7acc00;
   --color-bg-base: #0f1014;
   --color-bg-surface: #1a1b23;
   --color-bg-surface-hover: #232530;
@@ -215,7 +214,7 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-dark);
+  background-color: color-mix(in srgb, var(--color-primary) 85%, black);
   transform: translateY(-2px);
 }
 
