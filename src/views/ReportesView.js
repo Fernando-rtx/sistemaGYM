@@ -4,6 +4,27 @@ export class ReportesView extends BaseView {
     constructor(container, services, eventBus) {
         super(container, services, eventBus);
         this.charts = {};
+        this.filtros = {};
+    }
+
+    getDefaultDesde() {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 6);
+        return d.toISOString().split('T')[0];
+    }
+
+    getDefaultHasta() {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    getRangeLabel() {
+        const { fechaInicio, fechaFin } = this.filtros;
+        if (!fechaInicio && !fechaFin) return 'ÚLTIMOS 6 MESES';
+        const fmt = (s) => {
+            const d = new Date(s + 'T00:00:00');
+            return d.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+        };
+        return `${fmt(fechaInicio)} — ${fmt(fechaFin)}`;
     }
 
     render() {
@@ -13,6 +34,21 @@ export class ReportesView extends BaseView {
                 <button class="btn btn-primary" id="btnExportarPDF">
                     <span class="material-icons-round">picture_as_pdf</span> EXPORTAR REPORTE (PDF)
                 </button>
+            </div>
+
+            <div class="filtro-fechas" style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--color-text-secondary); font-weight: 600;">DESDE</label>
+                    <input type="date" id="filtroFechaInicio" style="background: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 10px 14px; border-radius: var(--border-radius-md); font-size: 14px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--color-text-secondary); font-weight: 600;">HASTA</label>
+                    <input type="date" id="filtroFechaFin" style="background: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 10px 14px; border-radius: var(--border-radius-md); font-size: 14px;">
+                </div>
+                <button class="btn btn-primary" id="btnAplicarFiltro" style="padding: 10px 24px; justify-content: center;">
+                    <span class="material-icons-round" aria-hidden="true" style="font-size: 18px;">filter_alt</span> APLICAR
+                </button>
+                <span id="txtRangoLabel" style="font-size: 13px; color: var(--color-text-secondary); align-self: center; margin-left: 4px;"></span>
             </div>
 
             <div class="reportes-grid">
@@ -100,14 +136,41 @@ export class ReportesView extends BaseView {
             });
         }
 
+        const inputDesde = this.$('#filtroFechaInicio');
+        const inputHasta = this.$('#filtroFechaFin');
+        if (inputDesde) inputDesde.value = this.getDefaultDesde();
+        if (inputHasta) inputHasta.value = this.getDefaultHasta();
+
+        const btnAplicar = this.$('#btnAplicarFiltro');
+        if (btnAplicar) {
+            this.bindEvent(btnAplicar, 'click', async () => {
+                this.filtros = {
+                    fechaInicio: inputDesde?.value || '',
+                    fechaFin: inputHasta?.value || ''
+                };
+                if (!this.filtros.fechaInicio || !this.filtros.fechaFin) {
+                    this.filtros = {};
+                }
+                await this.generarGraficos();
+            });
+        }
+
         // Cargar datos y renderizar gráficos
         await this.generarGraficos();
     }
 
     async generarGraficos() {
         Object.values(this.charts).forEach(c => c?.destroy());
-        const data = await this.services.reporte.generarDatos();
+        const data = await this.services.reporte.generarDatos(this.filtros);
         const { ingresosPorMes, sociosPorMes, membresias, topProductos, metricas, primaryColor } = data;
+
+        const rangeLabel = this.getRangeLabel();
+        const txtRango = this.$('#txtRangoLabel');
+        if (txtRango) txtRango.textContent = rangeLabel;
+
+        const headings = this.container.querySelectorAll('.chart-card h3');
+        if (headings.length >= 1) headings[0].innerHTML = `INGRESOS <span style="color: var(--color-text-secondary); font-weight: 400;">${rangeLabel}</span>`;
+        if (headings.length >= 2) headings[1].innerHTML = `ALTAS DE SOCIOS <span style="color: var(--color-text-secondary); font-weight: 400;">${rangeLabel}</span>`;
 
         this.renderIngresosChart(ingresosPorMes, primaryColor);
         this.renderSociosChart(sociosPorMes, primaryColor);

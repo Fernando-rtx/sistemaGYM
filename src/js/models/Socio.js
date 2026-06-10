@@ -1,7 +1,7 @@
 import { DIAS_POR_VENCER } from '../utils/constants.js';
 
 export class Socio {
-    constructor({ id, nombre, telefono, edad, membresia, precio, fechaRegistro, fechaVencimiento, estado, deuda, createdAt }) {
+    constructor({ id, nombre, telefono, edad, membresia, precio, fechaRegistro, fechaVencimiento, estado, deuda, notas, fecha_congelado, dias_congelado, foto_url, createdAt }) {
         this.id = id;
         this.nombre = nombre;
         this.telefono = telefono || '';
@@ -12,7 +12,15 @@ export class Socio {
         this.fechaVencimiento = fechaVencimiento;
         this.estado = estado || 'Activo';
         this.deuda = parseFloat(deuda || 0);
+        this.notas = notas || '';
+        this.fecha_congelado = fecha_congelado || null;
+        this.dias_congelado = dias_congelado || 0;
+        this.foto_url = foto_url || null;
         this.createdAt = createdAt;
+    }
+
+    get estaCongelado() {
+        return this.estado === 'Congelado';
     }
 
     get estaVencido() {
@@ -61,6 +69,10 @@ export class Socio {
             fechaVencimiento: row.fecha_vencimiento,
             estado: row.estado,
             deuda: row.deuda,
+            notas: row.notas,
+            fecha_congelado: row.fecha_congelado,
+            dias_congelado: row.dias_congelado,
+            foto_url: row.foto_url,
             createdAt: row.created_at
         });
     }
@@ -75,7 +87,11 @@ export class Socio {
             fecha_registro: this.fechaRegistro,
             fecha_vencimiento: this.fechaVencimiento,
             estado: this.estado,
-            deuda: this.deuda
+            deuda: this.deuda,
+            notas: this.notas,
+            fecha_congelado: this.fecha_congelado,
+            dias_congelado: this.dias_congelado,
+            foto_url: this.foto_url
         };
         if (this.id) data.id = this.id;
         return data;

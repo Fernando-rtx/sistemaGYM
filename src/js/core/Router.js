@@ -5,10 +5,26 @@ export class Router {
         this.eventBus = eventBus;
         this.routes = new Map();
         this.currentView = null;
+        this.currentViewName = null;
     }
 
     register(name, ViewClass) {
         this.routes.set(name, ViewClass);
+    }
+
+    async init() {
+        window.addEventListener('hashchange', () => this._onHashChange());
+
+        const hash = window.location.hash.replace('#', '');
+        const initialView = hash && this.routes.has(hash) ? hash : 'dashboard';
+        await window.navigateTo(initialView);
+    }
+
+    _onHashChange() {
+        const viewName = window.location.hash.replace('#', '');
+        if (viewName && viewName !== this.currentViewName && this.routes.has(viewName)) {
+            window.navigateTo(viewName);
+        }
     }
 
     async navigate(viewName) {
@@ -31,6 +47,9 @@ export class Router {
         } catch (err) {
             console.error(`Error initializing view "${viewName}":`, err);
         }
+
+        this.currentViewName = viewName;
+        window.location.hash = viewName;
 
         this.eventBus.emit('router:navigation', viewName);
     }

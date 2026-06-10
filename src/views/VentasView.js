@@ -333,6 +333,7 @@ export class VentasView extends BaseView {
 
                 this.services.toast.success('Venta cobrada con éxito');
                 this.cart.clear();
+                this._showComprobanteModal(items, total, metodo);
                 cleanup();
                 await this.productGrid.refresh([]);
                 await this.refreshCajaAndTransactions();
@@ -440,38 +441,110 @@ export class VentasView extends BaseView {
         }
     }
 
+    _showComprobanteModal(items, total, metodo) {
+        const confirmHtml = `
+            <div class="modal-header">
+                <h3 class="modal-title">¿GENERAR COMPROBANTE?</h3>
+                <button class="btn-close" id="btnCloseComprobanteModal"><span class="material-icons-round">close</span></button>
+            </div>
+            <div style="padding: 10px; text-align: center;">
+                <p style="margin-bottom: 24px; color: var(--color-text-secondary); line-height: 1.5;">
+                    La venta de <b>$${total.toFixed(2)}</b> ha sido registrada con éxito.<br>
+                    ¿Deseas generar el comprobante de pago?
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button class="btn btn-outline" id="btnNoComprobante" style="flex: 1; padding: 12px;">NO, CERRAR</button>
+                    <button class="btn btn-primary" id="btnSiComprobante" style="flex: 1; padding: 12px;">SÍ, GENERAR</button>
+                </div>
+            </div>
+        `;
+        this.services.modal.open(confirmHtml);
+
+        const closeModal = () => this.services.modal.close();
+        document.getElementById('btnCloseComprobanteModal')?.addEventListener('click', closeModal);
+        document.getElementById('btnNoComprobante')?.addEventListener('click', closeModal);
+        document.getElementById('btnSiComprobante')?.addEventListener('click', async () => {
+            closeModal();
+            const settings = await this.services.settings.get();
+            const gymName = settings.brandName || 'NEXFIT';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+            const itemsRows = items.map(i => `
+                <tr>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px;">${i.name}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: center;">${i.qty}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: right;">$${(i.price * i.qty).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            const printWin = window.open('', '_blank', 'width=380,height=600');
+            printWin.document.write(`
+                <html>
+                <head><title>Comprobante - ${gymName}</title>
+                <style>
+                    body { font-family: 'Courier New', monospace; font-size: 13px; color: #000; margin: 0; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .header h2 { margin: 0; font-size: 18px; letter-spacing: 2px; }
+                    .header p { margin: 4px 0; color: #555; font-size: 11px; }
+                    .divider { border-top: 1px dashed #999; margin: 12px 0; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { padding: 6px 8px; border-bottom: 2px solid #000; font-size: 11px; text-align: left; }
+                    .total-row td { padding: 8px; font-weight: bold; border-top: 2px solid #000; font-size: 14px; }
+                    .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #888; }
+                </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>${gymName.toUpperCase()}</h2>
+                        <p>COMPROBANTE DE PAGO</p>
+                        <p>${dateStr} — ${timeStr}</p>
+                        <p>Método: ${metodo.toUpperCase()}</p>
+                    </div>
+                    <div class="divider"></div>
+                    <table>
+                        <thead>
+                            <tr><th>PRODUCTO</th><th style="text-align:center;">CTD</th><th style="text-align:right;">IMPORTE</th></tr>
+                        </thead>
+                        <tbody>
+                            ${itemsRows}
+                        </tbody>
+                    </table>
+                    <div class="divider"></div>
+                    <div style="text-align: right; font-size: 14px; font-weight: bold;">TOTAL: $${total.toFixed(2)}</div>
+                    <div class="footer">
+                        ¡Gracias por tu compra!<br>
+                        Este comprobante es para control interno.
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() { window.print(); window.close(); }, 400);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+        });
+    }
+
     async openAdminInventarioModal() {
         const inventario = await this.services.inventario.getAll();
-        
-        let listHtml = inventario.map(p => `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="material-icons-round" aria-hidden="true" style="color:${p.color};">${p.icono}</span>
-                    <div>
-                        <div style="font-size: 14px; font-weight: 600;">${p.nombre}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary);">Stock: ${p.stock} | Precio: $${parseFloat(p.precio).toFixed(2)}</div>
-                    </div>
-                </div>
-                <button class="btn-icon danger btn-delete-prod" data-id="${p.id}" style="width: 28px; height: 28px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--color-danger); cursor: pointer;">
-                    <span class="material-icons-round" aria-hidden="true" style="font-size: 16px;">delete</span>
-                </button>
-            </div>
-        `).join('');
-
-        if (inventario.length === 0) {
-            listHtml = '<div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">No hay productos</div>';
-        }
 
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">ADMINISTRAR PRODUCTOS</h3>
                 <button class="btn-close" id="btnCloseAdminModal"><span class="material-icons-round" aria-hidden="true">close</span></button>
             </div>
-            
-            <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
-                ${listHtml}
+
+            <div style="margin-bottom: 12px; position: relative;">
+                <span class="material-icons-round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary); font-size: 20px;">search</span>
+                <input type="text" id="adminSearchInput" placeholder="Buscar producto..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 10px 10px 10px 40px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; box-sizing: border-box; outline: none;">
             </div>
-            
+
+            <div id="adminProductList" style="max-height: 260px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;"></div>
+
             <div style="background: var(--color-bg-base); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
                 <h4 style="font-size: 13px; color: var(--color-primary); margin-bottom: 15px;">NUEVO PRODUCTO</h4>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -482,7 +555,7 @@ export class VentasView extends BaseView {
                 <button class="btn btn-primary" id="btnAddProd" style="width: 100%; justify-content: center; padding: 8px;">AÑADIR PRODUCTO</button>
             </div>
         `;
-        
+
         this.services.modal.open(modalHtml);
 
         const btnClose = document.getElementById('btnCloseAdminModal');
@@ -491,31 +564,69 @@ export class VentasView extends BaseView {
 
         if (btnClose) btnClose.addEventListener('click', cleanup);
 
-        document.querySelectorAll('.btn-delete-prod').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                this.services.modal.confirm(
-                    'ELIMINAR PRODUCTO',
-                    '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
-                    async () => {
-                        await this.services.inventario.delete(id);
-                        cleanup();
-                        await this.openAdminInventarioModal();
-                        await this.productGrid.refresh(this.cart.getItems());
-                    },
-                    'CANCELAR',
-                    'ELIMINAR',
-                    true
-                );
+        const renderProductList = (filter) => {
+            const listContainer = document.getElementById('adminProductList');
+            if (!listContainer) return;
+
+            const filtered = filter
+                ? inventario.filter(p => p.nombre.toLowerCase().includes(filter.toLowerCase()))
+                : inventario;
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">No se encontraron productos</div>';
+                return;
+            }
+
+            listContainer.innerHTML = filtered.map(p => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-icons-round" aria-hidden="true" style="color:${p.color};">${p.icono}</span>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 600;">${p.nombre}</div>
+                            <div style="font-size: 12px; color: var(--color-text-secondary);">Stock: ${p.stock} | Precio: $${parseFloat(p.precio).toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <button class="btn-icon danger btn-delete-prod" data-id="${p.id}" style="width: 28px; height: 28px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--color-danger); cursor: pointer;">
+                        <span class="material-icons-round" aria-hidden="true" style="font-size: 16px;">delete</span>
+                    </button>
+                </div>
+            `).join('');
+
+            listContainer.querySelectorAll('.btn-delete-prod').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    this.services.modal.confirm(
+                        'ELIMINAR PRODUCTO',
+                        '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
+                        async () => {
+                            await this.services.inventario.delete(id);
+                            cleanup();
+                            await this.openAdminInventarioModal();
+                            await this.productGrid.refresh(this.cart.getItems());
+                        },
+                        'CANCELAR',
+                        'ELIMINAR',
+                        true
+                    );
+                });
             });
-        });
+        };
+
+        renderProductList('');
+
+        const searchInput = document.getElementById('adminSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                renderProductList(e.target.value);
+            });
+        }
 
         if (btnAdd) {
             btnAdd.addEventListener('click', async () => {
                 const nombre = document.getElementById('newProdName').value.trim();
                 const precio = parseFloat(document.getElementById('newProdPrice').value);
                 const stock = parseInt(document.getElementById('newProdStock').value);
-                
+
                 if (!nombre || isNaN(precio) || isNaN(stock)) {
                     this.services.toast.danger('Completa todos los campos correctamente');
                     return;

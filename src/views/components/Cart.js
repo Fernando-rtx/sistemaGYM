@@ -49,7 +49,15 @@ export class Cart {
         if (!carritoSection || !carritoItems || !carritoTotal) return;
 
         if (this.items.length === 0) {
-            carritoSection.style.display = 'none';
+            carritoSection.style.display = 'block';
+            carritoTotal.textContent = '$0.00';
+            carritoItems.innerHTML = `
+                <div style="text-align: center; padding: 30px 20px; color: var(--color-text-secondary);">
+                    <span class="material-icons-round" style="font-size: 36px; margin-bottom: 12px; opacity: 0.4;">shopping_cart</span>
+                    <div style="font-size: 14px; font-weight: 500;">Carrito vacío</div>
+                    <div style="font-size: 12px; margin-top: 4px; opacity: 0.7;">Agrega productos desde el inventario</div>
+                </div>
+            `;
             return;
         }
 

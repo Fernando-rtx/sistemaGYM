@@ -3,6 +3,7 @@ import { Checkin } from '../models/Checkin.js';
 import { BaseService } from '../core/BaseService.js';
 import { toDateStr } from '../utils/dateUtils.js';
 import { DIAS_AUSENTE } from '../utils/constants.js';
+import { Socio } from '../models/Socio.js';
 
 export class CheckinService extends BaseService {
     constructor(eventBus) {
@@ -23,6 +24,12 @@ export class CheckinService extends BaseService {
     }
 
     async registrar(socioId, nombre) {
+        const { data: socioData, error: fetchError } = await supabase.from('socios').select('estado').eq('id', socioId).single();
+        if (fetchError) return this.handleError(fetchError, null);
+        if (socioData?.estado === 'Congelado') {
+            return this.handleError(new Error('El socio está congelado'), null);
+        }
+
         const d = new Date();
         const fecha = toDateStr(d);
         const hora = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;

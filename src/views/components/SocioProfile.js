@@ -131,15 +131,24 @@ export class SocioProfile {
 
             <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 24px; flex-wrap: wrap; gap: 20px;">
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="width: 80px; height: 80px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: var(--color-primary);">${this.socio.iniciales}</div>
+                    <div id="photoContainer" style="width: 80px; height: 80px; border-radius: 16px; position: relative; cursor: pointer; overflow: hidden; flex-shrink: 0;">
+                        ${this.socio.foto_url
+                            ? `<img src="${this.socio.foto_url}" alt="foto" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`
+                            : `<div style="width:100%;height:100%;background:color-mix(in srgb, var(--color-primary) 10%, transparent);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--color-primary);border-radius:16px;">${this.socio.iniciales}</div>`
+                        }
+                        <div id="cameraOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:16px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
+                            <span class="material-icons-round" style="color:white;font-size:24px;">camera_alt</span>
+                        </div>
+                        <input type="file" id="photoInput" accept="image/*" style="display:none;">
+                    </div>
                     <div>
                         <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${this.socio.nombre.toUpperCase()}</h1>
                         <div style="display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 13px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
                             <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">person</span> ${this.socio.edad ? this.socio.edad + ' años' : '-'}</span>
                             <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">phone</span> ${this.socio.telefono || 'Sin teléfono'}</span>
                             <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${Socio.formatFecha(this.socio.fechaRegistro)}</span>
-                            <span class="status-badge ${this.socio.estaVencido ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo')}" style="padding: 2px 8px;">
-                                ${this.socio.estaVencido ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO')}
+                            <span class="status-badge ${this.socio.estaCongelado ? 'status-congelado' : (this.socio.estaVencido ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo'))}" style="padding: 2px 8px;">
+                                ${this.socio.estaCongelado ? 'CONGELADO' : (this.socio.estaVencido ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO'))}
                             </span>
                         </div>
                     </div>
@@ -150,10 +159,29 @@ export class SocioProfile {
                     </button>
                     <button class="btn btn-outline" id="btnVerQrProfile"><span class="material-icons-round" style="font-size:18px;">qr_code</span> VER QR</button>
                     ${isAdmin ? `<button class="btn btn-outline danger" id="btnEliminarProfile"><span class="material-icons-round" style="font-size:18px;">delete</span> ELIMINAR</button>` : ''}
+                    ${isAdmin ? `
+                    <button class="btn btn-outline ${this.socio.estaCongelado ? '' : 'danger'}" id="btnFreezeProfile" style="${this.socio.estaCongelado ? 'border-color:var(--color-success);color:var(--color-success);' : ''}">
+                        <span class="material-icons-round" style="font-size:18px;">${this.socio.estaCongelado ? 'unfreeze' : 'ac_unit'}</span>
+                        ${this.socio.estaCongelado ? 'DESCONGELAR' : 'CONGELAR'}
+                    </button>
+                    ` : ''}
                     <button class="btn btn-outline" id="btnRenovarProfile"><span class="material-icons-round" style="font-size:18px;">autorenew</span> RENOVAR PLAN</button>
-                    <button class="btn btn-primary" id="btnCheckinProfile"><span class="material-icons-round" style="font-size:18px;">flash_on</span> CHECK-IN</button>
+                    ${!this.socio.estaCongelado ? `<button class="btn btn-primary" id="btnCheckinProfile"><span class="material-icons-round" style="font-size:18px;">flash_on</span> CHECK-IN</button>` : ''}
                 </div>
             </div>
+
+            ${this.socio.estaCongelado ? `
+            <div class="card" style="padding: 16px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; border-left: 4px solid #eab308;">
+                <span class="material-icons-round" style="color:#eab308;font-size:28px;">ac_unit</span>
+                <div>
+                    <div style="font-weight:700;font-size:14px;">MEMBRESÍA CONGELADA</div>
+                    <div style="font-size:13px;color:var(--color-text-secondary);">
+                        Congelado desde ${Socio.formatFecha(this.socio.fecha_congelado)} · 
+                        ${this.socio.dias_congelado} días restantes por recuperar al descongelar
+                    </div>
+                </div>
+            </div>
+            ` : ''}
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px;">
                 <div class="profile-stat-card">
@@ -172,6 +200,12 @@ export class SocioProfile {
                     <div style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px;">ÚLTIMA VISITA</div>
                     <div style="font-size: 20px; font-weight: 800; margin-top: 8px;">${ultimaVisitaFormateada}</div>
                 </div>
+            </div>
+
+            <div class="card" style="padding: 24px; margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: 0.5px;">NOTAS INTERNAS</div>
+                <textarea id="notasTextarea" placeholder="Agregar notas internas sobre este socio..." style="width:100%;min-height:80px;background-color:var(--color-bg-base);border:1px solid rgba(255,255,255,0.1);color:var(--color-text-primary);padding:12px;border-radius:var(--border-radius-md);font-size:13px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;">${this.socio.notas || ''}</textarea>
+                <div id="notasSaved" style="font-size:11px;color:var(--color-text-secondary);margin-top:4px;text-align:right;opacity:0;transition:opacity 0.3s;">Guardado</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;" class="profile-layout-grid">
@@ -238,11 +272,86 @@ export class SocioProfile {
             });
         }
 
+        // Photo upload
+        const photoContainer = this.container.querySelector('#photoContainer');
+        const photoInput = this.container.querySelector('#photoInput');
+        const cameraOverlay = this.container.querySelector('#cameraOverlay');
+        if (photoContainer && photoInput) {
+            photoContainer.addEventListener('mouseenter', () => { if (cameraOverlay) cameraOverlay.style.opacity = '1'; });
+            photoContainer.addEventListener('mouseleave', () => { if (cameraOverlay) cameraOverlay.style.opacity = '0'; });
+            photoContainer.addEventListener('click', () => photoInput.click());
+            photoInput.addEventListener('change', async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const url = URL.createObjectURL(file);
+                const img = photoContainer.querySelector('img') || document.createElement('img');
+                img.src = url;
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:16px;';
+                const placeholder = photoContainer.querySelector('div:first-child');
+                if (placeholder && !placeholder.tagName?.toLowerCase().startsWith('img')) {
+                    placeholder.replaceWith(img);
+                }
+                const result = await this.services.socio.uploadPhoto(this.socio.id, file);
+                if (result) {
+                    this.services.toast.success('Foto actualizada');
+                } else {
+                    this.services.toast.danger('Error al subir la foto');
+                }
+                photoInput.value = '';
+            });
+        }
+
+        // Freeze / Unfreeze button
+        const btnFreeze = this.container.querySelector('#btnFreezeProfile');
+        if (btnFreeze) {
+            btnFreeze.addEventListener('click', async () => {
+                if (this.socio.estaCongelado) {
+                    this.services.modal.confirm(
+                        'DESCONGELAR MEMBRESÍA',
+                        `¿Descongelar a ${this.socio.nombre.toUpperCase()}? Se recuperarán ${this.socio.dias_congelado} días y se recalculará el vencimiento.`,
+                        async () => {
+                            const updated = await this.services.socio.unfreeze(this.socio.id);
+                            if (updated) {
+                                this.services.toast.success('Membresía descongelada con éxito');
+                                await this.loadSocio(this.socio.id);
+                            } else {
+                                this.services.toast.danger('Error al descongelar');
+                            }
+                        },
+                        'CANCELAR',
+                        'DESCONGELAR',
+                        false
+                    );
+                } else {
+                    this.services.modal.confirm(
+                        'CONGELAR MEMBRESÍA',
+                        `¿Congelar a ${this.socio.nombre.toUpperCase()}? La membresía se pausará y podrá reanudarse después.`,
+                        async () => {
+                            const updated = await this.services.socio.freeze(this.socio.id);
+                            if (updated) {
+                                this.services.toast.success('Membresía congelada con éxito');
+                                await this.loadSocio(this.socio.id);
+                            } else {
+                                this.services.toast.danger('Error al congelar');
+                            }
+                        },
+                        'CANCELAR',
+                        'CONGELAR',
+                        false
+                    );
+                }
+            });
+        }
+
         const btnCheckin = this.container.querySelector('#btnCheckinProfile');
         if (btnCheckin) {
             btnCheckin.addEventListener('click', async () => {
                 if (this.socio.estaVencido) {
                     this.services.toast.danger(`Acceso denegado. La membresía de ${this.socio.nombre} está vencida.`, 4000);
+                    return;
+                }
+                if (this.socio.estaCongelado) {
+                    this.services.toast.danger(`Acceso denegado. La membresía de ${this.socio.nombre} está congelada.`, 4000);
                     return;
                 }
                 const ch = await this.services.checkin.registrar(this.socio.id, this.socio.nombre);
@@ -257,6 +366,8 @@ export class SocioProfile {
                         this.services.toast.success(statusMsg, 3000);
                     }
                     await this.loadSocio(this.socio.id);
+                } else {
+                    this.services.toast.danger('Error al registrar check-in');
                 }
             });
         }
@@ -301,6 +412,24 @@ export class SocioProfile {
                     'ELIMINAR',
                     true
                 );
+            });
+        }
+
+        // Notes auto-save (debounced)
+        const notasTextarea = this.container.querySelector('#notasTextarea');
+        const notasSaved = this.container.querySelector('#notasSaved');
+        if (notasTextarea) {
+            let notasTimer;
+            notasTextarea.addEventListener('blur', () => {
+                clearTimeout(notasTimer);
+                notasTimer = setTimeout(async () => {
+                    const val = notasTextarea.value;
+                    const updated = await this.services.socio.update(this.socio.id, { notas: val });
+                    if (updated && notasSaved) {
+                        notasSaved.style.opacity = '1';
+                        setTimeout(() => { notasSaved.style.opacity = '0'; }, 2000);
+                    }
+                }, 1000);
             });
         }
     }

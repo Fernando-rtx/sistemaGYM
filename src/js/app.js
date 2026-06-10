@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial check
     applyAuthUI();
     if (services.auth.getCurrentUser()) {
-        await window.navigateTo('dashboard');
+        await router.init();
     }
 
     // Quick Checkin button

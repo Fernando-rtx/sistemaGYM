@@ -6,15 +6,31 @@ export class ReporteService extends BaseService {
         this.services = services;
     }
 
-    async generarDatos() {
-        const [socios, transacciones, settings] = await Promise.all([
+    async generarDatos(filtros = {}) {
+        const { fechaInicio, fechaFin } = filtros;
+
+        let [socios, transacciones, settings] = await Promise.all([
             this.services.socio.getAll(),
             this.services.transaccion.getAll(),
             this.services.settings.get()
         ]);
 
+        if (fechaInicio && fechaFin) {
+            transacciones = transacciones.filter(t => {
+                if (!t.createdAt) return false;
+                const d = new Date(t.createdAt);
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                return dateStr >= fechaInicio && dateStr <= fechaFin;
+            });
+            socios = socios.filter(s => {
+                return s.fechaRegistro && s.fechaRegistro >= fechaInicio && s.fechaRegistro <= fechaFin;
+            });
+        }
+
         const primaryColor = settings.brandColor || '#94ff00';
-        const months = getLastNMonths(6);
+        const months = fechaInicio && fechaFin
+            ? this._getMonthsInRange(new Date(fechaInicio + 'T00:00:00'), new Date(fechaFin + 'T00:00:00'))
+            : getLastNMonths(6);
 
         const ingresosPorMes = this._agruparIngresos(transacciones, months);
         const sociosPorMes = this._agruparSocios(socios, months);
@@ -23,6 +39,18 @@ export class ReporteService extends BaseService {
         const metricas = this._calcularMetricas(socios, transacciones);
 
         return { ingresosPorMes, sociosPorMes, membresias, topProductos, metricas, primaryColor, settings };
+    }
+
+    _getMonthsInRange(startDate, endDate) {
+        const months = [];
+        const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        while (current <= endDate) {
+            const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+            const label = current.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+            months.push({ key, label, mes: current.getMonth() + 1, anio: current.getFullYear() });
+            current.setMonth(current.getMonth() + 1);
+        }
+        return months;
     }
 
     _agruparIngresos(transacciones, months) {

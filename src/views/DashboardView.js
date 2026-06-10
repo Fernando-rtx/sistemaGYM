@@ -175,7 +175,10 @@ export class DashboardView extends BaseView {
                     <div class="card" style="padding: 24px;">
                         <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">ASISTENCIA SEMANAL <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">últimos 7 días</span></div>
                         <div style="height: 180px; width: 100%;">
-                            <canvas id="weeklyChart"></canvas>
+                            ${checkinsHoy.length === 0
+                                ? '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--color-text-secondary);"><span class="material-icons-round" style="font-size: 36px; margin-bottom: 8px; opacity: 0.5;">today</span><div style="font-size: 14px;">No hay check-ins hoy</div></div>'
+                                : '<canvas id="weeklyChart"></canvas>'
+                            }
                         </div>
                     </div>
                     <div class="card" style="padding: 24px; flex: 1;">

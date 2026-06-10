@@ -70,6 +70,11 @@ export class SocioForm {
                 </div>
             </div>
             
+            <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">NOTAS INTERNAS</label>
+                <textarea id="inpSocioNotas" placeholder="Notas opcionales sobre el socio..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; min-height: 60px; box-sizing: border-box; outline: none; font-family: inherit; resize: vertical;">${isEdit && socio.notas ? socio.notas : ''}</textarea>
+            </div>
+
             ${!isEdit ? `
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">PLAN CONTRATADO</label>
@@ -184,8 +189,10 @@ export class SocioForm {
                     const telefono = numeroTel ? `${prefijo} ${numeroTel}` : '';
                     const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
 
+                    const notas = document.getElementById('inpSocioNotas')?.value || '';
+
                     if (isEdit) {
-                        const ok = await this.services.socio.update(socioId, { nombre, telefono, edad });
+                        const ok = await this.services.socio.update(socioId, { nombre, telefono, edad, notas });
                         if (ok) {
                             this.services.toast.success('Socio actualizado correctamente');
                             cleanup();
@@ -208,6 +215,7 @@ export class SocioForm {
                             nombre,
                             telefono,
                             edad,
+                            notas,
                             membresia: plan,
                             precio,
                             fechaRegistro: fechaInicio,
@@ -227,7 +235,7 @@ export class SocioForm {
                             this.services.toast.success('Socio registrado con éxito');
                             cleanup();
 
-                            if (onSaveSuccess) onSaveSuccess(nuevoSocio.id, nuevoSocio);
+                            if (onSaveSuccess) onSaveSuccess(nuevoSocio, true);
                         } else {
                             this.services.toast.danger('Error al registrar el socio');
                         }

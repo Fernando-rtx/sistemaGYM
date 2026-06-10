@@ -54,12 +54,55 @@ export class SocioService extends BaseService {
         if (changes.fechaVencimiento !== undefined) updateData.fecha_vencimiento = changes.fechaVencimiento;
         if (changes.estado !== undefined) updateData.estado = changes.estado;
         if (changes.deuda !== undefined) updateData.deuda = changes.deuda;
+        if (changes.notas !== undefined) updateData.notas = changes.notas;
+        if (changes.fecha_congelado !== undefined) updateData.fecha_congelado = changes.fecha_congelado;
+        if (changes.dias_congelado !== undefined) updateData.dias_congelado = changes.dias_congelado;
+        if (changes.foto_url !== undefined) updateData.foto_url = changes.foto_url;
 
         const { data, error } = await supabase.from('socios').update(updateData).eq('id', id).select().single();
         if (error) return this.handleError(error, null);
         const updatedSocio = Socio.fromSupabase(data);
         this.emit('socio:updated', updatedSocio);
         return updatedSocio;
+    }
+
+    async freeze(id) {
+        const socio = await this.getById(id);
+        if (!socio) return null;
+        const hoy = this.today();
+        const updated = await this.update(id, {
+            estado: 'Congelado',
+            fecha_congelado: hoy,
+            dias_congelado: Math.max(0, socio.diasRestantes)
+        });
+        return updated;
+    }
+
+    async unfreeze(id) {
+        const socio = await this.getById(id);
+        if (!socio) return null;
+        const diasCongelado = socio.dias_congelado || 0;
+        const hoy = new Date();
+        const nuevoVenc = new Date();
+        nuevoVenc.setDate(hoy.getDate() + diasCongelado);
+        const vencStr = `${nuevoVenc.getFullYear()}-${String(nuevoVenc.getMonth() + 1).padStart(2, '0')}-${String(nuevoVenc.getDate()).padStart(2, '0')}`;
+        const updated = await this.update(id, {
+            estado: 'Activo',
+            fecha_congelado: null,
+            dias_congelado: 0,
+            fechaVencimiento: vencStr
+        });
+        return updated;
+    }
+
+    async uploadPhoto(socioId, file) {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const filePath = `${socioId}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('socios').upload(filePath, file, { upsert: true });
+        if (uploadError) return this.handleError(uploadError, null);
+        const { data: { publicUrl } } = supabase.storage.from('socios').getPublicUrl(filePath);
+        const updated = await this.update(socioId, { foto_url: publicUrl });
+        return updated ? publicUrl : null;
     }
 
     async delete(id) {
