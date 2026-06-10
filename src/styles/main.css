@@ -555,6 +555,25 @@ body {
 .dash-stat {
   flex: 1;
   min-width: 100px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dash-stat:hover .dash-stat-label {
+  color: var(--color-primary);
+}
+
+.dash-stat:hover .dash-stat-value {
+  opacity: 0.8;
+}
+
+.dash-streak-item {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dash-streak-item:hover {
+  opacity: 0.7;
 }
 
 .dash-stat-label {

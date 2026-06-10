@@ -85,7 +85,7 @@ export class DashboardView extends BaseView {
         }).join('') : '<div class="dash-empty-state"><span class="material-icons-round">celebration</span><p>No hay alertas de renovación pendientes. Todo al día.</p></div>';
 
         const rachasHtml = rachas.length > 0 ? rachas.slice(0, 5).map((r, index) => `
-            <div class="dash-streak-item">
+            <div class="dash-streak-item" data-nav="socios" title="Ver socio">
                 <div class="dash-streak-left">
                     <div class="dash-streak-rank">${index + 1}</div>
                     <div>
@@ -112,19 +112,19 @@ export class DashboardView extends BaseView {
                     </div>
                     
                     <div class="dash-panel-stats">
-                        <div class="dash-stat">
+                        <div class="dash-stat" data-nav="checkin" title="Ver check-ins">
                             <div class="dash-stat-label">CHECK-INS HOY</div>
                             <div class="dash-stat-value accent">${checkinsHoy.length}</div>
                         </div>
-                        <div class="dash-stat">
+                        <div class="dash-stat" data-nav="socios" title="Ver socios">
                             <div class="dash-stat-label">SOCIOS TOTALES</div>
                             <div class="dash-stat-value">${socios.length}</div>
                         </div>
-                        <div class="dash-stat">
+                        <div class="dash-stat" data-nav="ventas" title="Ver ventas">
                             <div class="dash-stat-label">INGRESOS DEL MES</div>
                             <div class="dash-stat-value">$${Number(ingresosMes).toFixed(2)}</div>
                         </div>
-                        <div class="dash-stat">
+                        <div class="dash-stat" data-nav="reportes" title="Ver reportes">
                             <div class="dash-stat-label">RACHA RÉCORD</div>
                             <div class="dash-stat-value">${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
                         </div>
@@ -133,22 +133,22 @@ export class DashboardView extends BaseView {
 
                 <!-- Metric Cards 2x2 -->
                 <div class="dash-metric-grid">
-                    <div class="card dash-metric-card success">
+                    <div class="card dash-metric-card success" data-nav="socios" data-filter="ACTIVO" title="Ver socios activos">
                         <div class="dash-metric-header"><span class="material-icons-round">bolt</span> ACTIVOS</div>
                         <div class="dash-metric-number green">${activos}</div>
                         <div class="dash-metric-sub">de ${socios.length} socios</div>
                     </div>
-                    <div class="card dash-metric-card warning">
+                    <div class="card dash-metric-card warning" data-nav="socios" data-filter="POR RENOVAR" title="Ver socios por renovar">
                         <div class="dash-metric-header"><span class="material-icons-round">notifications</span> POR RENOVAR</div>
                         <div class="dash-metric-number amber">${allAlerts.length}</div>
                         <div class="dash-metric-sub">≤ 6 días para vencer</div>
                     </div>
-                    <div class="card dash-metric-card danger">
+                    <div class="card dash-metric-card danger" data-nav="socios" data-filter="VENCIDOS" title="Ver socios vencidos">
                         <div class="dash-metric-header"><span class="material-icons-round">schedule</span> VENCIDOS</div>
                         <div class="dash-metric-number red">${vencidos}</div>
                         <div class="dash-metric-sub">requieren acción</div>
                     </div>
-                    <div class="card dash-metric-card muted">
+                    <div class="card dash-metric-card muted" data-nav="socios" data-filter="AUSENTE" title="Ver socios ausentes">
                         <div class="dash-metric-header"><span class="material-icons-round">person_off</span> AUSENTES</div>
                         <div class="dash-metric-number gray">${ausentes}</div>
                         <div class="dash-metric-sub">+5 días sin asistir</div>
@@ -264,6 +264,7 @@ export class DashboardView extends BaseView {
         const verTodosBtn = this.$('#btnDashboardVerTodosSocios');
         if (verTodosBtn) {
             this.bindEvent(verTodosBtn, 'click', () => {
+                window.__socioFilter = null;
                 if (window.navigateTo) window.navigateTo('socios');
             });
         }
@@ -272,6 +273,16 @@ export class DashboardView extends BaseView {
             this.bindEvent(btn, 'click', () => {
                 const socioId = btn.getAttribute('data-socio-id');
                 this.openRenovarModal(socioId);
+            });
+        });
+
+        // Navegación interactiva: click en stats, métricas y rachas
+        container.querySelectorAll('[data-nav]').forEach(el => {
+            this.bindEvent(el, 'click', () => {
+                const view = el.getAttribute('data-nav');
+                const filter = el.getAttribute('data-filter');
+                window.__socioFilter = filter || null;
+                if (window.navigateTo && view) window.navigateTo(view);
             });
         });
     }

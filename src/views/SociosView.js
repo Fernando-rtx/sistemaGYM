@@ -152,6 +152,13 @@ export class SociosView extends BaseView {
 
         await this.tableComponent.init();
 
+        // Aplicar filtro pendiente desde Dashboard (ej: click en metric cards)
+        const pendingFilter = window.__socioFilter;
+        window.__socioFilter = null;
+        if (pendingFilter && this.tableComponent) {
+            this.tableComponent.setFilter(pendingFilter);
+        }
+
         // 2. Instanciar el perfil de socios
         this.profileComponent = new SocioProfile(
             profileContainer,

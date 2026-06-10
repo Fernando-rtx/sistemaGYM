@@ -347,6 +347,16 @@ export class SociosTable {
         await this.refreshData();
     }
 
+    setFilter(filterName) {
+        this.currentFilter = filterName;
+        const filterBtns = this.container.querySelectorAll('.filter-btn');
+        filterBtns.forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-filter') === filterName);
+        });
+        this._page = 1;
+        this.updateTable();
+    }
+
     async refreshData() {
         this.socios = await this.services.socio.getAll();
         this.checkins = await this.services.checkin.getAll();
