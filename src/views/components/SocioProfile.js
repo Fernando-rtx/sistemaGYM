@@ -1,6 +1,7 @@
 import { Socio } from '../../js/models/Socio.js';
 import { getPlanes } from '../../js/utils/planSelector.js';
 import { PLAN_DIAS } from '../../js/utils/constants.js';
+import { escapeHtml } from '../../js/utils/escapeHtml.js';
 
 export class SocioProfile {
     constructor(container, services, eventBus, onBack) {
@@ -105,11 +106,11 @@ export class SocioProfile {
                         <span class="material-icons-round" style="font-size: 16px;">autorenew</span>
                     </div>
                     <div>
-                        <div style="font-weight: 600; font-size: 14px;">Renovación: ${r.planNuevo}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary);">${Socio.formatFecha(r.fecha)} (Plan anterior: ${r.planAnterior})</div>
+                        <div style="font-weight: 600; font-size: 14px;">Renovación: ${escapeHtml(r.planNuevo)}</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary);">${escapeHtml(Socio.formatFecha(r.fecha))} (Plan anterior: ${escapeHtml(r.planAnterior)})</div>
                     </div>
                 </div>
-                <div style="font-size: 14px; color: var(--color-primary); font-weight: 700;">$${r.monto.toFixed(2)}</div>
+                <div style="font-size: 14px; color: var(--color-primary); font-weight: 700;">$${Number(r.monto).toFixed(2)}</div>
             </div>
         `).join('');
 
@@ -125,7 +126,7 @@ export class SocioProfile {
                     <span class="material-icons-round" style="font-size: 18px; margin-right: 4px;">arrow_back</span> VOLVER
                 </button>
                 <div style="color: var(--color-text-secondary); font-size: 13px; font-weight: 600; letter-spacing: 1px;">
-                    SOCIOS / <span style="color: var(--color-text-primary);">${this.socio.nombre.toUpperCase()}</span>
+                    SOCIOS / <span style="color: var(--color-text-primary);">${escapeHtml(this.socio.nombre).toUpperCase()}</span>
                 </div>
             </div>
 
@@ -133,8 +134,8 @@ export class SocioProfile {
                 <div style="display: flex; align-items: center; gap: 20px;">
                     <div id="photoContainer" style="width: 80px; height: 80px; border-radius: 16px; position: relative; cursor: pointer; overflow: hidden; flex-shrink: 0;">
                         ${this.socio.foto_url
-                            ? `<img src="${this.socio.foto_url}" alt="foto" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`
-                            : `<div style="width:100%;height:100%;background:color-mix(in srgb, var(--color-primary) 10%, transparent);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--color-primary);border-radius:16px;">${this.socio.iniciales}</div>`
+                            ? (() => { try { const u = new URL(this.socio.foto_url); if (u.protocol === 'https:') return `<img src="${escapeHtml(this.socio.foto_url)}" alt="foto" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`; } catch(e){} return `<div style="width:100%;height:100%;background:color-mix(in srgb, var(--color-primary) 10%, transparent);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--color-primary);border-radius:16px;">${escapeHtml(this.socio.iniciales)}</div>`; })()
+                            : `<div style="width:100%;height:100%;background:color-mix(in srgb, var(--color-primary) 10%, transparent);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--color-primary);border-radius:16px;">${escapeHtml(this.socio.iniciales)}</div>`
                         }
                         <div id="cameraOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:16px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;">
                             <span class="material-icons-round" style="color:white;font-size:24px;">camera_alt</span>
@@ -142,11 +143,11 @@ export class SocioProfile {
                         <input type="file" id="photoInput" accept="image/*" style="display:none;">
                     </div>
                     <div>
-                        <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${this.socio.nombre.toUpperCase()}</h1>
+                        <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">${escapeHtml(this.socio.nombre).toUpperCase()}</h1>
                         <div style="display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 13px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
-                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">person</span> ${this.socio.edad ? this.socio.edad + ' años' : '-'}</span>
-                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">phone</span> ${this.socio.telefono || 'Sin teléfono'}</span>
-                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${Socio.formatFecha(this.socio.fechaRegistro)}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">person</span> ${this.socio.edad ? escapeHtml(String(this.socio.edad)) + ' años' : '-'}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">phone</span> ${escapeHtml(this.socio.telefono || 'Sin teléfono')}</span>
+                            <span style="display: flex; align-items: center; gap: 4px;"><span class="material-icons-round" style="font-size:16px;">calendar_today</span> Socio desde ${escapeHtml(Socio.formatFecha(this.socio.fechaRegistro) || '')}</span>
                             <span class="status-badge ${this.socio.estaCongelado ? 'status-congelado' : (this.socio.estaVencido ? 'status-vencido' : (isAusenteBadge ? 'status-ausente' : 'status-activo'))}" style="padding: 2px 8px;">
                                 ${this.socio.estaCongelado ? 'CONGELADO' : (this.socio.estaVencido ? 'VENCIDO' : (isAusenteBadge ? 'AUSENTE' : 'ACTIVO'))}
                             </span>
@@ -155,7 +156,7 @@ export class SocioProfile {
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-outline" id="btnDeudaProfile">
-                        <span class="material-icons-round" style="font-size:18px;">payments</span> DEUDA: $${this.socio.deuda.toFixed(2)}
+                        <span class="material-icons-round" style="font-size:18px;">payments</span> DEUDA: $${escapeHtml(this.socio.deuda.toFixed(2))}
                     </button>
                     <button class="btn btn-outline" id="btnVerQrProfile"><span class="material-icons-round" style="font-size:18px;">qr_code</span> VER QR</button>
                     ${isAdmin ? `<button class="btn btn-outline danger" id="btnEliminarProfile"><span class="material-icons-round" style="font-size:18px;">delete</span> ELIMINAR</button>` : ''}
@@ -176,8 +177,8 @@ export class SocioProfile {
                 <div>
                     <div style="font-weight:700;font-size:14px;">MEMBRESÍA CONGELADA</div>
                     <div style="font-size:13px;color:var(--color-text-secondary);">
-                        Congelado desde ${Socio.formatFecha(this.socio.fecha_congelado)} · 
-                        ${this.socio.dias_congelado} días restantes por recuperar al descongelar
+                        Congelado desde ${escapeHtml(Socio.formatFecha(this.socio.fecha_congelado) || '')} · 
+                        ${escapeHtml(String(this.socio.dias_congelado))} días restantes por recuperar al descongelar
                     </div>
                 </div>
             </div>
@@ -204,14 +205,14 @@ export class SocioProfile {
 
             <div class="card" style="padding: 24px; margin-bottom: 24px;">
                 <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; letter-spacing: 0.5px;">NOTAS INTERNAS</div>
-                <textarea id="notasTextarea" placeholder="Agregar notas internas sobre este socio..." style="width:100%;min-height:80px;background-color:var(--color-bg-base);border:1px solid rgba(255,255,255,0.1);color:var(--color-text-primary);padding:12px;border-radius:var(--border-radius-md);font-size:13px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;">${this.socio.notas || ''}</textarea>
+                <textarea id="notasTextarea" placeholder="Agregar notas internas sobre este socio..." style="width:100%;min-height:80px;background-color:var(--color-bg-base);border:1px solid rgba(255,255,255,0.1);color:var(--color-text-primary);padding:12px;border-radius:var(--border-radius-md);font-size:13px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;">${escapeHtml(this.socio.notas || '')}</textarea>
                 <div id="notasSaved" style="font-size:11px;color:var(--color-text-secondary);margin-top:4px;text-align:right;opacity:0;transition:opacity 0.3s;">Guardado</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;" class="profile-layout-grid">
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <div class="card" style="padding: 24px;">
-                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ESTADO DEL PLAN <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">Plan ${this.socio.membresia} · $${(this.socio.precio || 0).toFixed(2)}</span></div>
+                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px;">ESTADO DEL PLAN <span style="color: var(--color-text-secondary); font-weight: 400; font-size: 13px; margin-left: 8px;">Plan ${escapeHtml(this.socio.membresia)} · $${(this.socio.precio || 0).toFixed(2)}</span></div>
                         
                         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 1px; margin-bottom: 8px;">
                             <span>INICIO · ${(Socio.formatFecha(this.socio.fechaRegistro) || '').toUpperCase()}</span>
@@ -280,10 +281,15 @@ export class SocioProfile {
             photoContainer.addEventListener('mouseenter', () => { if (cameraOverlay) cameraOverlay.style.opacity = '1'; });
             photoContainer.addEventListener('mouseleave', () => { if (cameraOverlay) cameraOverlay.style.opacity = '0'; });
             photoContainer.addEventListener('click', () => photoInput.click());
+            let _photoObjectUrl = null;
             photoInput.addEventListener('change', async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                if (_photoObjectUrl) {
+                    URL.revokeObjectURL(_photoObjectUrl);
+                }
                 const url = URL.createObjectURL(file);
+                _photoObjectUrl = url;
                 const img = photoContainer.querySelector('img') || document.createElement('img');
                 img.src = url;
                 img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:16px;';
@@ -291,10 +297,14 @@ export class SocioProfile {
                 if (placeholder && !placeholder.tagName?.toLowerCase().startsWith('img')) {
                     placeholder.replaceWith(img);
                 }
-                const result = await this.services.socio.uploadPhoto(this.socio.id, file);
-                if (result) {
-                    this.services.toast.success('Foto actualizada');
-                } else {
+                try {
+                    const result = await this.services.socio.uploadPhoto(this.socio.id, file);
+                    if (result) {
+                        this.services.toast.success('Foto actualizada');
+                    } else {
+                        this.services.toast.danger('Error al subir la foto');
+                    }
+                } catch (err) {
                     this.services.toast.danger('Error al subir la foto');
                 }
                 photoInput.value = '';
@@ -308,7 +318,7 @@ export class SocioProfile {
                 if (this.socio.estaCongelado) {
                     this.services.modal.confirm(
                         'DESCONGELAR MEMBRESÍA',
-                        `¿Descongelar a ${this.socio.nombre.toUpperCase()}? Se recuperarán ${this.socio.dias_congelado} días y se recalculará el vencimiento.`,
+                        `¿Descongelar a ${escapeHtml(this.socio.nombre).toUpperCase()}? Se recuperarán ${escapeHtml(String(this.socio.dias_congelado))} días y se recalculará el vencimiento.`,
                         async () => {
                             const updated = await this.services.socio.unfreeze(this.socio.id);
                             if (updated) {
@@ -325,7 +335,7 @@ export class SocioProfile {
                 } else {
                     this.services.modal.confirm(
                         'CONGELAR MEMBRESÍA',
-                        `¿Congelar a ${this.socio.nombre.toUpperCase()}? La membresía se pausará y podrá reanudarse después.`,
+                        `¿Congelar a ${escapeHtml(this.socio.nombre).toUpperCase()}? La membresía se pausará y podrá reanudarse después.`,
                         async () => {
                             const updated = await this.services.socio.freeze(this.socio.id);
                             if (updated) {
@@ -347,18 +357,18 @@ export class SocioProfile {
         if (btnCheckin) {
             btnCheckin.addEventListener('click', async () => {
                 if (this.socio.estaVencido) {
-                    this.services.toast.danger(`Acceso denegado. La membresía de ${this.socio.nombre} está vencida.`, 4000);
+                    this.services.toast.danger(`Acceso denegado. La membresía de ${escapeHtml(this.socio.nombre)} está vencida.`, 4000);
                     return;
                 }
                 if (this.socio.estaCongelado) {
-                    this.services.toast.danger(`Acceso denegado. La membresía de ${this.socio.nombre} está congelada.`, 4000);
+                    this.services.toast.danger(`Acceso denegado. La membresía de ${escapeHtml(this.socio.nombre)} está congelada.`, 4000);
                     return;
                 }
                 const ch = await this.services.checkin.registrar(this.socio.id, this.socio.nombre);
                 if (ch) {
                     const statusMsg = this.socio.estaPorVencer 
                         ? `Check-in registrado. ¡AVISO! Vence en ${this.socio.diasRestantes} días.`
-                        : `Check-in registrado con éxito para ${this.socio.nombre}.`;
+                        : `Check-in registrado con éxito para ${escapeHtml(this.socio.nombre)}.`;
                     
                     if (this.socio.estaPorVencer) {
                         this.services.toast.warning(statusMsg, 5000);
@@ -396,9 +406,9 @@ export class SocioProfile {
         const btnEliminar = this.container.querySelector('#btnEliminarProfile');
         if (btnEliminar) {
             btnEliminar.addEventListener('click', () => {
-                this.services.modal.confirm(
-                    'ELIMINAR SOCIO',
-                    `¿Estás seguro de que deseas eliminar a ${this.socio.nombre.toUpperCase()}? Esta acción no se puede deshacer y eliminará sus asistencias.`,
+                    this.services.modal.confirm(
+                        'ELIMINAR SOCIO',
+                        `¿Estás seguro de que deseas eliminar a ${escapeHtml(this.socio.nombre).toUpperCase()}? Esta acción no se puede deshacer y eliminará sus asistencias.`,
                     async () => {
                         const ok = await this.services.socio.delete(this.socio.id);
                         if (ok) {
@@ -435,7 +445,6 @@ export class SocioProfile {
     }
 
     openRenewalModal() {
-        const settings = this.services.settings.get();
         this.services.settings.get().then(sets => {
             const precios = sets.precios;
             const modalHtml = `
@@ -444,7 +453,7 @@ export class SocioProfile {
                     <button class="btn-close" id="btnCloseRenewal"><span class="material-icons-round">close</span></button>
                 </div>
                 <div style="padding: 10px 0;">
-                    <p style="margin-bottom: 20px; font-size: 14px; color: var(--color-text-secondary);">Selecciona el plan para renovar la suscripción de <b>${this.socio.nombre}</b>.</p>
+                    <p style="margin-bottom: 20px; font-size: 14px; color: var(--color-text-secondary);">Selecciona el plan para renovar la suscripción de <b>${escapeHtml(this.socio.nombre)}</b>.</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                         <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="${PLAN_DIAS.Mensual}" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); position: relative;">
                             <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
@@ -551,7 +560,7 @@ export class SocioProfile {
                         // Register transaction
                         await this.services.transaccion.crear({
                             tipo: 'ingreso',
-                            concepto: `Renovación Membresía ${plan} - ${this.socio.nombre}`,
+                            concepto: `Renovación Membresía ${plan} - ${escapeHtml(this.socio.nombre)}`,
                             monto: price
                         });
 
@@ -576,7 +585,7 @@ export class SocioProfile {
                 <button class="btn-close" id="btnCloseDebt"><span class="material-icons-round">close</span></button>
             </div>
             <div style="padding: 10px 0;">
-                <p style="margin-bottom: 20px; font-size: 14px; color: var(--color-text-secondary);">Ajusta la deuda actual de <b>${this.socio.nombre}</b>. Deuda actual: <b style="color:var(--color-danger); font-size:16px;">$${this.socio.deuda.toFixed(2)}</b></p>
+                <p style="margin-bottom: 20px; font-size: 14px; color: var(--color-text-secondary);">Ajusta la deuda actual de <b>${escapeHtml(this.socio.nombre)}</b>. Deuda actual: <b style="color:var(--color-danger); font-size:16px;">$${this.socio.deuda.toFixed(2)}</b></p>
                 <div class="form-group" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
                     <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800;">NUEVO MONTO DE DEUDA</label>
                     <input type="number" id="inpNewDebt" step="0.01" value="${this.socio.deuda}" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width:100%; box-sizing:border-box;">
@@ -615,16 +624,20 @@ export class SocioProfile {
     }
 
     destroy() {
-        this._cleanup?.();
+        if (this._cleanup) {
+            this._cleanup();
+            this._cleanup = null;
+        }
         this.socio = null;
         this.checkins = [];
         this.renewals = [];
+        this.container.innerHTML = '';
     }
 
     openQrModal() {
         const modalHtml = `
             <div class="modal-header">
-                <h3 class="modal-title">CÓDIGO QR - ${this.socio.nombre.toUpperCase()}</h3>
+                <h3 class="modal-title">CÓDIGO QR - ${escapeHtml(this.socio.nombre).toUpperCase()}</h3>
                 <button class="btn-close" id="btnCloseQr"><span class="material-icons-round">close</span></button>
             </div>
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">

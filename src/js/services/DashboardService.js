@@ -10,6 +10,12 @@ export class DashboardService extends BaseService {
         const mesActual = hoy.getMonth() + 1;
         const anoActual = hoy.getFullYear();
 
+        const safe = (promise, fallback) =>
+            promise.catch(err => {
+                console.error('Dashboard fetch error:', err);
+                return fallback;
+            });
+
         const [
             settings,
             socios,
@@ -20,40 +26,40 @@ export class DashboardService extends BaseService {
             porVencer,
             ingresosMes
         ] = await Promise.all([
-            this.services.settings.get(),
-            this.services.socio.getAll(),
-            this.services.transaccion.getResumenCaja(),
-            this.services.checkin.getHoy(),
-            this.services.checkin.getAll(),
-            this.services.socio.getNuevosHoy(),
-            this.services.socio.getPorVencer(6),
-            this.services.transaccion.getIngresosMes(mesActual, anoActual)
+            safe(this.services.settings.get(), null),
+            safe(this.services.socio.getAll(), []),
+            safe(this.services.transaccion.getResumenCaja(), { ingresos: 0, salidas: 0, total: 0, numTransacciones: 0 }),
+            safe(this.services.checkin.getHoy(), []),
+            safe(this.services.checkin.getAll(), []),
+            safe(this.services.socio.getNuevosHoy(), 0),
+            safe(this.services.socio.getPorVencer(6), []),
+            safe(this.services.transaccion.getIngresosMes(mesActual, anoActual), 0)
         ]);
 
-        const rachas = await this.services.checkin.calcularRachas(checkins);
+        const rachas = await safe(this.services.checkin.calcularRachas(checkins || []), []);
 
-        const activos = socios.filter(s => s.estado === 'Activo' && !s.estaVencido);
-        const vencidos = socios.filter(s => s.estaVencido);
-        const ausentes = socios.filter(s => this.services.checkin.esAusente(s, checkins));
-        const alertas = porVencer.filter(p => !p.estaVencido)
+        const activos = (socios || []).filter(s => s.estado === 'Activo' && !s.estaVencido);
+        const vencidos = (socios || []).filter(s => s.estaVencido);
+        const ausentes = (socios || []).filter(s => this.services.checkin.esAusente(s, checkins || []));
+        const alertas = (porVencer || []).filter(p => !p.estaVencido)
             .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento));
 
         return {
             settings,
-            socios,
+            socios: socios || [],
             caja,
-            checkinsHoy,
-            checkins,
+            checkinsHoy: checkinsHoy || [],
+            checkins: checkins || [],
             nuevosHoy,
-            porVencer,
+            porVencer: porVencer || [],
             rachas,
             activos: activos.length,
             vencidos: vencidos.length,
             ausentes: ausentes.length,
             alertas,
-            rachaRecord: rachas.length > 0 ? rachas[0].racha : 0,
+            rachaRecord: (rachas || []).length > 0 ? rachas[0].racha : 0,
             ingresosMes,
-            totalSocios: socios.length
+            totalSocios: (socios || []).length
         };
     }
 }

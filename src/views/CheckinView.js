@@ -1,5 +1,6 @@
 import { BaseView } from '../js/core/BaseView.js';
 import { Socio } from '../js/models/Socio.js';
+import { escapeHtml } from '../js/utils/escapeHtml.js';
 
 export class CheckinView extends BaseView {
     constructor(container, services, eventBus) {
@@ -189,11 +190,18 @@ export class CheckinView extends BaseView {
 
         if (btnImprimir) {
             this.bindEvent(btnImprimir, 'click', () => {
-                const ticketEl = this.$('.ticket');
-                if (!ticketEl) return;
+                if (!this.lastCheckedSocio) {
+                    this.services.toast.info('Primero escanea un socio');
+                    return;
+                }
+                const socio = this.lastCheckedSocio;
+                const fecha = new Date();
+                const dateStr = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const settings = this.services.settings ? { brandName: 'NEXFIT' } : {};
+                const gymName = 'NEXFIT';
                 const printWin = window.open('', '_blank', 'width=400,height=600');
                 printWin.document.write(`
-                    <html><head><title>Ticket</title>
+                    <html><head><title>Ticket - ${escapeHtml(gymName)}</title>
                     <style>
                         body { font-family: 'Inter', Arial, sans-serif; padding: 20px; }
                         .ticket-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
@@ -204,7 +212,20 @@ export class CheckinView extends BaseView {
                         .ticket-divider { border-top: 2px dashed #ccc; margin: 15px 0; }
                         .ticket-status { text-align: center; font-weight: 800; font-size: 18px; margin-top: 10px; }
                     </style></head><body>
-                    ${ticketEl.innerHTML}
+                        <div class="ticket">
+                            <div class="ticket-header">
+                                <h2>${escapeHtml(gymName)} GYM</h2>
+                                <p>Comprobante de Ingreso</p>
+                            </div>
+                            <div class="ticket-body">
+                                <div class="ticket-row"><span>Socio:</span> <strong>${escapeHtml(socio.nombre)}</strong></div>
+                                <div class="ticket-row"><span>Plan:</span> <strong>${escapeHtml(socio.membresia)}</strong></div>
+                                <div class="ticket-row"><span>Vencimiento:</span> <strong>${escapeHtml(Socio.formatFecha(socio.fechaVencimiento))}</strong></div>
+                                <div class="ticket-row"><span>Fecha:</span> <strong>${escapeHtml(dateStr)}</strong></div>
+                                <div class="ticket-divider"></div>
+                                <div class="ticket-status ${socio.estado === 'Activo' && !socio.estaVencido ? 'success' : 'denied'}">${socio.estado === 'Activo' && !socio.estaVencido ? '✅ ACCESO PERMITIDO' : '❌ ACCESO DENEGADO'}</div>
+                            </div>
+                        </div>
                     <script>window.onload = function() { window.print(); window.close(); }<\/script>
                     </body></html>
                 `);
@@ -242,79 +263,103 @@ export class CheckinView extends BaseView {
         if (this.isProcessingScan) return;
         this.isProcessingScan = true;
 
-        const socios = await this.services.socio.getAll();
-        const socio = socios.find(s => s.id === qrCodeMessage);
-        
-        if (!socio) {
-            this.services.toast.danger('Código no reconocido');
-            setTimeout(() => { this.isProcessingScan = false; }, 2000);
-            return;
-        }
-
-        this.lastCheckedSocio = socio;
-        const ticketContainer = this.$('#ticketContainer');
-        if (ticketContainer) {
-            ticketContainer.style.opacity = '1';
-            ticketContainer.style.pointerEvents = 'auto';
-        }
-        
-        const tktSocio = this.$('#tktSocio');
-        const tktPlan = this.$('#tktPlan');
-        const tktVenc = this.$('#tktVenc');
-        const tktFecha = this.$('#tktFecha');
-
-        if (tktSocio) tktSocio.textContent = socio.nombre;
-        if (tktPlan) tktPlan.textContent = `Plan ${socio.membresia}`;
-        if (tktVenc) tktVenc.textContent = Socio.formatFecha(socio.fechaVencimiento);
-        
-        if (tktFecha) {
-            const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            tktFecha.textContent = new Date().toLocaleDateString('es-ES', dateOptions);
-        }
-        
-        const diasRestantes = socio.diasRestantes;
-        const statusEl = this.$('#tktStatus');
-
-        if (statusEl) {
-            if (socio.estado === 'Activo' && !socio.estaVencido) {
-                await this.services.checkin.registrar(socio.id, socio.nombre);
-                
-                if (diasRestantes <= 5 && diasRestantes >= 0) {
-                    const diasText = diasRestantes === 0 ? 'HOY' : `EN ${diasRestantes} DÍAS`;
-                    statusEl.innerHTML = `✅ ACCESO PERMITIDO<br><span style="font-size: 14px; color: #f59e0b;">⚠️ VENCE ${diasText}</span>`;
-                    statusEl.className = 'ticket-status success';
-                    this.services.toast.warning(`Acceso concedido. Recuerda a ${socio.nombre} que su plan vence ${diasText.toLowerCase()}`);
-                } else {
-                    statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
-                    statusEl.className = 'ticket-status success';
-                    this.services.toast.success(`Acceso concedido a ${socio.nombre}`);
-                }
-            } else {
-                statusEl.textContent = '❌ ACCESO DENEGADO';
-                statusEl.className = 'ticket-status denied';
-                this.services.toast.danger(`Membresía de ${socio.nombre} vencida. No se registró la asistencia.`);
+        try {
+            const socios = await this.services.socio.getAll();
+            const socio = socios.find(s => s.id === qrCodeMessage);
+            
+            if (!socio) {
+                this.services.toast.danger('Código no reconocido');
+                return;
             }
-        }
-        
-        if (window.innerWidth <= 768 && ticketContainer) {
+
+            this.lastCheckedSocio = socio;
+            const ticketContainer = this.$('#ticketContainer');
+            if (ticketContainer) {
+                ticketContainer.style.opacity = '1';
+                ticketContainer.style.pointerEvents = 'auto';
+            }
+            
+            const tktSocio = this.$('#tktSocio');
+            const tktPlan = this.$('#tktPlan');
+            const tktVenc = this.$('#tktVenc');
+            const tktFecha = this.$('#tktFecha');
+
+            if (tktSocio) tktSocio.textContent = socio.nombre;
+            if (tktPlan) tktPlan.textContent = `Plan ${socio.membresia}`;
+            if (tktVenc) tktVenc.textContent = Socio.formatFecha(socio.fechaVencimiento);
+            
+            if (tktFecha) {
+                const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                tktFecha.textContent = new Date().toLocaleDateString('es-ES', dateOptions);
+            }
+            
+            const diasRestantes = socio.diasRestantes;
+            const statusEl = this.$('#tktStatus');
+
+            if (statusEl) {
+                if (socio.estado === 'Activo' && !socio.estaVencido) {
+                    await this.services.checkin.registrar(socio.id, socio.nombre);
+                    
+                    if (diasRestantes <= 5 && diasRestantes >= 0) {
+                        const diasText = diasRestantes === 0 ? 'HOY' : `EN ${diasRestantes} DÍAS`;
+                        statusEl.innerHTML = `✅ ACCESO PERMITIDO<br><span style="font-size: 14px; color: #f59e0b;">⚠️ VENCE ${escapeHtml(diasText)}</span>`;
+                        statusEl.className = 'ticket-status success';
+                        this.services.toast.warning(`Acceso concedido. Recuerda a ${escapeHtml(socio.nombre)} que su plan vence ${diasText.toLowerCase()}`);
+                    } else {
+                        statusEl.textContent = '✅ ¡ACCESO PERMITIDO!';
+                        statusEl.className = 'ticket-status success';
+                        this.services.toast.success(`Acceso concedido a ${escapeHtml(socio.nombre)}`);
+                    }
+                } else {
+                    statusEl.textContent = '❌ ACCESO DENEGADO';
+                    statusEl.className = 'ticket-status denied';
+                    this.services.toast.danger(`Membresía de ${escapeHtml(socio.nombre)} vencida. No se registró la asistencia.`);
+                }
+            }
+            
+            if (window.innerWidth <= 768 && ticketContainer) {
+                this._scrollTimeout = setTimeout(() => {
+                    ticketContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }, 100);
+            }
+        } catch (e) {
+            console.error('Error processing scan:', e);
+            this.services.toast.danger('Error al procesar el escaneo');
+        } finally {
             setTimeout(() => {
-                ticketContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }, 100);
+                this.isProcessingScan = false;
+            }, 4000);
         }
-        
-        setTimeout(() => {
-            this.isProcessingScan = false;
-        }, 4000);
     }
 
     destroy() {
         if (this.html5QrcodeScanner) {
             try {
-                this.html5QrcodeScanner.clear();
+                if (typeof this.html5QrcodeScanner.clear === 'function') {
+                    this.html5QrcodeScanner.clear();
+                }
             } catch (e) {
                 console.error('Error clearing QR scanner', e);
             }
+            try {
+                if (typeof this.html5QrcodeScanner.stop === 'function') {
+                    this.html5QrcodeScanner.stop();
+                }
+            } catch (e) {
+                console.error('Error stopping QR scanner', e);
+            }
             this.html5QrcodeScanner = null;
+        }
+        if (this._scrollTimeout) {
+            clearTimeout(this._scrollTimeout);
+            this._scrollTimeout = null;
+        }
+        if (window.innerWidth <= 768) {
+            const ticketContainer = this.$('#ticketContainer');
+            if (ticketContainer) {
+                ticketContainer.style.opacity = '';
+                ticketContainer.style.pointerEvents = '';
+            }
         }
         super.destroy();
     }

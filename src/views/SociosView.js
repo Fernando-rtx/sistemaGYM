@@ -3,6 +3,7 @@ import { SociosTable } from './components/SociosTable.js';
 import { SocioProfile } from './components/SocioProfile.js';
 import { SocioForm } from './components/SocioForm.js';
 import { TicketGenerator } from './components/TicketGenerator.js';
+import { escapeHtml } from '../js/utils/escapeHtml.js';
 
 export class SociosView extends BaseView {
     constructor(container, services, eventBus) {
@@ -48,7 +49,7 @@ export class SociosView extends BaseView {
                             </div>
                             <div style="padding: 10px; text-align: center;">
                                 <p style="margin-bottom: 24px; color: var(--color-text-secondary); line-height: 1.5;">
-                                    El socio <b>${savedSocio.nombre}</b> ha sido registrado con éxito.<br>
+                                    El socio <b>${escapeHtml(savedSocio.nombre)}</b> ha sido registrado con éxito.<br>
                                     ¿Deseas generar el ticket comprobante de inscripción?
                                 </p>
                                 <div style="display: flex; gap: 12px; justify-content: center;">
@@ -62,15 +63,25 @@ export class SociosView extends BaseView {
                         document.getElementById('btnCloseConfirmTicket').addEventListener('click', () => this.services.modal.close());
                         document.getElementById('btnNoTicket').addEventListener('click', () => this.services.modal.close());
                         document.getElementById('btnYesTicket').addEventListener('click', async () => {
-                            this.services.modal.close();
-                            await ticketComponent.open(savedSocio);
+                            try {
+                                this.services.modal.close();
+                                await ticketComponent.open(savedSocio);
+                            } catch (e) {
+                                console.error('Error generating ticket:', e);
+                            }
                         });
                     }
                 });
             },
             // onOpenDelete
             async (id) => {
-                const socio = await this.services.socio.getById(id);
+                let socio;
+                try {
+                    socio = await this.services.socio.getById(id);
+                } catch (e) {
+                    console.error(e);
+                    return;
+                }
                 if (!socio) return;
 
                 const confirmHtml = `
@@ -80,7 +91,7 @@ export class SociosView extends BaseView {
                     </div>
                     <div style="padding: 10px; text-align: center;">
                         <p style="margin-bottom: 24px; color: var(--color-text-secondary); line-height: 1.5;">
-                            ¿Estás seguro de que deseas eliminar al socio <b>${socio.nombre}</b>?<br>
+                            ¿Estás seguro de que deseas eliminar al socio <b>${escapeHtml(socio.nombre)}</b>?<br>
                             Esta acción es permanente y eliminará todo su historial.
                         </p>
                         <div style="display: flex; gap: 12px; justify-content: center;">
@@ -94,36 +105,46 @@ export class SociosView extends BaseView {
                 document.getElementById('btnCloseConfirmDelete').addEventListener('click', () => this.services.modal.close());
                 document.getElementById('btnCancelDelete').addEventListener('click', () => this.services.modal.close());
                 document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
-                    this.services.modal.close();
-                    const success = await this.services.socio.delete(id);
-                    if (success) {
-                        this.services.toast.success(`Socio ${socio.nombre} eliminado`);
-                        await this.tableComponent.refreshData();
-                    } else {
-                        this.services.toast.danger('No se pudo eliminar al socio');
+                    try {
+                        this.services.modal.close();
+                        const success = await this.services.socio.delete(id);
+                        if (success) {
+                            this.services.toast.success(`Socio ${escapeHtml(socio.nombre)} eliminado`);
+                            await this.tableComponent.refreshData();
+                        } else {
+                            this.services.toast.danger('No se pudo eliminar al socio');
+                        }
+                    } catch (e) {
+                        console.error('Error deleting socio:', e);
+                        this.services.toast.danger('Error al eliminar al socio');
                     }
                 });
             },
             // onRegisterCheckin
             async (id) => {
-                const socio = await this.services.socio.getById(id);
-                if (!socio) return;
+                try {
+                    const socio = await this.services.socio.getById(id);
+                    if (!socio) return;
 
-                if (socio.estado !== 'Activo') {
-                    this.services.toast.danger(`Acceso denegado. Membresía de ${socio.nombre} está ${socio.estado.toLowerCase()}`);
-                    return;
-                }
-
-                const checkinObj = await this.services.checkin.registrar(id, socio.nombre);
-                if (checkinObj) {
-                    const dias = socio.diasRestantes;
-                    if (dias <= 5 && dias >= 0) {
-                        this.services.toast.warning(`Check-in registrado. AVISO: Membresía vence en ${dias} días`);
-                    } else {
-                        this.services.toast.success(`Check-in registrado para ${socio.nombre}`);
+                    if (socio.estado !== 'Activo') {
+                        this.services.toast.danger(`Acceso denegado. Membresía de ${escapeHtml(socio.nombre)} está ${escapeHtml(socio.estado.toLowerCase())}`);
+                        return;
                     }
-                    await this.tableComponent.refreshData();
-                } else {
+
+                    const checkinObj = await this.services.checkin.registrar(id, socio.nombre);
+                    if (checkinObj) {
+                        const dias = socio.diasRestantes;
+                        if (dias <= 5 && dias >= 0) {
+                            this.services.toast.warning(`Check-in registrado. AVISO: Membresía vence en ${dias} días`);
+                        } else {
+                            this.services.toast.success(`Check-in registrado para ${escapeHtml(socio.nombre)}`);
+                        }
+                        await this.tableComponent.refreshData();
+                    } else {
+                        this.services.toast.danger('Error al registrar check-in');
+                    }
+                } catch (e) {
+                    console.error('Error registering checkin:', e);
                     this.services.toast.danger('Error al registrar check-in');
                 }
             }

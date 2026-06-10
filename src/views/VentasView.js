@@ -1,6 +1,7 @@
 import { BaseView } from '../js/core/BaseView.js';
 import { Cart } from './components/Cart.js';
 import { ProductGrid } from './components/ProductGrid.js';
+import { escapeHtml } from '../js/utils/escapeHtml.js';
 
 export class VentasView extends BaseView {
     constructor(container, services, eventBus) {
@@ -164,8 +165,8 @@ export class VentasView extends BaseView {
         // Hide admin button for non-admins
         const user = this.services.auth.getCurrentUser();
         const btnAdmin = this.$('#btnAdminProductos');
-        if (user && user.role === 'Empleado' && btnAdmin) {
-            btnAdmin.style.display = 'none';
+        if (!user || user.role === 'Empleado') {
+            if (btnAdmin) btnAdmin.style.display = 'none';
         }
 
         // 1. Instanciar Cart
@@ -244,8 +245,8 @@ export class VentasView extends BaseView {
         if (empty) empty.style.display = 'none';
         tbody.innerHTML = trans.map(t => `
             <tr>
-                <td>${t.hora}</td>
-                <td>${t.concepto}</td>
+                <td>${escapeHtml(t.hora)}</td>
+                <td>${escapeHtml(t.concepto)}</td>
                 <td class="${t.tipo === 'ingreso' ? 'text-success' : 'text-danger'}">${t.tipo === 'ingreso' ? '+' : '-'}$${parseFloat(t.monto).toFixed(2)}</td>
             </tr>
         `).join('');
@@ -314,29 +315,47 @@ export class VentasView extends BaseView {
 
         if (btnConfirm) {
             btnConfirm.addEventListener('click', async () => {
-                const itemsStr = items.map(i => `${i.name} x${i.qty}`).join(', ');
+                const itemsStr = items.map(i => `${escapeHtml(i.name)} x${i.qty}`).join(', ');
+                btnConfirm.disabled = true;
 
-                // Restar stock
-                const inv = await this.services.inventario.getAll();
-                for (const item of items) {
-                    const prod = inv.find(p => p.id === item.id);
-                    if (prod) {
-                        await this.services.inventario.update(prod.id, { stock: prod.stock - item.qty });
+                try {
+                    // 1. First create transaction
+                    const transaccion = await this.services.transaccion.crear({
+                        tipo: 'ingreso',
+                        concepto: `Venta (${metodo}): ${itemsStr}`,
+                        monto: total
+                    });
+
+                    // 2. Then deduct stock
+                    const inv = await this.services.inventario.getAll();
+                    const stockErrors = [];
+                    for (const item of items) {
+                        const prod = inv.find(p => p.id === item.id);
+                        if (prod) {
+                            const newStock = prod.stock - item.qty;
+                            if (newStock < 0) {
+                                stockErrors.push(`Stock insuficiente para ${escapeHtml(item.name)}`);
+                                continue;
+                            }
+                            await this.services.inventario.update(prod.id, { stock: newStock });
+                        }
                     }
+
+                    if (stockErrors.length > 0) {
+                        console.warn('Stock errors during sale:', stockErrors.join(', '));
+                    }
+
+                    this.services.toast.success('Venta cobrada con éxito');
+                    this.cart.clear();
+                    this._showComprobanteModal(items, total, metodo);
+                    cleanup();
+                    await this.productGrid.refresh([]);
+                    await this.refreshCajaAndTransactions();
+                } catch (e) {
+                    console.error('Error processing payment:', e);
+                    this.services.toast.danger('Error al procesar el cobro');
+                    btnConfirm.disabled = false;
                 }
-
-                await this.services.transaccion.crear({
-                    tipo: 'ingreso',
-                    concepto: `Venta (${metodo}): ${itemsStr}`,
-                    monto: total
-                });
-
-                this.services.toast.success('Venta cobrada con éxito');
-                this.cart.clear();
-                this._showComprobanteModal(items, total, metodo);
-                cleanup();
-                await this.productGrid.refresh([]);
-                await this.refreshCajaAndTransactions();
             });
         }
     }
@@ -471,10 +490,11 @@ export class VentasView extends BaseView {
             const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
+            const safeGymName = escapeHtml(gymName);
             const itemsRows = items.map(i => `
                 <tr>
-                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px;">${i.name}</td>
-                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: center;">${i.qty}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px;">${escapeHtml(i.name)}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: center;">${escapeHtml(String(i.qty))}</td>
                     <td style="padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: right;">$${(i.price * i.qty).toFixed(2)}</td>
                 </tr>
             `).join('');
@@ -482,7 +502,7 @@ export class VentasView extends BaseView {
             const printWin = window.open('', '_blank', 'width=380,height=600');
             printWin.document.write(`
                 <html>
-                <head><title>Comprobante - ${gymName}</title>
+                <head><title>Comprobante - ${safeGymName}</title>
                 <style>
                     body { font-family: 'Courier New', monospace; font-size: 13px; color: #000; margin: 0; padding: 20px; }
                     .header { text-align: center; margin-bottom: 20px; }
@@ -497,10 +517,10 @@ export class VentasView extends BaseView {
                 </head>
                 <body>
                     <div class="header">
-                        <h2>${gymName.toUpperCase()}</h2>
+                        <h2>${safeGymName.toUpperCase()}</h2>
                         <p>COMPROBANTE DE PAGO</p>
-                        <p>${dateStr} — ${timeStr}</p>
-                        <p>Método: ${metodo.toUpperCase()}</p>
+                        <p>${escapeHtml(dateStr)} — ${escapeHtml(timeStr)}</p>
+                        <p>Método: ${escapeHtml(metodo.toUpperCase())}</p>
                     </div>
                     <div class="divider"></div>
                     <table>
@@ -569,7 +589,7 @@ export class VentasView extends BaseView {
             if (!listContainer) return;
 
             const filtered = filter
-                ? inventario.filter(p => p.nombre.toLowerCase().includes(filter.toLowerCase()))
+                ? inventario.filter(p => (p.nombre || '').toLowerCase().includes(filter.toLowerCase()))
                 : inventario;
 
             if (filtered.length === 0) {
@@ -580,13 +600,13 @@ export class VentasView extends BaseView {
             listContainer.innerHTML = filtered.map(p => `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="material-icons-round" aria-hidden="true" style="color:${p.color};">${p.icono}</span>
+                        <span class="material-icons-round" aria-hidden="true" style="color:${escapeHtml(p.color)};">${escapeHtml(p.icono)}</span>
                         <div>
-                            <div style="font-size: 14px; font-weight: 600;">${p.nombre}</div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary);">Stock: ${p.stock} | Precio: $${parseFloat(p.precio).toFixed(2)}</div>
+                            <div style="font-size: 14px; font-weight: 600;">${escapeHtml(p.nombre)}</div>
+                            <div style="font-size: 12px; color: var(--color-text-secondary);">Stock: ${escapeHtml(String(p.stock))} | Precio: $${parseFloat(p.precio).toFixed(2)}</div>
                         </div>
                     </div>
-                    <button class="btn-icon danger btn-delete-prod" data-id="${p.id}" style="width: 28px; height: 28px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--color-danger); cursor: pointer;">
+                    <button class="btn-icon danger btn-delete-prod" data-id="${escapeHtml(p.id)}" style="width: 28px; height: 28px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--color-danger); cursor: pointer;">
                         <span class="material-icons-round" aria-hidden="true" style="font-size: 16px;">delete</span>
                     </button>
                 </div>

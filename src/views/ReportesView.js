@@ -1,4 +1,5 @@
 import { BaseView } from '../js/core/BaseView.js';
+import { escapeHtml } from '../js/utils/escapeHtml.js';
 
 export class ReportesView extends BaseView {
     constructor(container, services, eventBus) {
@@ -168,9 +169,14 @@ export class ReportesView extends BaseView {
         const txtRango = this.$('#txtRangoLabel');
         if (txtRango) txtRango.textContent = rangeLabel;
 
+        const safeRange = escapeHtml(rangeLabel);
         const headings = this.container.querySelectorAll('.chart-card h3');
-        if (headings.length >= 1) headings[0].innerHTML = `INGRESOS <span style="color: var(--color-text-secondary); font-weight: 400;">${rangeLabel}</span>`;
-        if (headings.length >= 2) headings[1].innerHTML = `ALTAS DE SOCIOS <span style="color: var(--color-text-secondary); font-weight: 400;">${rangeLabel}</span>`;
+        if (headings.length >= 1) {
+            headings[0].textContent = `INGRESOS ${rangeLabel}`;
+        }
+        if (headings.length >= 2) {
+            headings[1].textContent = `ALTAS DE SOCIOS ${rangeLabel}`;
+        }
 
         this.renderIngresosChart(ingresosPorMes, primaryColor);
         this.renderSociosChart(sociosPorMes, primaryColor);
@@ -180,99 +186,119 @@ export class ReportesView extends BaseView {
     }
 
     renderIngresosChart(ingresosPorMes, color) {
+        if (typeof Chart === 'undefined') return;
         const ctx = this.$('#chartIngresos')?.getContext('2d');
         if (!ctx) return;
 
         const { labels, data } = ingresosPorMes;
 
-        this.charts.ingresos = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Ingresos ($)',
-                    data,
-                    borderColor: color,
-                    backgroundColor: color + '1A', // opacity 10%
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: this.getChartOptions()
-        });
+        try {
+            this.charts.ingresos = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Ingresos ($)',
+                        data,
+                        borderColor: color,
+                        backgroundColor: color + '1A',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: this.getChartOptions()
+            });
+        } catch (e) {
+            console.error('Error rendering ingresos chart:', e);
+        }
     }
 
     renderSociosChart(sociosPorMes, color) {
+        if (typeof Chart === 'undefined') return;
         const ctx = this.$('#chartSocios')?.getContext('2d');
         if (!ctx) return;
 
         const { labels, data } = sociosPorMes;
 
-        this.charts.socios = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Nuevos Socios',
-                    data,
-                    backgroundColor: color,
-                    borderRadius: 6
-                }]
-            },
-            options: this.getChartOptions()
-        });
+        try {
+            this.charts.socios = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Nuevos Socios',
+                        data,
+                        backgroundColor: color,
+                        borderRadius: 6
+                    }]
+                },
+                options: this.getChartOptions()
+            });
+        } catch (e) {
+            console.error('Error rendering socios chart:', e);
+        }
     }
 
     renderMembresiasChart(membresias) {
+        if (typeof Chart === 'undefined') return;
         const ctx = this.$('#chartMembresias')?.getContext('2d');
         if (!ctx) return;
 
         const planes = membresias;
 
-        this.charts.membresias = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Mensual', 'Quincenal', 'Diario'],
-                datasets: [{
-                    data: [planes.Mensual, planes.Quincenal, planes.Diario],
-                    backgroundColor: ['#94ff00', '#00e5ff', '#ff007f'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { color: '#8c8f9f', font: { family: 'Inter', size: 12 } }
+        try {
+            this.charts.membresias = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mensual', 'Quincenal', 'Diario'],
+                    datasets: [{
+                        data: [planes.Mensual, planes.Quincenal, planes.Diario],
+                        backgroundColor: ['#94ff00', '#00e5ff', '#ff007f'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#8c8f9f', font: { family: 'Inter', size: 12 } }
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (e) {
+            console.error('Error rendering membresias chart:', e);
+        }
     }
 
     renderProductosChart(topProductos, color) {
+        if (typeof Chart === 'undefined') return;
         const ctx = this.$('#chartProductos')?.getContext('2d');
         if (!ctx) return;
 
         const labels = topProductos.labels;
         const data = topProductos.data;
 
-        this.charts.productos = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels.length > 0 ? labels : ['Ninguno'],
-                datasets: [{
-                    label: 'Unidades Vendidas',
-                    data: data.length > 0 ? data : [0],
-                    backgroundColor: '#ffaa00',
-                    borderRadius: 6
-                }]
-            },
-            options: this.getChartOptions()
-        });
+        try {
+            this.charts.productos = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Ninguno'],
+                    datasets: [{
+                        label: 'Unidades Vendidas',
+                        data: data.length > 0 ? data : [0],
+                        backgroundColor: '#ffaa00',
+                        borderRadius: 6
+                    }]
+                },
+                options: this.getChartOptions()
+            });
+        } catch (e) {
+            console.error('Error rendering productos chart:', e);
+        }
     }
 
     renderMetricas(metricas) {
@@ -311,6 +337,8 @@ export class ReportesView extends BaseView {
         const gymName = settings.brandName || 'NEXFIT';
         const brandColor = settings.brandColor || '#94ff00';
 
+        const safeGymName = escapeHtml(gymName);
+        const safeBrandColor = escapeHtml(brandColor);
         const printWin = window.open('', '_blank', 'width=800,height=900');
         
         // Capturar imágenes base64 de los gráficos
@@ -319,14 +347,16 @@ export class ReportesView extends BaseView {
         const imgMembresias = this.charts.membresias?.toBase64Image() || '';
         const imgProductos = this.charts.productos?.toBase64Image() || '';
 
-        const tasaRenovacion = this.$('#txtTasaRenovacion')?.textContent || '0.0%';
-        const totalTickets = this.$('#txtTotalTickets')?.textContent || '0';
-        const valorMedio = this.$('#txtValorMedio')?.textContent || '$0.00';
+        const tasaRenovacion = escapeHtml(this.$('#txtTasaRenovacion')?.textContent || '0.0%');
+        const totalTickets = escapeHtml(this.$('#txtTotalTickets')?.textContent || '0');
+        const valorMedio = escapeHtml(this.$('#txtValorMedio')?.textContent || '$0.00');
+
+        const safeDate = escapeHtml(new Date().toLocaleDateString('es-ES'));
 
         printWin.document.write(`
             <html>
             <head>
-                <title>Reporte de Rendimiento - ${gymName}</title>
+                <title>Reporte de Rendimiento - ${safeGymName}</title>
                 <style>
                     body {
                         font-family: 'Inter', Arial, sans-serif;
@@ -335,7 +365,7 @@ export class ReportesView extends BaseView {
                         background: #ffffff;
                     }
                     .header {
-                        border-bottom: 2px solid ${brandColor};
+                        border-bottom: 2px solid ${safeBrandColor};
                         padding-bottom: 20px;
                         margin-bottom: 30px;
                         display: flex;
@@ -408,10 +438,10 @@ export class ReportesView extends BaseView {
                 <div class="header">
                     <div>
                         <h1>REPORTE DE RENDIMIENTO</h1>
-                        <p>${gymName.toUpperCase()} GYM</p>
+                        <p>${safeGymName.toUpperCase()} GYM</p>
                     </div>
                     <div style="text-align: right; color: #6b7280; font-size: 14px;">
-                        Fecha: ${new Date().toLocaleDateString('es-ES')}<br>
+                        Fecha: ${safeDate}<br>
                         Generado automáticamente
                     </div>
                 </div>

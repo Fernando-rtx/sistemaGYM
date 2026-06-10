@@ -1,4 +1,5 @@
 import { Socio } from '../../js/models/Socio.js';
+import { escapeHtml } from '../../js/utils/escapeHtml.js';
 
 export class SociosTable {
     constructor(container, services, eventBus, onOpenProfile, onOpenEdit, onOpenDelete, onRegisterCheckin) {
@@ -389,7 +390,7 @@ export class SociosTable {
 
         const filtered = processed.filter(item => {
             const s = item.socio;
-            const matchesSearch = s.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) || s.id.includes(this.searchQuery);
+            const matchesSearch = (s.nombre || '').toLowerCase().includes(this.searchQuery.toLowerCase()) || (s.id || '').includes(this.searchQuery);
             
             let matchesFilter = false;
             if (this.currentFilter === 'TODOS') matchesFilter = true;
@@ -432,24 +433,43 @@ export class SociosTable {
                 statusLabel = 'ACTIVO';
             }
 
-            const avatarHtml = s.foto_url
-                ? `<img src="${s.foto_url}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:12px;flex-shrink:0;">`
-                : `<span class="avatar-sm">${s.iniciales}</span>`;
+            const safeNombre = escapeHtml(s.nombre || '');
+            const safeMembresia = escapeHtml(s.membresia || '');
+            const safeId = escapeHtml(s.id || '');
+            const safeEdad = s.edad ? escapeHtml(String(s.edad)) : '';
+            const safeTelefono = escapeHtml(s.telefono || 'Sin teléfono');
+            const safeIniciales = escapeHtml(s.iniciales || '');
+
+            let fotoUrl = '';
+            if (s.foto_url) {
+                try {
+                    const parsed = new URL(s.foto_url);
+                    if (parsed.protocol === 'https:') {
+                        fotoUrl = escapeHtml(s.foto_url);
+                    }
+                } catch (e) {}
+            }
+
+            const avatarHtml = fotoUrl
+                ? `<img src="${fotoUrl}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:12px;flex-shrink:0;">`
+                : `<span class="avatar-sm">${safeIniciales}</span>`;
+
+            const showDeleteBtn = user && user.role && user.role !== 'Empleado';
 
             return `
-                <tr style="cursor: pointer;" class="socio-row" data-id="${s.id}">
-                    <td style="color: var(--color-text-secondary);">#${s.id.substring(0,6)}</td>
+                <tr style="cursor: pointer;" class="socio-row" data-id="${safeId}">
+                    <td style="color: var(--color-text-secondary);">#${escapeHtml(String(s.id || '').substring(0,6))}</td>
                     <td>
                         <div style="display: flex; align-items: center;">
                             ${avatarHtml}
                             <div>
-                                <div>${s.nombre}</div>
-                                <div style="font-size: 12px; color: var(--color-text-secondary);">${s.edad ? s.edad + ' años • ' : ''}${s.telefono || 'Sin teléfono'}</div>
+                                <div>${safeNombre}</div>
+                                <div style="font-size: 12px; color: var(--color-text-secondary);">${safeEdad ? safeEdad + ' años • ' : ''}${safeTelefono}</div>
                             </div>
                         </div>
                     </td>
-                    <td>${s.membresia}</td>
-                    <td>${Socio.formatFecha(s.fechaVencimiento)}</td>
+                    <td>${safeMembresia}</td>
+                    <td>${escapeHtml(Socio.formatFecha(s.fechaVencimiento) || '')}</td>
                     <td>
                         <span class="status-badge ${statusClass}">
                             ${statusLabel}
@@ -457,14 +477,14 @@ export class SociosTable {
                     </td>
                     <td>
                         <div class="action-btns">
-                            <button class="btn-icon btn-checkin-row" data-id="${s.id}" data-nombre="${s.nombre}" title="Check-in">
+                            <button class="btn-icon btn-checkin-row" data-id="${safeId}" data-nombre="${safeNombre}" title="Check-in">
                                 <span class="material-icons-round" style="font-size: 16px;">login</span>
                             </button>
-                            <button class="btn-icon btn-edit-row" data-id="${s.id}" title="Editar">
+                            <button class="btn-icon btn-edit-row" data-id="${safeId}" title="Editar">
                                 <span class="material-icons-round" style="font-size: 16px;">edit</span>
                             </button>
-                            ${user && user.role !== 'Empleado' ? `
-                            <button class="btn-icon danger btn-delete-row" data-id="${s.id}" data-nombre="${s.nombre}" title="Eliminar">
+                            ${showDeleteBtn ? `
+                            <button class="btn-icon danger btn-delete-row" data-id="${safeId}" data-nombre="${safeNombre}" title="Eliminar">
                                 <span class="material-icons-round" style="font-size: 16px;">delete</span>
                             </button>
                             ` : ''}
@@ -474,37 +494,27 @@ export class SociosTable {
             `;
         }).join('');
 
-        tbody.querySelectorAll('.btn-checkin-row').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                if (this.onRegisterCheckin) this.onRegisterCheckin(id);
-            });
-        });
-
-        tbody.querySelectorAll('.btn-edit-row').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                if (this.onOpenEdit) this.onOpenEdit(id);
-            });
-        });
-
-        tbody.querySelectorAll('.btn-delete-row').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
+        // Event delegation on tbody instead of per-row listeners
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) {
+                const row = e.target.closest('.socio-row');
+                if (row && this.onOpenProfile) {
+                    const id = row.getAttribute('data-id');
+                    if (id) this.onOpenProfile(id);
+                }
+                return;
+            }
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if (btn.classList.contains('btn-checkin-row') && id && this.onRegisterCheckin) {
+                this.onRegisterCheckin(id);
+            } else if (btn.classList.contains('btn-edit-row') && id && this.onOpenEdit) {
+                this.onOpenEdit(id);
+            } else if (btn.classList.contains('btn-delete-row') && id && this.onOpenDelete) {
                 const nombre = btn.getAttribute('data-nombre');
-                if (this.onOpenDelete) this.onOpenDelete(id, nombre);
-            });
-        });
-
-        tbody.querySelectorAll('.socio-row').forEach(row => {
-            row.addEventListener('click', (e) => {
-                if (e.target.closest('button') || e.target.closest('.action-btns')) return;
-                const id = row.getAttribute('data-id');
-                if (this.onOpenProfile) this.onOpenProfile(id);
-            });
+                this.onOpenDelete(id, nombre);
+            }
         });
 
         this._renderPagination(filtered.length);

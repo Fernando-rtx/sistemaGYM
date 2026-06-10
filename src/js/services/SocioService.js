@@ -7,8 +7,10 @@ export class SocioService extends BaseService {
         super(eventBus);
     }
 
-    async getAll() {
-        const { data, error } = await supabase.from('socios').select('*').order('created_at', { ascending: false });
+    async getAll(page = 1, pageSize = 100) {
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize - 1;
+        const { data, error } = await supabase.from('socios').select('*').eq('activo', true).order('created_at', { ascending: false }).range(start, end);
         if (error) return this.handleError(error, []);
         return data.map(s => Socio.fromSupabase(s));
     }
@@ -21,20 +23,19 @@ export class SocioService extends BaseService {
 
     async sincronizarEstados() {
         const hoyStr = this.today();
-        const { data, error } = await supabase.from('socios')
-            .select('id')
+        const { error } = await supabase.from('socios')
+            .update({ estado: 'Vencido' })
             .eq('estado', 'Activo')
             .lt('fecha_vencimiento', hoyStr);
         if (error) {
             this.logError('sincronizarEstados', error);
-            return;
-        }
-        for (const s of data || []) {
-            await supabase.from('socios').update({ estado: 'Vencido' }).eq('id', s.id);
         }
     }
 
     async create(socioData) {
+        if (!socioData.nombre || !socioData.membresia) {
+            return this.handleError(new Error('Nombre y membresía son requeridos'), null);
+        }
         const socio = new Socio(socioData);
         const { data, error } = await supabase.from('socios').insert([socio.toSupabase()]).select().single();
         if (error) return this.handleError(error, null);
@@ -72,7 +73,7 @@ export class SocioService extends BaseService {
         const hoy = this.today();
         const updated = await this.update(id, {
             estado: 'Congelado',
-            fecha_congelado: hoy,
+            fecha_congelado: this.today(),
             dias_congelado: Math.max(0, socio.diasRestantes)
         });
         return updated;
@@ -82,8 +83,8 @@ export class SocioService extends BaseService {
         const socio = await this.getById(id);
         if (!socio) return null;
         const diasCongelado = socio.dias_congelado || 0;
-        const hoy = new Date();
-        const nuevoVenc = new Date();
+        const hoy = new Date(this.today() + 'T00:00:00');
+        const nuevoVenc = new Date(hoy);
         nuevoVenc.setDate(hoy.getDate() + diasCongelado);
         const vencStr = `${nuevoVenc.getFullYear()}-${String(nuevoVenc.getMonth() + 1).padStart(2, '0')}-${String(nuevoVenc.getDate()).padStart(2, '0')}`;
         const updated = await this.update(id, {
@@ -96,7 +97,18 @@ export class SocioService extends BaseService {
     }
 
     async uploadPhoto(socioId, file) {
-        const ext = file.name.split('.').pop() || 'jpg';
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+        if (!allowedMimes.includes(file.type)) {
+            return this.handleError(new Error('Formato de imagen no válido. Use JPEG, PNG o WebP.'), null);
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            return this.handleError(new Error('La imagen no debe superar los 2MB.'), null);
+        }
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        if (!allowedExts.includes(ext)) {
+            return this.handleError(new Error('Extensión de archivo no válida.'), null);
+        }
         const filePath = `${socioId}.${ext}`;
         const { error: uploadError } = await supabase.storage.from('socios').upload(filePath, file, { upsert: true });
         if (uploadError) return this.handleError(uploadError, null);
@@ -106,7 +118,11 @@ export class SocioService extends BaseService {
     }
 
     async delete(id) {
-        const { error } = await supabase.from('socios').delete().eq('id', id);
+        const { data, error } = await supabase.from('socios')
+            .update({ activo: false, estado: 'Inactivo' })
+            .eq('id', id)
+            .select()
+            .single();
         if (error) return this.handleError(error, false);
         this.emit('socio:deleted', id);
         return true;

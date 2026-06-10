@@ -9,10 +9,16 @@ export class ReporteService extends BaseService {
     async generarDatos(filtros = {}) {
         const { fechaInicio, fechaFin } = filtros;
 
+        const safe = (promise, fallback) =>
+            promise.catch(err => {
+                console.error('Reporte fetch error:', err);
+                return fallback;
+            });
+
         let [socios, transacciones, settings] = await Promise.all([
-            this.services.socio.getAll(),
-            this.services.transaccion.getAll(),
-            this.services.settings.get()
+            safe(this.services.socio.getAll(), []),
+            safe(this.services.transaccion.getAll(), []),
+            safe(this.services.settings.get(), { brandColor: '#94ff00' })
         ]);
 
         if (fechaInicio && fechaFin) {
@@ -94,12 +100,12 @@ export class ReporteService extends BaseService {
     }
 
     _distribuirMembresias(socios) {
-        const planes = { Mensual: 0, Quincenal: 0, Diario: 0 };
+        const planes = { Mensual: 0, Quincenal: 0, Diario: 0, Otros: 0 };
         socios.forEach(s => {
             if (planes[s.membresia] !== undefined) {
                 planes[s.membresia]++;
             } else {
-                planes.Mensual++;
+                planes.Otros++;
             }
         });
         return planes;
@@ -108,16 +114,20 @@ export class ReporteService extends BaseService {
     _topProductos(transacciones) {
         const productosVendidos = {};
         transacciones.forEach(t => {
-            if (t.tipo === 'ingreso' && t.concepto.includes('Venta')) {
+            if (t.tipo === 'ingreso' && t.concepto && t.concepto.includes('Venta')) {
                 const parts = t.concepto.split(':');
                 if (parts.length > 1) {
                     const items = parts[1].trim().split(',');
                     items.forEach(item => {
-                        const match = item.trim().match(/(.+)\s+x(\d+)/);
-                        if (match) {
-                            const name = match[1].trim();
-                            const qty = parseInt(match[2]);
-                            productosVendidos[name] = (productosVendidos[name] || 0) + qty;
+                        try {
+                            const match = item.trim().match(/(.+)\s+x(\d+)/);
+                            if (match) {
+                                const name = match[1].trim();
+                                const qty = parseInt(match[2]);
+                                productosVendidos[name] = (productosVendidos[name] || 0) + qty;
+                            }
+                        } catch (e) {
+                            // skip unparseable item
                         }
                     });
                 }

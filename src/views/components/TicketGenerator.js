@@ -1,4 +1,5 @@
 import html2canvas from 'html2canvas';
+import { escapeHtml } from '../../js/utils/escapeHtml.js';
 
 export class TicketGenerator {
     constructor(services) {
@@ -16,6 +17,13 @@ export class TicketGenerator {
             return `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
         };
 
+        const safeGymName = escapeHtml(gymName);
+        const safeNombre = escapeHtml(socioInfo.nombre || '');
+        const safePlan = escapeHtml(socioInfo.membresia || socioInfo.plan || '');
+        const safePrecio = parseFloat(socioInfo.precio || 0).toFixed(2);
+        const safeFechaReg = escapeHtml(formatD(socioInfo.fechaRegistro));
+        const safeFechaVenc = escapeHtml(formatD(socioInfo.fechaVencimiento));
+
         const modalHtml = `
             <div class="modal-header" style="justify-content: center; position: relative;">
                 <h3 class="modal-title" style="letter-spacing: 1px;">TICKET GENERADO</h3>
@@ -25,7 +33,7 @@ export class TicketGenerator {
             <div style="background: #111; padding: 20px; border-radius: 8px; display: flex; justify-content: center; margin-bottom: 20px;">
                 <div id="ticketCaptureArea" style="background: white; color: black; padding: 30px; width: 300px; font-family: monospace; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; font-family: 'Inter', sans-serif;">${gymName.toUpperCase()}</h2>
+                        <h2 style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; font-family: 'Inter', sans-serif;">${safeGymName.toUpperCase()}</h2>
                         <div style="font-size: 12px; color: #555; margin-top: 4px;">Comprobante de Inscripción</div>
                     </div>
                     
@@ -33,33 +41,33 @@ export class TicketGenerator {
                     
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                         <span style="color: #666;">Fecha:</span>
-                        <span style="font-weight: bold;">${formatD(socioInfo.fechaRegistro)}</span>
+                        <span style="font-weight: bold;">${safeFechaReg}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                         <span style="color: #666;">Socio:</span>
-                        <span style="font-weight: bold;">${socioInfo.nombre}</span>
+                        <span style="font-weight: bold;">${safeNombre}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                         <span style="color: #666;">Plan:</span>
-                        <span style="font-weight: bold;">Plan ${socioInfo.plan}</span>
+                        <span style="font-weight: bold;">Plan ${safePlan}</span>
                     </div>
                     
                     <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
                     
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                         <span style="color: #666;">Válido desde:</span>
-                        <span style="font-weight: bold;">${formatD(socioInfo.fechaRegistro)}</span>
+                        <span style="font-weight: bold;">${safeFechaReg}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
                         <span style="color: #666;">Vencimiento:</span>
-                        <span style="font-weight: bold;">${formatD(socioInfo.fechaVencimiento)}</span>
+                        <span style="font-weight: bold;">${safeFechaVenc}</span>
                     </div>
                     
                     <div style="border-top: 2px solid black; margin: 15px 0;"></div>
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <span style="font-weight: 900; font-size: 18px;">TOTAL:</span>
-                        <span style="font-weight: 900; font-size: 18px;">$${parseFloat(socioInfo.precio || 0).toFixed(2)}</span>
+                        <span style="font-weight: 900; font-size: 18px;">$${safePrecio}</span>
                     </div>
                     
                     <div style="text-align: center; font-size: 10px; color: #888; line-height: 1.4;">
@@ -84,21 +92,30 @@ export class TicketGenerator {
 
         let preGeneratedFile = null;
         let preGeneratedBlob = null;
+        let _ticketGenerationAttempts = 0;
 
-        setTimeout(async () => {
+        const generateTicketImage = async () => {
+            const ticketEl = document.getElementById('ticketCaptureArea');
+            if (!ticketEl) {
+                if (_ticketGenerationAttempts < 10) {
+                    _ticketGenerationAttempts++;
+                    requestAnimationFrame(generateTicketImage);
+                }
+                return;
+            }
             try {
-                const ticketEl = document.getElementById('ticketCaptureArea');
-                if (!ticketEl) return;
                 const canvas = await html2canvas(ticketEl, { scale: 2, backgroundColor: '#ffffff' });
                 canvas.toBlob((blob) => {
                     preGeneratedBlob = blob;
-                    const fileName = `Ticket_${socioInfo.nombre.replace(/\s+/g, '_')}.png`;
+                    const fileName = `Ticket_${safeNombre.replace(/\s+/g, '_')}.png`;
                     preGeneratedFile = new File([blob], fileName, { type: 'image/png' });
                 }, 'image/png');
             } catch (e) {
                 console.error('Error pre-generando ticket', e);
             }
-        }, 500);
+        };
+
+        requestAnimationFrame(generateTicketImage);
 
         const btnClose = document.getElementById('btnCloseTicketModal');
         const btnCancel = document.getElementById('btnCancelTicket');
@@ -131,10 +148,10 @@ export class TicketGenerator {
                 }
 
                 const phone = socioInfo.telefono ? socioInfo.telefono.replace(/[^0-9]/g, '') : '';
-                const msg = `¡Hola ${socioInfo.nombre}! Te enviamos desde ${gymName.toUpperCase()} tu comprobante de inscripción.`;
+                const msg = `¡Hola ${safeNombre}! Te enviamos desde ${safeGymName.toUpperCase()} tu comprobante de inscripción.`;
 
                 // 1. Intentar usar Web Share API (Nativo en celulares, puede compartir archivos)
-                if (navigator.canShare && navigator.canShare({ files: [preGeneratedFile] })) {
+                if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [preGeneratedFile] })) {
                     try {
                         await navigator.share({
                             files: [preGeneratedFile],

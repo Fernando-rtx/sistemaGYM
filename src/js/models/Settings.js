@@ -17,11 +17,15 @@ export class Settings {
     }
 
     static fromSupabase(row) {
+        let precios = row.precios;
+        if (typeof precios === 'string') {
+            try { precios = JSON.parse(precios); } catch { precios = {}; }
+        }
         return new Settings({
             id: row.id,
             brandName: row.brand_name,
             brandColor: row.brand_color,
-            precios: typeof row.precios === 'string' ? JSON.parse(row.precios) : row.precios
+            precios
         });
     }
 

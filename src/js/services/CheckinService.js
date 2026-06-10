@@ -24,6 +24,9 @@ export class CheckinService extends BaseService {
     }
 
     async registrar(socioId, nombre) {
+        if (!socioId) {
+            return this.handleError(new Error('ID de socio requerido'), null);
+        }
         const { data: socioData, error: fetchError } = await supabase.from('socios').select('estado').eq('id', socioId).single();
         if (fetchError) return this.handleError(fetchError, null);
         if (socioData?.estado === 'Congelado') {
@@ -33,6 +36,17 @@ export class CheckinService extends BaseService {
         const d = new Date();
         const fecha = toDateStr(d);
         const hora = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+        // Check for existing checkin today
+        const { data: existing } = await supabase
+            .from('checkins')
+            .select('id')
+            .eq('socio_id', socioId)
+            .eq('fecha', fecha)
+            .maybeSingle();
+        if (existing) {
+            return this.handleError(new Error('El socio ya tiene un check-in registrado hoy'), null);
+        }
 
         const insertData = { socio_id: socioId, fecha, hora };
         const { data, error } = await supabase.from('checkins').insert([insertData]).select().single();
@@ -69,7 +83,7 @@ export class CheckinService extends BaseService {
                 expected.setDate(expected.getDate() - i);
                 const expectedStr = toDateStr(expected);
 
-                if (sortedDates.includes(expectedStr)) {
+                if (fechas.has(expectedStr)) {
                     racha++;
                 } else {
                     break;

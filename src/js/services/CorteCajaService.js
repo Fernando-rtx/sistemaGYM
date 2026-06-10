@@ -8,12 +8,30 @@ export class CorteCajaService extends BaseService {
     }
 
     async guardarCorte(resumen) {
+        const hoy = this.today();
+
+        // Validate numeric fields
+        const ingresos = parseMoney(resumen.ingresos);
+        const salidas = parseMoney(resumen.salidas);
+        const total = parseMoney(resumen.total);
+        const numTransacciones = safeInt(resumen.numTransacciones);
+
+        if (!isFinite(ingresos) || !isFinite(salidas) || !isFinite(total) || !isFinite(numTransacciones)) {
+            return this.handleError(new Error('Los valores del resumen deben ser números finitos'), null);
+        }
+
+        // Prevent duplicate date
+        const { data: existing } = await supabase.from('cortes_caja').select('id').eq('fecha', hoy).maybeSingle();
+        if (existing) {
+            return this.handleError(new Error('Ya existe un corte de caja para hoy'), null);
+        }
+
         const insertData = {
-            fecha: this.today(),
-            ingresos: parseMoney(resumen.ingresos),
-            salidas: parseMoney(resumen.salidas),
-            total: parseMoney(resumen.total),
-            num_transacciones: safeInt(resumen.numTransacciones)
+            fecha: hoy,
+            ingresos,
+            salidas,
+            total,
+            num_transacciones: numTransacciones
         };
 
         const { data, error } = await supabase.from('cortes_caja').insert([insertData]).select().single();

@@ -24,13 +24,13 @@ import { ReportesView } from '../views/ReportesView.js';
 
 import { MAX_QUICK_SEARCH } from './utils/constants.js';
 
+// Setup EventBus
+const eventBus = new EventBus();
+
 // Setup Toast and Modal Managers
 const toastManager = new ToastManager();
 const modalManager = new ModalManager();
-const errorHandler = new ErrorHandler(toastManager);
-
-// Setup EventBus
-const eventBus = new EventBus();
+const errorHandler = new ErrorHandler(toastManager, eventBus);
 
 // Setup Services Map
 const services = {
@@ -64,7 +64,7 @@ const applySettings = (settings) => {
         brandEls.forEach(el => {
             el.textContent = settings.brandName.toUpperCase();
         });
-        
+
         const logoEl = document.querySelector('.brand-logo');
         if (logoEl) {
             logoEl.textContent = settings.brandName.trim().charAt(0).toUpperCase();
@@ -77,8 +77,10 @@ const applySettings = (settings) => {
     }
 };
 
-// Global routing function
+// Global routing function (kept for HTML onclick compatibility)
 window.navigateTo = async (viewName) => {
+    if (!router) return;
+
     const user = services.auth.getCurrentUser();
     if (!user) return;
 
@@ -144,7 +146,7 @@ const applyAuthUI = () => {
         if (loginOverlay) loginOverlay.style.display = 'flex';
     } else {
         if (loginOverlay) loginOverlay.style.display = 'none';
-        
+
         const userNameDisplay = document.getElementById('sidebarUserName');
         const userRoleDisplay = document.getElementById('sidebarUserRole');
         const avatarDisplay = document.getElementById('sidebarAvatar');
@@ -165,7 +167,13 @@ const applyAuthUI = () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initial settings fetch
-    const settings = await services.settings.get();
+    let settings;
+    try {
+        settings = await services.settings.get();
+    } catch (err) {
+        console.error('Failed to load settings, using defaults:', err);
+        settings = { brandName: 'NEXFIT', brandColor: '#94ff00' };
+    }
     applySettings(settings);
 
     updateDate();
@@ -173,7 +181,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Setup Router
     const viewContainer = document.getElementById('viewContainer');
     router = new Router(viewContainer, services, eventBus);
-    window.router = router;
 
     router.register('dashboard', DashboardView);
     router.register('socios', SociosView);
@@ -183,21 +190,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     router.register('reportes', ReportesView);
 
     // 3. React to updates
-    eventBus.on('settings:updated', (newSettings) => {
+    eventBus.on('settings:changed', async (newSettings) => {
         applySettings(newSettings);
         // Refresh current view if needed
         const current = router.getCurrentView();
         if (current && typeof current.init === 'function') {
-            current.init();
+            await current.init();
         }
     });
 
     // 4. Navigation Events
     const navBtns = document.querySelectorAll('.nav-menu .nav-btn');
     navBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const view = e.currentTarget.getAttribute('data-view');
-            window.navigateTo(view);
+            await window.navigateTo(view);
         });
     });
 
@@ -223,7 +230,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnLoginSubmit.addEventListener('click', async () => {
             const u = document.getElementById('loginUser').value.trim();
             const p = document.getElementById('loginPass').value.trim();
-            
+
+            if (!u || !p) {
+                toastManager.danger('Ingrese usuario y contraseña');
+                return;
+            }
+
             const success = await services.auth.login(u, p);
             if (success) {
                 toastManager.success('Sesión iniciada correctamente');
@@ -263,16 +275,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial check
     applyAuthUI();
-    if (services.auth.getCurrentUser()) {
-        await router.init();
-    }
+    await router.init();
 
     // Quick Checkin button
     const btnCheckinRapido = document.getElementById('btnCheckinRapido');
     if (btnCheckinRapido) {
         btnCheckinRapido.addEventListener('click', async () => {
             const socios = await services.socio.getAll();
-            
+
             const modalHtml = `
                 <div class="modal-header">
                     <h3 class="modal-title">CHECK-IN RÁPIDO</h3>
@@ -289,8 +299,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const searchEl = document.getElementById('quickSearchSocio');
             const btnClose = document.getElementById('btnCloseQuickCheckin');
 
+            let quickSearchTimer;
+            const closeModal = () => {
+                clearTimeout(quickSearchTimer);
+                modalManager.close();
+            };
+
             if (btnClose) {
-                btnClose.addEventListener('click', () => modalManager.close());
+                btnClose.addEventListener('click', closeModal);
             }
 
             const renderList = (filter = '') => {
@@ -311,16 +327,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const id = item.getAttribute('data-id');
                         const nombre = item.getAttribute('data-nombre');
                         const socio = socios.find(s => s.id === id);
-                        
+
                         if (socio && (socio.estado !== 'Activo' || socio.estaVencido)) {
                             toastManager.danger(`Acceso denegado. Membresía de ${nombre} está vencida/inactiva`);
                             return;
                         }
 
                         const diasRestantes = socio.diasRestantes;
+                        clearTimeout(quickSearchTimer);
                         const checkinObj = await services.checkin.registrar(id, nombre);
                         modalManager.close();
-                        
+
                         if (checkinObj) {
                             if (diasRestantes <= 5 && diasRestantes >= 0) {
                                 toastManager.warning(`Check-in registrado. AVISO: Membresía vence en ${diasRestantes} días`);
@@ -335,7 +352,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             renderList();
-            let quickSearchTimer;
             searchEl.addEventListener('input', (e) => {
                 clearTimeout(quickSearchTimer);
                 quickSearchTimer = setTimeout(() => renderList(e.target.value), 300);

@@ -1,6 +1,7 @@
 import { Socio } from '../../js/models/Socio.js';
 import { getPlanes } from '../../js/utils/planSelector.js';
 import { PLAN_DIAS } from '../../js/utils/constants.js';
+import { escapeHtml } from '../../js/utils/escapeHtml.js';
 
 export class SocioForm {
     constructor(services, eventBus) {
@@ -44,13 +45,13 @@ export class SocioForm {
             
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">NOMBRE COMPLETO</label>
-                <input type="text" id="inpSocioNombre" value="${isEdit ? socio.nombre : ''}" placeholder="Ej. María Fernanda Castillo" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+                <input type="text" id="inpSocioNombre" value="${isEdit ? escapeHtml(socio.nombre) : ''}" placeholder="Ej. María Fernanda Castillo" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
             </div>
             
             <div style="display: flex; gap: 15px; margin-bottom: 20px;">
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">EDAD</label>
-                    <input type="number" id="inpSocioEdad" value="${isEdit && socio.edad ? socio.edad : ''}" placeholder="25" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
+                    <input type="number" id="inpSocioEdad" value="${isEdit && socio.edad ? escapeHtml(String(socio.edad)) : ''}" placeholder="25" style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
                 </div>
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
                     <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">TELÉFONO</label>
@@ -65,14 +66,14 @@ export class SocioForm {
                             <option value="+506" ${currentPrefix === '+506' ? 'selected' : ''}>🇨🇷 +506</option>
                             <option value="+507" ${currentPrefix === '+507' ? 'selected' : ''}>🇵🇦 +507</option>
                         </select>
-                        <input type="text" id="inpSocioTel" value="${currentNum}" placeholder="12345678" maxlength="8" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <input type="text" id="inpSocioTel" value="${escapeHtml(currentNum)}" placeholder="12345678" maxlength="8" style="flex: 1; background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.2s;">
                     </div>
                 </div>
             </div>
             
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">NOTAS INTERNAS</label>
-                <textarea id="inpSocioNotas" placeholder="Notas opcionales sobre el socio..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; min-height: 60px; box-sizing: border-box; outline: none; font-family: inherit; resize: vertical;">${isEdit && socio.notas ? socio.notas : ''}</textarea>
+                <textarea id="inpSocioNotas" placeholder="Notas opcionales sobre el socio..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 14px; width: 100%; min-height: 60px; box-sizing: border-box; outline: none; font-family: inherit; resize: vertical;">${isEdit && socio.notas ? escapeHtml(socio.notas) : ''}</textarea>
             </div>
 
             ${!isEdit ? `
@@ -120,11 +121,19 @@ export class SocioForm {
         const btnClose = document.getElementById('btnCloseSocioForm');
         const btnCancel = document.getElementById('btnCancelSocioForm');
         const btnSave = document.getElementById('btnGuardarSocio');
+        const telInput = document.getElementById('inpSocioTel');
 
         const cleanup = () => this.services.modal.close();
 
         if (btnClose) btnClose.addEventListener('click', cleanup);
         if (btnCancel) btnCancel.addEventListener('click', cleanup);
+
+        // Replace inline oninput handler with JS event listener
+        if (telInput) {
+            telInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
 
         if (!isEdit) {
             const fechaInicioInp = document.getElementById('inpFechaInicio');
@@ -134,7 +143,7 @@ export class SocioForm {
             const updateVencimiento = () => {
                 const dateVal = fechaInicioInp.value;
                 const selectedCard = document.querySelector('.plan-card-ns.selected');
-                const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
+                const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias'), 10) : PLAN_DIAS.Mensual;
                 
                 if (!dateVal) return;
                 const d = new Date(dateVal + "T00:00:00");
@@ -204,7 +213,7 @@ export class SocioForm {
                         const selectedCard = document.querySelector('.plan-card-ns.selected');
                         const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
                         const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
-                    const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
+                    const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias'), 10) : PLAN_DIAS.Mensual;
                     
                     const fechaInicio = document.getElementById('inpFechaInicio').value;
                         const dVenc = new Date(fechaInicio + "T00:00:00");

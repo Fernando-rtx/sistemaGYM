@@ -1,4 +1,5 @@
 import { DIAS_POR_VENCER } from '../utils/constants.js';
+import { formatDate } from '../utils/dateUtils.js';
 
 export class Socio {
     constructor({ id, nombre, telefono, edad, membresia, precio, fechaRegistro, fechaVencimiento, estado, deuda, notas, fecha_congelado, dias_congelado, foto_url, createdAt }) {
@@ -98,11 +99,7 @@ export class Socio {
     }
 
     static formatFecha(dateStr) {
-        if (!dateStr || dateStr === 'Próximo mes') return dateStr;
-        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return dateStr;
-        return `${parseInt(parts[2])} ${meses[parseInt(parts[1]) - 1]}`;
+        return formatDate(dateStr);
     }
 
     static calcularVencimiento(plan) {

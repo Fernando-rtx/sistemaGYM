@@ -3,8 +3,16 @@ export class BaseView {
         this.container = container;
         this.services = services;
         this.eventBus = eventBus;
+        this._cleanups = [];
         this._eventBindings = [];
         this._subscriptions = [];
+
+        if (!this.container) {
+            console.warn('BaseView: container is null');
+        }
+        if (!this.services) {
+            console.warn('BaseView: services is null');
+        }
     }
 
     render() {
@@ -16,6 +24,11 @@ export class BaseView {
     }
 
     destroy() {
+        this._cleanups.forEach(fn => {
+            try { fn(); } catch (e) {}
+        });
+        this._cleanups = [];
+
         this._eventBindings.forEach(({ el, event, handler }) => {
             if (el) {
                 try {
@@ -33,16 +46,18 @@ export class BaseView {
             }
         });
         this._subscriptions = [];
-        
-        this.container.innerHTML = '';
+
+        if (this.container) {
+            this.container.innerHTML = '';
+        }
     }
 
     $(selector) {
-        return this.container.querySelector(selector);
+        return this.container ? this.container.querySelector(selector) : null;
     }
 
     $$(selector) {
-        return this.container.querySelectorAll(selector);
+        return this.container ? this.container.querySelectorAll(selector) : null;
     }
 
     bindEvent(el, event, handler) {
@@ -55,5 +70,9 @@ export class BaseView {
         if (!this.eventBus) return;
         this.eventBus.on(event, callback);
         this._subscriptions.push({ event, callback });
+    }
+
+    addCleanup(fn) {
+        this._cleanups.push(fn);
     }
 }

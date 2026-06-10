@@ -245,6 +245,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Fade in animation for view transitions */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -283,6 +290,7 @@ body {
 
 .toast.success { border-left-color: var(--color-success); }
 .toast.danger { border-left-color: var(--color-danger); }
+.toast.warning { border-left-color: var(--color-warning); }
 .toast.info { border-left-color: #3b82f6; }
 
 @keyframes slideIn {
@@ -357,26 +365,25 @@ body {
   color: var(--color-text-primary);
 }
 
+.nav-btn:focus-visible, .btn:focus-visible, .btn-close:focus-visible, .btn-icon:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* ==================== RESPONSIVE DESIGN ==================== */
 .sidebar-overlay {
-  display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
   z-index: 900;
   backdrop-filter: blur(2px);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .sidebar-overlay.active {
-  display: block;
   opacity: 1;
-}
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  visibility: visible;
 }
 
 @media (max-width: 768px) {
@@ -444,4 +451,35 @@ body {
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
-.rotate-anim { animation: spin 1s linear infinite; display: inline-block; }
+.spin-anim { animation: spin 1s linear infinite; display: inline-block; }
+
+.dashboard-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.heatmap-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-activo { background-color: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+.status-vencido { background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); }
+.status-ausente { background-color: rgba(255, 255, 255, 0.1); color: var(--color-text-secondary); }
+.status-congelado { background-color: rgba(96, 165, 250, 0.1); color: #60a5fa; }

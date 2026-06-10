@@ -9,8 +9,10 @@ export class TransaccionService extends BaseService {
         super(eventBus);
     }
 
-    async getAll() {
-        const { data, error } = await supabase.from('transacciones').select('*').order('created_at', { ascending: false });
+    async getAll(page = 1, pageSize = 100) {
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize - 1;
+        const { data, error } = await supabase.from('transacciones').select('*').order('created_at', { ascending: false }).range(start, end);
         if (error) return this.handleError(error, []);
         return data.map(t => Transaccion.fromSupabase(t));
     }
@@ -23,6 +25,16 @@ export class TransaccionService extends BaseService {
     }
 
     async crear(transaccionData) {
+        const validTipos = ['ingreso', 'egreso'];
+        if (!validTipos.includes(transaccionData.tipo)) {
+            return this.handleError(new Error('Tipo debe ser "ingreso" o "egreso"'), null);
+        }
+        if (!transaccionData.monto || parseFloat(transaccionData.monto) <= 0) {
+            return this.handleError(new Error('El monto debe ser mayor a 0'), null);
+        }
+        if (!transaccionData.concepto || !transaccionData.concepto.trim()) {
+            return this.handleError(new Error('El concepto no puede estar vacío'), null);
+        }
         const trans = new Transaccion(transaccionData);
         if (!trans.fecha) trans.fecha = this.today();
         if (!trans.hora) {
@@ -49,7 +61,7 @@ export class TransaccionService extends BaseService {
     async getIngresosMes(mes, anio) {
         const { startStr, endStr } = getMonthRange(mes, anio);
         const { data, error } = await supabase.from('transacciones')
-            .select('*')
+            .select('monto')
             .eq('tipo', 'ingreso')
             .gte('fecha', startStr)
             .lte('fecha', endStr);

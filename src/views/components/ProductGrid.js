@@ -1,3 +1,5 @@
+import { escapeHtml } from '../../js/utils/escapeHtml.js';
+
 export class ProductGrid {
     constructor(container, services, onProductSelected) {
         this.container = container;
@@ -24,6 +26,11 @@ export class ProductGrid {
             return;
         }
 
+        // Remove previous delegation listener
+        if (this._gridClickHandler) {
+            this.container.removeEventListener('click', this._gridClickHandler);
+        }
+
         this.container.innerHTML = this.products.map(p => {
             const inCart = cartItems.find(c => c.id === p.id);
             const qtyCart = inCart ? inCart.qty : 0;
@@ -31,28 +38,30 @@ export class ProductGrid {
             const disabled = stockRestante <= 0 ? 'disabled' : '';
 
             return `
-                <div class="product-item ${disabled}" data-id="${p.id}" style="position: relative;">
-                    <div class="prod-stock">${p.stock}</div>
-                    <span class="material-icons-round" style="font-size: 32px; color: ${p.color};">${p.icono}</span>
-                    <div class="prod-name">${p.nombre}</div>
+                <div class="product-item ${disabled}" data-id="${escapeHtml(p.id)}" style="position: relative;">
+                    <div class="prod-stock">${escapeHtml(String(p.stock))}</div>
+                    <span class="material-icons-round" style="font-size: 32px; color: ${escapeHtml(p.color)};">${escapeHtml(p.icono)}</span>
+                    <div class="prod-name">${escapeHtml(p.nombre)}</div>
                     <div class="prod-price">$${parseFloat(p.precio).toFixed(2)}</div>
                 </div>
             `;
         }).join('');
 
-        this.container.querySelectorAll('.product-item').forEach(item => {
-            item.addEventListener('click', () => {
-                if (item.classList.contains('disabled')) return;
-                const id = item.getAttribute('data-id');
-                const product = this.products.find(p => p.id === id);
-                
-                item.style.transform = 'scale(0.95)';
-                setTimeout(() => { item.style.transform = ''; }, 150);
+        // Event delegation on container
+        this._gridClickHandler = (e) => {
+            const item = e.target.closest('.product-item');
+            if (!item || item.classList.contains('disabled')) return;
+            const id = item.getAttribute('data-id');
+            const product = this.products.find(p => p.id === id);
+            if (!product) return;
 
-                if (this.onProductSelected && product) {
-                    this.onProductSelected(product);
-                }
-            });
-        });
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => { item.style.transform = ''; }, 150);
+
+            if (this.onProductSelected) {
+                this.onProductSelected(product);
+            }
+        };
+        this.container.addEventListener('click', this._gridClickHandler);
     }
 }

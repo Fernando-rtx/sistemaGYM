@@ -152,50 +152,67 @@ export class ConfiguracionView extends BaseView {
             });
         }
 
-        // Guardar ajustes de identidad
+        // Guardar ajustes de identidad (ONLY identity fields)
         if (btnGuardarConfig) {
             this.bindEvent(btnGuardarConfig, 'click', async () => {
-                const name = inpName.value.trim() || 'NEXFIT';
-                const color = inpColor.value || '#94ff00';
+                btnGuardarConfig.disabled = true;
+                const originalText = btnGuardarConfig.innerHTML;
+                btnGuardarConfig.innerHTML = '<span class="material-icons-round" style="animation: spin 1s linear infinite;">autorenew</span> GUARDANDO...';
+                try {
+                    const current = await this.services.settings.get();
+                    const name = inpName.value.trim() || 'NEXFIT';
+                    const color = inpColor.value || '#94ff00';
 
-                const updated = await this.services.settings.save({
-                    brandName: name,
-                    brandColor: color,
-                    precios: {
-                        Mensual: parseFloat(precioMensual.value || 20),
-                        Quincenal: parseFloat(precioQuincenal.value || 10),
-                        Diario: parseFloat(precioDiario.value || 3)
+                    const updated = await this.services.settings.save({
+                        brandName: name,
+                        brandColor: color,
+                        precios: current.precios || { Mensual: 20, Quincenal: 10, Diario: 3 }
+                    });
+
+                    if (updated) {
+                        this.services.toast.success('Configuración guardada exitosamente');
+                        this.eventBus.emit('settings:updated', updated);
+                    } else {
+                        this.services.toast.danger('No se pudo guardar la configuración');
                     }
-                });
-
-                if (updated) {
-                    this.services.toast.success('Configuración guardada exitosamente');
-                    // Emitir evento para actualizar marca de inmediato
-                    this.eventBus.emit('settings:updated', updated);
-                } else {
-                    this.services.toast.danger('No se pudo guardar la configuración');
+                } catch (e) {
+                    this.services.toast.danger('Error al guardar configuración');
+                } finally {
+                    btnGuardarConfig.disabled = false;
+                    btnGuardarConfig.innerHTML = originalText;
                 }
             });
         }
 
-        // Guardar precios
+        // Guardar precios (ONLY prices)
         if (btnGuardarPrecios) {
             this.bindEvent(btnGuardarPrecios, 'click', async () => {
-                const updated = await this.services.settings.save({
-                    brandName: inpName.value.trim() || 'NEXFIT',
-                    brandColor: inpColor.value || '#94ff00',
-                    precios: {
-                        Mensual: parseFloat(precioMensual.value || 20),
-                        Quincenal: parseFloat(precioQuincenal.value || 10),
-                        Diario: parseFloat(precioDiario.value || 3)
-                    }
-                });
+                btnGuardarPrecios.disabled = true;
+                const originalText = btnGuardarPrecios.innerHTML;
+                btnGuardarPrecios.innerHTML = '<span class="material-icons-round" style="animation: spin 1s linear infinite;">autorenew</span> GUARDANDO...';
+                try {
+                    const current = await this.services.settings.get();
+                    const updated = await this.services.settings.save({
+                        brandName: current.brandName || 'NEXFIT',
+                        brandColor: current.brandColor || '#94ff00',
+                        precios: {
+                            Mensual: parseFloat(precioMensual.value || 20),
+                            Quincenal: parseFloat(precioQuincenal.value || 10),
+                            Diario: parseFloat(precioDiario.value || 3)
+                        }
+                    });
 
-                if (updated) {
-                    this.services.toast.success('Precios actualizados');
-                    this.eventBus.emit('settings:updated', updated);
-                } else {
+                    if (updated) {
+                        this.services.toast.success('Precios actualizados');
+                        this.eventBus.emit('settings:updated', updated);
+                    } else {
+                        this.services.toast.danger('Error al guardar precios');
+                    }
+                } catch (e) {
                     this.services.toast.danger('Error al guardar precios');
+                } finally {
+                    btnGuardarPrecios.disabled = false;
+                    btnGuardarPrecios.innerHTML = originalText;
                 }
             });
         }

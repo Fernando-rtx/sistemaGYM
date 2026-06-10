@@ -26,14 +26,12 @@ export class SettingsService extends BaseService {
 
         const updates = settings.toSupabase();
 
-        if (current.id) {
-            const { error } = await supabase.from('ajustes').update(updates).eq('id', current.id);
-            if (error) return this.handleError(error, null);
-        } else {
-            const { data, error } = await supabase.from('ajustes').insert([updates]).select().single();
-            if (error) return this.handleError(error, null);
-            settings.id = data.id;
-        }
+        const { data, error } = await supabase.from('ajustes').upsert(
+            { ...updates, id: current.id || 1 },
+            { onConflict: 'id' }
+        ).select().single();
+
+        if (error) return this.handleError(error, null);
 
         this.emit('settings:changed', settings);
         return settings;
@@ -44,10 +42,11 @@ export class SettingsService extends BaseService {
     }
 
     async init() {
-        const { data, error } = await supabase.from('ajustes').select('*').limit(1);
-        if (!error && data && data.length === 0) {
-            const defaults = Settings.defaults();
-            await supabase.from('ajustes').insert([defaults.toSupabase()]);
-        }
+        const defaults = Settings.defaults();
+        const { error } = await supabase.from('ajustes').upsert(
+            { id: 1, ...defaults.toSupabase() },
+            { onConflict: 'id' }
+        );
+        if (error) console.error('Settings init upsert error:', error);
     }
 }

@@ -1,27 +1,40 @@
 export class ToastManager {
     constructor() {
-        this.container = document.getElementById('toastContainer');
+        this.container = null;
+    }
+
+    _ensureContainer() {
+        if (!this.container) {
+            this.container = document.getElementById('toastContainer');
+        }
+        return this.container;
     }
 
     show(message, type = 'info', duration = 3000) {
-        if (!this.container) {
-            this.container = document.getElementById('toastContainer');
-            if (!this.container) return;
-        }
+        const container = this._ensureContainer();
+        if (!container) return;
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.setAttribute('role', 'alert');
-        
+
         const icons = { success: 'check_circle', danger: 'error', info: 'info', warning: 'warning' };
         const icon = icons[type] || 'info';
         toast.innerHTML = `<span class="material-icons-round">${icon}</span> ${message}`;
-        
-        this.container.appendChild(toast);
-        
+
+        container.appendChild(toast);
+
+        while (container.children.length > 5) {
+            container.removeChild(container.firstChild);
+        }
+
         setTimeout(() => {
             toast.style.animation = 'slideOut 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
+            setTimeout(() => {
+                if (toast.isConnected) {
+                    toast.remove();
+                }
+            }, 300);
         }, duration);
     }
 
@@ -41,5 +54,3 @@ export class ToastManager {
         this.show(message, 'info', duration);
     }
 }
-
-export const toastManager = new ToastManager();

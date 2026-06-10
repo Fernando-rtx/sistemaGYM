@@ -1,5 +1,6 @@
 import { BaseView } from '../js/core/BaseView.js';
 import { calcularVencimiento } from '../js/utils/planSelector.js';
+import { escapeHtml } from '../js/utils/escapeHtml.js';
 
 export class DashboardView extends BaseView {
     constructor(container, services, eventBus) {
@@ -11,7 +12,7 @@ export class DashboardView extends BaseView {
         return `
             <div class="dashboard-grid-premium" id="dashboardContainer">
                 <div style="padding: 40px; text-align: center; color: var(--color-text-secondary);">
-                    <span class="material-icons-round style="font-size: 48px; animation: spin 1.5s linear infinite;">autorenew</span>
+                    <span class="material-icons-round" style="font-size: 48px; animation: spin 1.5s linear infinite;">autorenew</span>
                     <p style="margin-top: 10px;">Cargando Dashboard...</p>
                 </div>
             </div>
@@ -21,9 +22,9 @@ export class DashboardView extends BaseView {
     async init() {
         this.container.innerHTML = this.render();
         await this.loadDashboardData();
-        this.subscribe('checkin:created', () => this.loadDashboardData());
-        this.subscribe('socio:updated', () => this.loadDashboardData());
-        this.subscribe('settings:changed', () => this.loadDashboardData());
+        this.subscribe('checkin:created', () => { this.loadDashboardData().catch(e => console.error(e)); });
+        this.subscribe('socio:updated', () => { this.loadDashboardData().catch(e => console.error(e)); });
+        this.subscribe('settings:changed', () => { this.loadDashboardData().catch(e => console.error(e)); });
     }
 
     async loadDashboardData() {
@@ -57,16 +58,19 @@ export class DashboardView extends BaseView {
             
             const badgeStyle = 'color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);';
             const phoneClean = v.telefono ? v.telefono.replace(/[^0-9]/g, '') : '';
-            const waText = `Hola ${v.nombre}, te contactamos de ${gymName.toUpperCase()}.\n\nNotamos que tu membresía ${textVencimiento.toLowerCase()}. ¡Te invitamos a renovar para seguir entrenando juntos!`;
+            const safeName = escapeHtml(v.nombre);
+            const safeMembresia = escapeHtml(v.membresia);
+            const safeId = escapeHtml(v.id);
+            const waText = `Hola ${safeName}, te contactamos de ${gymName.toUpperCase()}.\n\nNotamos que tu membresía ${textVencimiento.toLowerCase()}. ¡Te invitamos a renovar para seguir entrenando juntos!`;
             const waLink = phoneClean ? `https://wa.me/${phoneClean}?text=${encodeURIComponent(waText)}` : '#';
             
             return `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="width: 44px; height: 44px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${v.nombre.substring(0,2).toUpperCase()}</div>
+                        <div style="width: 44px; height: 44px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${escapeHtml(v.nombre.substring(0,2).toUpperCase())}</div>
                         <div>
-                            <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">${v.nombre}</div>
-                            <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">${textVencimiento} · Plan ${v.membresia}</div>
+                            <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">${safeName}</div>
+                            <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">${textVencimiento} · Plan ${safeMembresia}</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -76,7 +80,7 @@ export class DashboardView extends BaseView {
                         <a href="${waLink}" target="${phoneClean ? '_blank' : '_self'}" title="${phoneClean ? 'Enviar WhatsApp' : 'Sin número'}" class="btn btn-outline" style="padding: 8px; border-radius: 8px; color: var(--color-text-primary); border-color: rgba(255,255,255,0.1); ${!phoneClean ? 'opacity: 0.3; pointer-events: none;' : ''}">
                             <span class="material-icons-round" style="font-size: 18px;">chat</span>
                         </a>
-                        <button class="btn btn-primary btn-renovar" data-socio-id="${v.id}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
+                        <button class="btn btn-primary btn-renovar" data-socio-id="${safeId}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
                     </div>
                 </div>
             `;
@@ -87,12 +91,12 @@ export class DashboardView extends BaseView {
                 <div style="display: flex; align-items: center; gap: 20px;">
                     <div style="font-size: 20px; font-weight: 900; color: var(--color-primary); width: 24px; text-align: center;">${index + 1}</div>
                     <div>
-                        <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">${r.nombre}</div>
-                        <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan ${socios.find(s=>s.id===r.socioId)?.membresia || ''}</div>
+                        <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">${escapeHtml(r.nombre)}</div>
+                        <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan ${escapeHtml(socios.find(s=>s.id===r.socioId)?.membresia || '')}</div>
                     </div>
                 </div>
                 <div style="color: var(--color-primary); font-weight: 800; font-size: 15px;">
-                    🔥 ${r.racha}
+                    🔥 ${escapeHtml(String(r.racha))}
                 </div>
             </div>
         `).join('') : '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Sin rachas. ¡Invita a tus socios a entrenar!</div>';
@@ -264,7 +268,7 @@ export class DashboardView extends BaseView {
         const verTodosBtn = this.$('#btnDashboardVerTodosSocios');
         if (verTodosBtn) {
             this.bindEvent(verTodosBtn, 'click', () => {
-                if (window.router) window.router.navigate('socios');
+                if (window.navigateTo) window.navigateTo('socios');
             });
         }
 
@@ -289,9 +293,9 @@ export class DashboardView extends BaseView {
                 <button class="btn-close" id="btnCloseRenovarModal"><span class="material-icons-round">close</span></button>
             </div>
             <div style="text-align: center; margin-bottom: 20px;">
-                <div style="width: 60px; height: 60px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${socio.nombre.substring(0,2).toUpperCase()}</div>
-                <h3 style="font-size: 18px; font-weight: 800;">${socio.nombre}</h3>
-                <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: ${socio.membresia}</p>
+                <div style="width: 60px; height: 60px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; margin-bottom: 10px;">${escapeHtml(socio.nombre.substring(0,2).toUpperCase())}</div>
+                <h3 style="font-size: 18px; font-weight: 800;">${escapeHtml(socio.nombre)}</h3>
+                <p style="color: var(--color-text-secondary); font-size: 13px;">Plan actual: ${escapeHtml(socio.membresia)}</p>
             </div>
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <div class="plan-card selected" data-plan="Mensual" data-precio="${precios.Mensual}" style="flex: 1; border: 2px solid var(--color-primary); padding: 15px; border-radius: var(--border-radius-md); text-align: center; cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); transition: all 0.2s;">
@@ -367,14 +371,14 @@ export class DashboardView extends BaseView {
                     
                     await this.services.transaccion.crear({
                         tipo: 'ingreso',
-                        concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
+                        concepto: `Renovación ${selectedPlan} - ${escapeHtml(socio.nombre)}`,
                         monto: selectedPrecio
                     });
 
                     await this.services.renovacion.registrar(socioId, planAnterior, selectedPlan, selectedPrecio);
                     
                     cleanup();
-                    this.services.toast.success(`Membresía de ${socio.nombre} renovada con éxito`);
+                    this.services.toast.success(`Membresía de ${escapeHtml(socio.nombre)} renovada con éxito`);
                     await this.loadDashboardData();
                 } finally {
                     if (document.getElementById('btnConfirmarRenovar')) {

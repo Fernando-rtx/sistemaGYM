@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient.js';
 
-const SESSION_KEY = 'gym_sesion';
+const SESSION_KEY = 'gym_session';
 
 export class AuthService {
     constructor(eventBus) {
@@ -8,15 +8,9 @@ export class AuthService {
     }
 
     async login(username, password) {
-        // 1. Try local auth first (always works, no Supabase dependency)
-        const user = this._matchLocalUser(username, password);
-        if (user) {
-            this._saveSession(user);
-            this._emit('auth:login', user);
-            return true;
-        }
+        if (!username || !password) return false;
 
-        // 2. Try Supabase Auth (if configured and user exists there)
+        // 1. Try Supabase Auth (if configured)
         try {
             if (supabase?.auth) {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -36,16 +30,41 @@ export class AuthService {
                 }
             }
         } catch (e) {
-            // Supabase not available, just use local auth
+            console.error('Supabase auth error:', e);
+        }
+
+        // 2. Fallback: try custom usuarios table
+        try {
+            const { data, error } = await supabase
+                .from('usuarios')
+                .select('*')
+                .or(`username.eq.${username},email.eq.${username}`)
+                .single();
+
+            if (data && data.password === password) {
+                const session = {
+                    id: data.id,
+                    username: data.username || data.email,
+                    nombre: data.nombre || data.username,
+                    role: data.role || 'Empleado'
+                };
+                this._saveSession(session);
+                this._emit('auth:login', session);
+                return true;
+            }
+        } catch (e) {
+            console.error('Fallback usuarios table error:', e);
         }
 
         return false;
     }
 
-    logout() {
+    async logout() {
         try {
-            supabase?.auth?.signOut();
-        } catch (e) { /* ignore */ }
+            await supabase?.auth?.signOut();
+        } catch (e) {
+            console.error('Supabase signout error:', e);
+        }
         localStorage.removeItem(SESSION_KEY);
         this._emit('auth:logout');
     }
@@ -62,7 +81,7 @@ export class AuthService {
 
     isAdmin() {
         const user = this.getCurrentUser();
-        return user && user.role !== 'Empleado';
+        return user && ['Admin', 'Creador'].includes(user.role);
     }
 
     _saveSession(user) {
@@ -75,12 +94,6 @@ export class AuthService {
     }
 
     _matchLocalUser(username, password) {
-        const users = [
-            { id: 'usr-1', username: 'fernando', password: '123', role: 'Creador', nombre: 'Fernando' },
-            { id: 'usr-2', username: 'admin', password: '123', role: 'Admin', nombre: 'Administrador' },
-            { id: 'usr-3', username: 'empleado', password: '123', role: 'Empleado', nombre: 'Recepcionista' },
-        ];
-        const user = users.find(u => u.username === username && u.password === password);
-        return user || null;
+        return null;
     }
 }

@@ -23,7 +23,13 @@ export class InventarioService extends BaseService {
     }
 
     async update(id, changes) {
-        const { data, error } = await supabase.from('inventario').update(changes).eq('id', id).select().single();
+        const allowed = ['nombre', 'precio', 'stock', 'costo', 'proveedor', 'categoria', 'descripcion'];
+        const updateData = {};
+        for (const key of allowed) {
+            if (changes[key] !== undefined) updateData[key] = changes[key];
+        }
+        if (Object.keys(updateData).length === 0) return this.handleError(new Error('No hay campos válidos para actualizar'), null);
+        const { data, error } = await supabase.from('inventario').update(updateData).eq('id', id).select().single();
         if (error) return this.handleError(error, null);
         const updatedProd = Producto.fromSupabase(data);
         this.emit('producto:updated', updatedProd);
@@ -38,15 +44,27 @@ export class InventarioService extends BaseService {
     }
 
     async restarStock(id, cantidad) {
-        const { data: current, error: getErr } = await supabase.from('inventario').select('stock').eq('id', id).single();
-        if (getErr || !current) return false;
-
-        const newStock = Math.max(0, current.stock - cantidad);
-        const { data, error } = await supabase.from('inventario').update({ stock: newStock }).eq('id', id).select().single();
-        if (error) return false;
-
-        const updatedProd = Producto.fromSupabase(data);
-        this.emit('producto:updated', updatedProd);
-        return true;
+        if (cantidad <= 0) return false;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const { data: product, error: readErr } = await supabase
+                .from('inventario')
+                .select('stock')
+                .eq('id', id)
+                .single();
+            if (readErr || !product || product.stock < cantidad) return false;
+            const { data, error } = await supabase
+                .from('inventario')
+                .update({ stock: product.stock - cantidad })
+                .eq('id', id)
+                .eq('stock', product.stock)
+                .select()
+                .single();
+            if (data) {
+                const updatedProd = Producto.fromSupabase(data);
+                this.emit('producto:updated', updatedProd);
+                return true;
+            }
+        }
+        return false;
     }
 }
