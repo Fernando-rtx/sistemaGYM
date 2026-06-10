@@ -372,7 +372,7 @@ export class SociosTable {
         const processed = this.socios.map(s => {
             const isVencido = s.estaVencido;
             const isPorVencer = s.estaPorVencer;
-            const isAusente = this.services.checkin.esAusente(s, this.checkins);
+            const isAusente = !isVencido && this.services.checkin.esAusente(s, this.checkins);
             const isActivo = s.estado === 'Activo' && !isVencido;
             const isCongelado = s.estaCongelado;
 

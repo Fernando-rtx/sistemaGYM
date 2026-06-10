@@ -40,7 +40,7 @@ export class DashboardService extends BaseService {
 
         const activos = (socios || []).filter(s => s.estado === 'Activo' && !s.estaVencido);
         const vencidos = (socios || []).filter(s => s.estaVencido);
-        const ausentes = (socios || []).filter(s => this.services.checkin.esAusente(s, checkins || []));
+        const ausentes = (socios || []).filter(s => !s.estaVencido && this.services.checkin.esAusente(s, checkins || []));
         const alertas = (porVencer || []).filter(p => !p.estaVencido)
             .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento));
 
