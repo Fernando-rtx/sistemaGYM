@@ -1,3 +1,5 @@
+import { DIAS_POR_VENCER } from '../utils/constants.js';
+
 export class Socio {
     constructor({ id, nombre, telefono, edad, membresia, precio, fechaRegistro, fechaVencimiento, estado, deuda, createdAt }) {
         this.id = id;
@@ -31,7 +33,7 @@ export class Socio {
 
     get estaPorVencer() {
         const dias = this.diasRestantes;
-        return dias <= 6 && dias >= 0;
+        return dias <= DIAS_POR_VENCER && dias >= 0;
     }
 
     get iniciales() {

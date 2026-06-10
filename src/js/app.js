@@ -22,7 +22,7 @@ import { VentasView } from '../views/VentasView.js';
 import { ConfiguracionView } from '../views/ConfiguracionView.js';
 import { ReportesView } from '../views/ReportesView.js';
 
-import { Socio } from './models/Socio.js';
+import { MAX_QUICK_SEARCH } from './utils/constants.js';
 
 // Setup Toast and Modal Managers
 const toastManager = new ToastManager();
@@ -48,8 +48,8 @@ const services = {
     dashboard: new DashboardService(eventBus),
     reporte: new ReporteService(eventBus)
 };
-services.dashboard.services = services;
-services.reporte.services = services;
+services.dashboard.setServices(services);
+services.reporte.setServices(services);
 
 // Router initialization
 let router = null;
@@ -131,7 +131,7 @@ const updateDate = () => {
     if (!dateDisplay) return;
     const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
     const date = new Date().toLocaleDateString('es-ES', options).toUpperCase();
-    dateDisplay.textContent = '📅 HOY - ' + date;
+    dateDisplay.textContent = 'HOY - ' + date;
 };
 
 // Authentication Layout Updates
@@ -235,11 +235,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const loginPassField = document.getElementById('loginPass');
+    if (loginPassField) {
+        loginPassField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                btnLoginSubmit.click();
+            }
+        });
+    }
+
     const userProfileBtn = document.getElementById('userProfileBtn');
     if (userProfileBtn) {
         userProfileBtn.addEventListener('click', () => {
-            services.auth.logout();
-            window.location.reload();
+            modalManager.confirm(
+                'CERRAR SESIÓN',
+                '¿Estás seguro de que deseas cerrar la sesión?',
+                () => {
+                    services.auth.logout();
+                    window.location.reload();
+                },
+                'CANCELAR',
+                'CERRAR SESIÓN',
+                true
+            );
         });
     }
 
@@ -258,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const modalHtml = `
                 <div class="modal-header">
                     <h3 class="modal-title">CHECK-IN RÁPIDO</h3>
-                    <button class="btn-close" id="btnCloseQuickCheckin"><span class="material-icons-round">close</span></button>
+                    <button class="btn-close" id="btnCloseQuickCheckin"><span class="material-icons-round" aria-hidden="true">close</span></button>
                 </div>
                 <div style="margin-bottom: 15px;">
                     <input type="text" id="quickSearchSocio" placeholder="🔍 Buscar socio por nombre..." style="background-color: var(--color-bg-base); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-primary); padding: 12px 16px; border-radius: var(--border-radius-md); font-size: 15px; width: 100%; box-sizing: border-box; outline: none;">
@@ -276,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const renderList = (filter = '') => {
-                const filtered = socios.filter(s => s.nombre.toLowerCase().includes(filter.toLowerCase())).slice(0, 8);
+                const filtered = socios.filter(s => s.nombre.toLowerCase().includes(filter.toLowerCase())).slice(0, MAX_QUICK_SEARCH);
                 listEl.innerHTML = filtered.map(s => `
                     <div class="quick-socio-item" data-id="${s.id}" data-nombre="${s.nombre}" style="display: flex; align-items: center; gap: 12px; background: var(--color-bg-base); padding: 12px; border-radius: var(--border-radius-sm); cursor: pointer; transition: all 0.2s;">
                         <div style="width: 36px; height: 36px; background: var(--color-bg-surface-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0;">${s.nombre.substring(0,2).toUpperCase()}</div>
@@ -284,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div style="font-weight: 500;">${s.nombre}</div>
                             <div style="font-size: 12px; color: var(--color-text-secondary);">${s.membresia}</div>
                         </div>
-                        <span class="material-icons-round" style="color: var(--color-primary);">login</span>
+                        <span class="material-icons-round" aria-hidden="true" style="color: var(--color-primary);">login</span>
                     </div>
                 `).join('');
 
@@ -317,7 +335,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             renderList();
-            searchEl.addEventListener('input', (e) => renderList(e.target.value));
+            let quickSearchTimer;
+            searchEl.addEventListener('input', (e) => {
+                clearTimeout(quickSearchTimer);
+                quickSearchTimer = setTimeout(() => renderList(e.target.value), 300);
+            });
             searchEl.focus();
         });
     }

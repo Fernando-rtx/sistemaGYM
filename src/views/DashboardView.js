@@ -1,5 +1,5 @@
 import { BaseView } from '../js/core/BaseView.js';
-import { Socio } from '../js/models/Socio.js';
+import { calcularVencimiento } from '../js/utils/planSelector.js';
 
 export class DashboardView extends BaseView {
     constructor(container, services, eventBus) {
@@ -15,41 +15,6 @@ export class DashboardView extends BaseView {
                     <p style="margin-top: 10px;">Cargando Dashboard...</p>
                 </div>
             </div>
-            
-            <style>
-                .dashboard-grid-premium {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                    padding-bottom: 24px;
-                }
-                .card {
-                    background: var(--color-bg-base);
-                    border: 1px solid rgba(255,255,255,0.03);
-                    border-radius: var(--border-radius-lg);
-                }
-                .alerts-container::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .alerts-container::-webkit-scrollbar-track {
-                    background: rgba(0,0,0,0.1); 
-                }
-                .alerts-container::-webkit-scrollbar-thumb {
-                    background: rgba(255,255,255,0.1); 
-                    border-radius: 4px;
-                }
-                .alerts-container::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255,255,255,0.2); 
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @media (max-width: 1024px) {
-                    .top-row { grid-template-columns: 1fr !important; }
-                    .bottom-row { grid-template-columns: 1fr !important; }
-                }
-            </style>
         `;
     }
 
@@ -65,48 +30,15 @@ export class DashboardView extends BaseView {
         const container = this.$('#dashboardContainer');
         if (!container) return;
 
-        const [
-            settings,
-            socios,
-            caja,
-            checkinsHoy,
-            checkins,
-            nuevosHoy,
-            porVencer
-        ] = await Promise.all([
-            this.services.settings.get(),
-            this.services.socio.getAll(),
-            this.services.transaccion.getResumenCaja(),
-            this.services.checkin.getHoy(),
-            this.services.checkin.getAll(),
-            this.services.socio.getNuevosHoy(),
-            this.services.socio.getPorVencer(6)
-        ]);
+        const {
+            settings, socios, checkinsHoy, checkins,
+            nuevosHoy, porVencer, rachas, activos, vencidos,
+            ausentes, alertas, rachaRecord, ingresosMes, totalSocios
+        } = await this.services.dashboard.getDashboardData();
 
-        const rachas = await this.services.checkin.calcularRachas(checkins);
-        const activos = socios.filter(s => s.estado === 'Activo' && !s.estaVencido).length;
-        const vencidos = socios.filter(s => s.estaVencido);
-        
         const hoy = new Date();
         const hoyPlano = new Date();
         hoyPlano.setHours(0,0,0,0);
-
-        // Calcular ausentes
-        const ausentes = socios.filter(s => this.services.checkin.esAusente(s, checkins));
-
-        // Calcular ingresos del mes
-        const mesActual = hoy.getMonth();
-        const anoActual = hoy.getFullYear();
-        const transacciones = await this.services.transaccion.getAll();
-        const ingresosMesNum = transacciones.filter(t => {
-            if (t.tipo !== 'ingreso') return false;
-            const d = new Date(t.fecha + "T00:00:00");
-            return d.getMonth() === mesActual && d.getFullYear() === anoActual;
-        }).reduce((acc, t) => acc + t.monto, 0);
-        const ingresosMes = ingresosMesNum.toFixed(2);
-
-        // Racha Récord
-        const rachaRecord = rachas.length > 0 ? rachas[0].racha : 0;
 
         // Fecha Panel
         const fechaHoyFormato = hoy.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
@@ -191,7 +123,7 @@ export class DashboardView extends BaseView {
                         </div>
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">INGRESOS DEL MES</div>
-                            <div style="font-size: 28px; font-weight: 800;">$${ingresosMes}</div>
+                            <div style="font-size: 28px; font-weight: 800;">$${Number(ingresosMes).toFixed(2)}</div>
                         </div>
                         <div style="flex: 1; min-width: 100px;">
                             <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">RACHA RÉCORD</div>
@@ -214,12 +146,12 @@ export class DashboardView extends BaseView {
                     </div>
                     <div class="card" style="border-left: 4px solid var(--color-danger); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">schedule</span> VENCIDOS</div>
-                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">${vencidos.length}</div>
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">${vencidos}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">requieren acción</div>
                     </div>
                     <div class="card" style="border-left: 4px solid #6b7280; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">person_off</span> AUSENTES</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">${ausentes.length}</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">${ausentes}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">+5 días sin asistir</div>
                     </div>
                 </div>
@@ -415,28 +347,38 @@ export class DashboardView extends BaseView {
 
         if (btnConfirm) {
             btnConfirm.addEventListener('click', async () => {
-                const planAnterior = socio.membresia;
-                const nuevaFecha = Socio.calcularVencimiento(selectedPlan);
-                
-                await this.services.socio.update(socioId, {
-                    membresia: selectedPlan,
-                    precio: selectedPrecio,
-                    fechaVencimiento: nuevaFecha,
-                    estado: 'Activo'
-                });
-                
-                await this.services.transaccion.crear({
-                    tipo: 'ingreso',
-                    concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
-                    monto: selectedPrecio
-                });
+                btnConfirm.disabled = true;
+                const originalText = btnConfirm.textContent;
+                btnConfirm.innerHTML = '<span class="material-icons-round" style="font-size: 18px; animation: spin 1s linear infinite;">autorenew</span> RENOVANDO...';
 
-                // Registrar renovación en historial (nueva tabla)
-                await this.services.renovacion.registrar(socioId, planAnterior, selectedPlan, selectedPrecio);
-                
-                cleanup();
-                this.services.toast.success(`Membresía de ${socio.nombre} renovada con éxito`);
-                await this.loadDashboardData();
+                try {
+                    const planAnterior = socio.membresia;
+                    const nuevaFecha = calcularVencimiento(selectedPlan);
+                    
+                    await this.services.socio.update(socioId, {
+                        membresia: selectedPlan,
+                        precio: selectedPrecio,
+                        fechaVencimiento: nuevaFecha,
+                        estado: 'Activo'
+                    });
+                    
+                    await this.services.transaccion.crear({
+                        tipo: 'ingreso',
+                        concepto: `Renovación ${selectedPlan} - ${socio.nombre}`,
+                        monto: selectedPrecio
+                    });
+
+                    await this.services.renovacion.registrar(socioId, planAnterior, selectedPlan, selectedPrecio);
+                    
+                    cleanup();
+                    this.services.toast.success(`Membresía de ${socio.nombre} renovada con éxito`);
+                    await this.loadDashboardData();
+                } finally {
+                    if (document.getElementById('btnConfirmarRenovar')) {
+                        btnConfirm.disabled = false;
+                        btnConfirm.innerHTML = originalText;
+                    }
+                }
             });
         }
     }

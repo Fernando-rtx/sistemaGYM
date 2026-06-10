@@ -2,6 +2,7 @@ export class ModalManager {
     constructor() {
         this.modal = document.getElementById('globalModal');
         this._setupOverlayClick();
+        this._setupEscapeKey();
     }
 
     _setupOverlayClick() {
@@ -12,6 +13,14 @@ export class ModalManager {
                 }
             });
         }
+    }
+
+    _setupEscapeKey() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.close();
+            }
+        });
     }
 
     open(contentHtml) {

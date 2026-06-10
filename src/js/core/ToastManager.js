@@ -11,6 +11,7 @@ export class ToastManager {
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
+        toast.setAttribute('role', 'alert');
         
         const icons = { success: 'check_circle', danger: 'error', info: 'info', warning: 'warning' };
         const icon = icons[type] || 'info';

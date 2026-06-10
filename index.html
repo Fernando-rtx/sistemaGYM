@@ -29,39 +29,39 @@
       </div>
       <nav class="nav-menu">
         <button class="nav-btn active" data-view="dashboard">
-          <span class="material-icons-round">dashboard</span>
+          <span class="material-icons-round" aria-hidden="true">dashboard</span>
           Panel General
         </button>
         <button class="nav-btn" data-view="socios">
-          <span class="material-icons-round">groups</span>
+          <span class="material-icons-round" aria-hidden="true">groups</span>
           Socios
         </button>
         <button class="nav-btn" data-view="checkin">
-          <span class="material-icons-round">qr_code_scanner</span>
+          <span class="material-icons-round" aria-hidden="true">qr_code_scanner</span>
           Check-in
         </button>
         <button class="nav-btn" data-view="ventas">
-          <span class="material-icons-round">point_of_sale</span>
+          <span class="material-icons-round" aria-hidden="true">point_of_sale</span>
           Ventas del Día
         </button>
         <button class="nav-btn" data-view="reportes">
-          <span class="material-icons-round">analytics</span>
+          <span class="material-icons-round" aria-hidden="true">analytics</span>
           Reportes
         </button>
         <button class="nav-btn" data-view="configuracion" id="navConfiguracion">
-          <span class="material-icons-round">settings</span>
+          <span class="material-icons-round" aria-hidden="true">settings</span>
           Configuración
         </button>
       </nav>
       <div class="user-profile" style="cursor: pointer;" id="userProfileBtn" title="Cerrar Sesión">
         <div class="avatar" id="sidebarAvatar">
-          <span class="material-icons-round">person</span>
+          <span class="material-icons-round" aria-hidden="true">person</span>
         </div>
         <div class="user-info">
           <span class="user-name" id="sidebarUserName">...</span>
           <span class="user-role" id="sidebarUserRole">...</span>
         </div>
-        <span class="material-icons-round" style="margin-left:auto; color: var(--color-danger); opacity:0.5;">logout</span>
+        <span class="material-icons-round" aria-hidden="true" style="margin-left:auto; color: var(--color-danger); opacity:0.5;">logout</span>
       </div>
     </aside>
 
@@ -70,17 +70,17 @@
       <header class="topbar">
         <div class="topbar-left" style="display: flex; align-items: center; gap: 12px;">
           <button class="mobile-menu-btn" id="mobileMenuBtn" style="display: none; background: none; border: none; color: white; cursor: pointer; padding: 4px;">
-            <span class="material-icons-round" style="font-size: 28px;">menu</span>
+            <span class="material-icons-round" aria-hidden="true" style="font-size: 28px;">menu</span>
           </button>
           <h2 class="view-title" id="viewTitle">Panel General</h2>
         </div>
         <div class="topbar-actions">
           <div class="date-display" id="currentDate"></div>
           <button class="btn btn-outline" onclick="window.navigateTo('checkin')">
-            <span class="material-icons-round">qr_code</span> Escanear QR
+            <span class="material-icons-round" aria-hidden="true">qr_code</span> Escanear QR
           </button>
           <button class="btn btn-primary" id="btnCheckinRapido">
-            <span class="material-icons-round">add</span> Check-in Rápido
+            <span class="material-icons-round" aria-hidden="true">add</span> Check-in Rápido
           </button>
         </div>
       </header>
@@ -96,7 +96,7 @@
   <div id="loginOverlay" style="position: fixed; inset: 0; background: var(--color-bg-base); z-index: 9999; display: flex; align-items: center; justify-content: center;">
       <div style="background: var(--color-bg-surface); padding: 40px; border-radius: var(--border-radius-lg); width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
           <div style="width: 80px; height: 80px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-              <span class="material-icons-round" style="font-size: 40px; color: var(--color-primary);">fitness_center</span>
+              <span class="material-icons-round" aria-hidden="true" style="font-size: 40px; color: var(--color-primary);">fitness_center</span>
           </div>
           <h2 style="margin-bottom: 5px;" class="brand-name">NEXFIT GYM</h2>
           <p style="color: var(--color-text-secondary); margin-bottom: 30px; font-size: 14px;">Inicia sesión para continuar</p>

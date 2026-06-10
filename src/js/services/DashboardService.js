@@ -1,6 +1,10 @@
 import { BaseService } from '../core/BaseService.js';
 
 export class DashboardService extends BaseService {
+    setServices(services) {
+        this.services = services;
+    }
+
     async getDashboardData() {
         const [
             settings,

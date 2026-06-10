@@ -14,7 +14,7 @@ export class VentasView extends BaseView {
             <div class="ventas-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h2 class="view-title" style="margin: 0; font-size: 24px; font-weight: 700;">Ventas y Caja</h2>
                 <button class="btn btn-outline" id="btnAdminProductos">
-                    <span class="material-icons-round">inventory_2</span> Administrar Productos
+                    <span class="material-icons-round" aria-hidden="true">inventory_2</span> Administrar Productos
                 </button>
             </div>
 
@@ -31,7 +31,7 @@ export class VentasView extends BaseView {
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <h4 style="color: var(--color-text-secondary); font-size: 13px; letter-spacing: 1px;">CARRITO</h4>
                                 <button class="btn-icon" id="btnLimpiarCarrito" title="Limpiar carrito" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-secondary); cursor: pointer; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                    <span class="material-icons-round" style="font-size: 16px;">delete_sweep</span>
+                                    <span class="material-icons-round" aria-hidden="true" style="font-size: 16px;">delete_sweep</span>
                                 </button>
                             </div>
                             <div id="carritoItems" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -40,7 +40,7 @@ export class VentasView extends BaseView {
                                 <span id="carritoTotal" style="font-size: 22px; font-weight: 800; color: var(--color-primary);">$0.00</span>
                             </div>
                             <button class="btn btn-primary" id="btnCobrar" style="width: 100%; margin-top: 12px; justify-content: center; padding: 14px;">
-                                <span class="material-icons-round">paid</span> COBRAR
+                                <span class="material-icons-round" aria-hidden="true">paid</span> COBRAR
                             </button>
                         </div>
                     </div>
@@ -180,7 +180,13 @@ export class VentasView extends BaseView {
 
         // Wire events
         this.bindEvent(this.$('#btnLimpiarCarrito'), 'click', () => {
-            this.cart.clear();
+            this.services.modal.confirm(
+                'LIMPIAR CARRITO',
+                '¿Estás seguro de limpiar el carrito? Todos los productos serán removidos.',
+                () => {
+                    this.cart.clear();
+                }
+            );
         });
 
         this.bindEvent(this.$('#btnCobrar'), 'click', () => {
@@ -253,7 +259,7 @@ export class VentasView extends BaseView {
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">COBRAR VENTA</h3>
-                <button class="btn-close" id="btnCloseCobrarModal"><span class="material-icons-round">close</span></button>
+                <button class="btn-close" id="btnCloseCobrarModal"><span class="material-icons-round" aria-hidden="true">close</span></button>
             </div>
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 14px; color: var(--color-text-secondary);">Total a cobrar:</div>
@@ -261,11 +267,11 @@ export class VentasView extends BaseView {
             </div>
             <div style="display: flex; gap: 10px; margin-bottom: 30px;">
                 <div class="payment-method selected" data-method="Efectivo" style="flex: 1; border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 5%, transparent); padding: 15px; border-radius: 8px; text-align: center; cursor: pointer;">
-                    <span class="material-icons-round" style="font-size: 32px; color: var(--color-primary);">payments</span>
+                    <span class="material-icons-round" aria-hidden="true" style="font-size: 32px; color: var(--color-primary);">payments</span>
                     <div style="margin-top: 5px; font-weight: 600; color: var(--color-primary);">EFECTIVO</div>
                 </div>
                 <div class="payment-method" data-method="Tarjeta" style="flex: 1; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; opacity: 0.5;">
-                    <span class="material-icons-round" style="font-size: 32px; color: var(--color-text-secondary);">credit_card</span>
+                    <span class="material-icons-round" aria-hidden="true" style="font-size: 32px; color: var(--color-text-secondary);">credit_card</span>
                     <div style="margin-top: 5px; font-weight: 600; color: var(--color-text-secondary);">TARJETA</div>
                 </div>
             </div>
@@ -340,7 +346,7 @@ export class VentasView extends BaseView {
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">REGISTRAR ${tipo} DE EFECTIVO</h3>
-                <button class="btn-close" id="btnCloseMovModal"><span class="material-icons-round">close</span></button>
+                <button class="btn-close" id="btnCloseMovModal"><span class="material-icons-round" aria-hidden="true">close</span></button>
             </div>
             <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 13px; color: var(--color-text-secondary); font-weight: 500;">Concepto / Motivo</label>
@@ -395,7 +401,7 @@ export class VentasView extends BaseView {
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">CERRAR CAJA</h3>
-                <button class="btn-close" id="btnCloseCierreModal"><span class="material-icons-round">close</span></button>
+                <button class="btn-close" id="btnCloseCierreModal"><span class="material-icons-round" aria-hidden="true">close</span></button>
             </div>
             <div style="text-align: center; padding: 20px 0;">
                 <div style="font-size: 48px; font-weight: 800; color: var(--color-primary); margin-bottom: 10px;">$${caja.total.toFixed(2)}</div>
@@ -407,7 +413,7 @@ export class VentasView extends BaseView {
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-outline" style="flex: 1; justify-content: center;" id="btnCancelCierre">CANCELAR</button>
-                <button class="btn btn-primary" id="btnConfirmarCierre" style="flex: 1; justify-content: center;">CONFIRMAR PAGO</button>
+                <button class="btn btn-primary" id="btnConfirmarCierre" style="flex: 1; justify-content: center;">CONFIRMAR CIERRE</button>
             </div>
         `;
         
@@ -440,14 +446,14 @@ export class VentasView extends BaseView {
         let listHtml = inventario.map(p => `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="material-icons-round" style="color:${p.color};">${p.icono}</span>
+                    <span class="material-icons-round" aria-hidden="true" style="color:${p.color};">${p.icono}</span>
                     <div>
                         <div style="font-size: 14px; font-weight: 600;">${p.nombre}</div>
                         <div style="font-size: 12px; color: var(--color-text-secondary);">Stock: ${p.stock} | Precio: $${parseFloat(p.precio).toFixed(2)}</div>
                     </div>
                 </div>
                 <button class="btn-icon danger btn-delete-prod" data-id="${p.id}" style="width: 28px; height: 28px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--color-danger); cursor: pointer;">
-                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                    <span class="material-icons-round" aria-hidden="true" style="font-size: 16px;">delete</span>
                 </button>
             </div>
         `).join('');
@@ -459,7 +465,7 @@ export class VentasView extends BaseView {
         const modalHtml = `
             <div class="modal-header">
                 <h3 class="modal-title">ADMINISTRAR PRODUCTOS</h3>
-                <button class="btn-close" id="btnCloseAdminModal"><span class="material-icons-round">close</span></button>
+                <button class="btn-close" id="btnCloseAdminModal"><span class="material-icons-round" aria-hidden="true">close</span></button>
             </div>
             
             <div style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
@@ -486,12 +492,21 @@ export class VentasView extends BaseView {
         if (btnClose) btnClose.addEventListener('click', cleanup);
 
         document.querySelectorAll('.btn-delete-prod').forEach(btn => {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
-                await this.services.inventario.delete(id);
-                cleanup();
-                await this.openAdminInventarioModal(); // Re-open
-                await this.productGrid.refresh(this.cart.getItems());
+                this.services.modal.confirm(
+                    'ELIMINAR PRODUCTO',
+                    '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
+                    async () => {
+                        await this.services.inventario.delete(id);
+                        cleanup();
+                        await this.openAdminInventarioModal();
+                        await this.productGrid.refresh(this.cart.getItems());
+                    },
+                    'CANCELAR',
+                    'ELIMINAR',
+                    true
+                );
             });
         });
 

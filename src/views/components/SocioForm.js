@@ -1,4 +1,6 @@
 import { Socio } from '../../js/models/Socio.js';
+import { getPlanes } from '../../js/utils/planSelector.js';
+import { PLAN_DIAS } from '../../js/utils/constants.js';
 
 export class SocioForm {
     constructor(services, eventBus) {
@@ -72,16 +74,16 @@ export class SocioForm {
             <div class="form-group" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 11px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px;">PLAN CONTRATADO</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
-                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); transition: all 0.2s; position: relative;">
+                    <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="${PLAN_DIAS.Mensual}" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); transition: all 0.2s; position: relative;">
                         <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
                         <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-primary); font-weight: 900;">PLAN MENSUAL</div>
-                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">30 días de acceso</div>
+                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">${PLAN_DIAS.Mensual} días de acceso</div>
                         <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-primary);">$${precios.Mensual.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
-                    <div class="plan-card-ns" data-plan="Quincenal" data-precio="${precios.Quincenal}" data-dias="15" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.6;">
+                    <div class="plan-card-ns" data-plan="Quincenal" data-precio="${precios.Quincenal}" data-dias="${PLAN_DIAS.Quincenal}" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.6;">
                         <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: transparent; font-size: 20px;">check_circle</span>
                         <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; color: var(--color-text-secondary); font-weight: 900;">PLAN QUINCENAL</div>
-                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">15 días de acceso</div>
+                        <div style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; font-weight: 500;">${PLAN_DIAS.Quincenal} días de acceso</div>
                         <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)} <span style="font-size: 10px; font-weight: 700; color: var(--color-text-secondary);">USD</span></div>
                     </div>
                 </div>
@@ -127,7 +129,7 @@ export class SocioForm {
             const updateVencimiento = () => {
                 const dateVal = fechaInicioInp.value;
                 const selectedCard = document.querySelector('.plan-card-ns.selected');
-                const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : 30;
+                const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
                 
                 if (!dateVal) return;
                 const d = new Date(dateVal + "T00:00:00");
@@ -172,59 +174,68 @@ export class SocioForm {
                     return;
                 }
 
-                const prefijo = document.getElementById('inpSocioTelPrefix').value;
-                const numeroTel = document.getElementById('inpSocioTel').value.trim();
-                const telefono = numeroTel ? `${prefijo} ${numeroTel}` : '';
-                const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
+                btnSave.disabled = true;
+                const originalText = btnSave.innerHTML;
+                btnSave.innerHTML = '<span class="material-icons-round" style="font-size: 18px; animation: spin 1s linear infinite;">autorenew</span> GUARDANDO...';
 
-                if (isEdit) {
-                    const ok = await this.services.socio.update(socioId, { nombre, telefono, edad });
-                    if (ok) {
-                        this.services.toast.success('Socio actualizado correctamente');
-                        cleanup();
-                        if (onSaveSuccess) onSaveSuccess(socioId);
+                try {
+                    const prefijo = document.getElementById('inpSocioTelPrefix').value;
+                    const numeroTel = document.getElementById('inpSocioTel').value.trim();
+                    const telefono = numeroTel ? `${prefijo} ${numeroTel}` : '';
+                    const edad = document.getElementById('inpSocioEdad').value ? parseInt(document.getElementById('inpSocioEdad').value) : null;
+
+                    if (isEdit) {
+                        const ok = await this.services.socio.update(socioId, { nombre, telefono, edad });
+                        if (ok) {
+                            this.services.toast.success('Socio actualizado correctamente');
+                            cleanup();
+                            if (onSaveSuccess) onSaveSuccess(socioId);
+                        } else {
+                            this.services.toast.danger('Error al actualizar el socio');
+                        }
                     } else {
-                        this.services.toast.danger('Error al actualizar el socio');
-                    }
-                } else {
-                    const selectedCard = document.querySelector('.plan-card-ns.selected');
-                    const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
-                    const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
-                    const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : 30;
+                        const selectedCard = document.querySelector('.plan-card-ns.selected');
+                        const plan = selectedCard ? selectedCard.getAttribute('data-plan') : 'Mensual';
+                        const precio = selectedCard ? parseFloat(selectedCard.getAttribute('data-precio')) : precios.Mensual;
+                    const dias = selectedCard ? parseInt(selectedCard.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
                     
                     const fechaInicio = document.getElementById('inpFechaInicio').value;
-                    const dVenc = new Date(fechaInicio + "T00:00:00");
-                    dVenc.setDate(dVenc.getDate() + dias);
-                    const fechaVencimiento = dVenc.toISOString().split('T')[0];
+                        const dVenc = new Date(fechaInicio + "T00:00:00");
+                        dVenc.setDate(dVenc.getDate() + dias);
+                        const fechaVencimiento = dVenc.toISOString().split('T')[0];
 
-                    const nuevoSocio = await this.services.socio.create({
-                        nombre,
-                        telefono,
-                        edad,
-                        membresia: plan,
-                        precio,
-                        fechaRegistro: fechaInicio,
-                        fechaVencimiento: fechaVencimiento,
-                        estado: 'Activo'
-                    });
-
-                    if (nuevoSocio) {
-                        // Income transaction
-                        await this.services.transaccion.crear({
-                            tipo: 'ingreso',
-                            concepto: `Membresía ${plan} - ${nombre}`,
-                            monto: precio
+                        const nuevoSocio = await this.services.socio.create({
+                            nombre,
+                            telefono,
+                            edad,
+                            membresia: plan,
+                            precio,
+                            fechaRegistro: fechaInicio,
+                            fechaVencimiento: fechaVencimiento,
+                            estado: 'Activo'
                         });
 
-                        // Renewal history record (initial)
-                        await this.services.renovacion.registrar(nuevoSocio.id, 'Ninguno', plan, precio);
+                        if (nuevoSocio) {
+                            await this.services.transaccion.crear({
+                                tipo: 'ingreso',
+                                concepto: `Membresía ${plan} - ${nombre}`,
+                                monto: precio
+                            });
 
-                        this.services.toast.success('Socio registrado con éxito');
-                        cleanup();
+                            await this.services.renovacion.registrar(nuevoSocio.id, 'Ninguno', plan, precio);
 
-                        if (onSaveSuccess) onSaveSuccess(nuevoSocio.id, nuevoSocio);
-                    } else {
-                        this.services.toast.danger('Error al registrar el socio');
+                            this.services.toast.success('Socio registrado con éxito');
+                            cleanup();
+
+                            if (onSaveSuccess) onSaveSuccess(nuevoSocio.id, nuevoSocio);
+                        } else {
+                            this.services.toast.danger('Error al registrar el socio');
+                        }
+                    }
+                } finally {
+                    if (document.getElementById('btnGuardarSocio')) {
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = originalText;
                     }
                 }
             });

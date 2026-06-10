@@ -2,6 +2,7 @@ import { supabase } from '../supabaseClient.js';
 import { Checkin } from '../models/Checkin.js';
 import { BaseService } from '../core/BaseService.js';
 import { toDateStr } from '../utils/dateUtils.js';
+import { DIAS_AUSENTE } from '../utils/constants.js';
 
 export class CheckinService extends BaseService {
     constructor(eventBus) {
@@ -77,7 +78,7 @@ export class CheckinService extends BaseService {
     }
 
     esAusente(socio, checkins) {
-        return this.calcularDiasAusente(socio, checkins) > 5;
+        return this.calcularDiasAusente(socio, checkins) > DIAS_AUSENTE;
     }
 
     calcularDiasAusente(socio, checkins) {

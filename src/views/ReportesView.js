@@ -105,58 +105,22 @@ export class ReportesView extends BaseView {
     }
 
     async generarGraficos() {
-        const [socios, transacciones] = await Promise.all([
-            this.services.socio.getAll(),
-            this.services.transaccion.getAll()
-        ]);
+        Object.values(this.charts).forEach(c => c?.destroy());
+        const data = await this.services.reporte.generarDatos();
+        const { ingresosPorMes, sociosPorMes, membresias, topProductos, metricas, primaryColor } = data;
 
-        const settings = await this.services.settings.get();
-        const primaryColor = settings.brandColor || '#94ff00';
-
-        // 1. Ingresos Históricos
-        this.renderIngresosChart(transacciones, primaryColor);
-
-        // 2. Nuevas Altas de Socios
-        this.renderSociosChart(socios, primaryColor);
-
-        // 3. Distribución de Membresías
-        this.renderMembresiasChart(socios);
-
-        // 4. Productos Más Vendidos
-        this.renderProductosChart(transacciones, primaryColor);
-
-        // 5. Calcular Métricas de Resumen
-        this.calcularMetricas(socios, transacciones);
+        this.renderIngresosChart(ingresosPorMes, primaryColor);
+        this.renderSociosChart(sociosPorMes, primaryColor);
+        this.renderMembresiasChart(membresias);
+        this.renderProductosChart(topProductos, primaryColor);
+        this.renderMetricas(metricas);
     }
 
-    renderIngresosChart(transacciones, color) {
+    renderIngresosChart(ingresosPorMes, color) {
         const ctx = this.$('#chartIngresos')?.getContext('2d');
         if (!ctx) return;
 
-        // Agrupar ingresos por mes (últimos 6 meses)
-        const meses = {};
-        const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        
-        // Inicializar últimos 6 meses
-        const hoy = new Date();
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            meses[key] = { label: `${nombresMeses[d.getMonth()]} ${d.getFullYear()}`, total: 0 };
-        }
-
-        transacciones.forEach(t => {
-            if (t.tipo === 'ingreso' && t.createdAt) {
-                const date = new Date(t.createdAt);
-                const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                if (meses[key] !== undefined) {
-                    meses[key].total += parseFloat(t.monto);
-                }
-            }
-        });
-
-        const labels = Object.values(meses).map(m => m.label);
-        const data = Object.values(meses).map(m => m.total);
+        const { labels, data } = ingresosPorMes;
 
         this.charts.ingresos = new Chart(ctx, {
             type: 'line',
@@ -176,34 +140,11 @@ export class ReportesView extends BaseView {
         });
     }
 
-    renderSociosChart(socios, color) {
+    renderSociosChart(sociosPorMes, color) {
         const ctx = this.$('#chartSocios')?.getContext('2d');
         if (!ctx) return;
 
-        const meses = {};
-        const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        const hoy = new Date();
-
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            meses[key] = { label: `${nombresMeses[d.getMonth()]} ${d.getFullYear()}`, total: 0 };
-        }
-
-        socios.forEach(s => {
-            if (s.fechaRegistro) {
-                const parts = s.fechaRegistro.split('-');
-                if (parts.length === 3) {
-                    const key = `${parts[0]}-${parts[1]}`;
-                    if (meses[key] !== undefined) {
-                        meses[key].total++;
-                    }
-                }
-            }
-        });
-
-        const labels = Object.values(meses).map(m => m.label);
-        const data = Object.values(meses).map(m => m.total);
+        const { labels, data } = sociosPorMes;
 
         this.charts.socios = new Chart(ctx, {
             type: 'bar',
@@ -220,18 +161,11 @@ export class ReportesView extends BaseView {
         });
     }
 
-    renderMembresiasChart(socios) {
+    renderMembresiasChart(membresias) {
         const ctx = this.$('#chartMembresias')?.getContext('2d');
         if (!ctx) return;
 
-        const planes = { Mensual: 0, Quincenal: 0, Diario: 0 };
-        socios.forEach(s => {
-            if (planes[s.membresia] !== undefined) {
-                planes[s.membresia]++;
-            } else {
-                planes.Mensual++; // fallback
-            }
-        });
+        const planes = membresias;
 
         this.charts.membresias = new Chart(ctx, {
             type: 'doughnut',
@@ -256,39 +190,12 @@ export class ReportesView extends BaseView {
         });
     }
 
-    renderProductosChart(transacciones, color) {
+    renderProductosChart(topProductos, color) {
         const ctx = this.$('#chartProductos')?.getContext('2d');
         if (!ctx) return;
 
-        // Analizar conceptos de transacciones tipo venta
-        const productosVendidos = {};
-
-        transacciones.forEach(t => {
-            if (t.tipo === 'ingreso' && t.concepto.includes('Venta')) {
-                // Concepto ej: "Venta (Efectivo): Agua x2, Proteína x1"
-                const parts = t.concepto.split(':');
-                if (parts.length > 1) {
-                    const itemsStr = parts[1].trim();
-                    const items = itemsStr.split(',');
-                    items.forEach(item => {
-                        const match = item.trim().match(/(.+)\s+x(\d+)/);
-                        if (match) {
-                            const name = match[1].trim();
-                            const qty = parseInt(match[2]);
-                            productosVendidos[name] = (productosVendidos[name] || 0) + qty;
-                        }
-                    });
-                }
-            }
-        });
-
-        // Ordenar productos y tomar los 5 mejores
-        const sorted = Object.entries(productosVendidos)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
-
-        const labels = sorted.map(x => x[0]);
-        const data = sorted.map(x => x[1]);
+        const labels = topProductos.labels;
+        const data = topProductos.data;
 
         this.charts.productos = new Chart(ctx, {
             type: 'bar',
@@ -305,27 +212,15 @@ export class ReportesView extends BaseView {
         });
     }
 
-    calcularMetricas(socios, transacciones) {
-        // Tasa de renovación: (socios activos que han renovado / socios totales)
-        // Haremos un cálculo simplificado: porcentaje de socios que tienen un estado Activo
-        const total = socios.length;
-        const activos = socios.filter(s => s.estado === 'Activo' && !s.estaVencido).length;
-        const tasa = total > 0 ? ((activos / total) * 100).toFixed(1) : '0.0';
-
+    renderMetricas(metricas) {
         const txtTasa = this.$('#txtTasaRenovacion');
-        if (txtTasa) txtTasa.textContent = `${tasa}%`;
+        if (txtTasa) txtTasa.textContent = metricas.tasaRenovacion;
 
-        // Total de transacciones
         const txtTotal = this.$('#txtTotalTickets');
-        if (txtTotal) txtTotal.textContent = transacciones.length;
-
-        // Valor medio de transacción de ingreso
-        const ingresos = transacciones.filter(t => t.tipo === 'ingreso');
-        const sumaIngresos = ingresos.reduce((sum, t) => sum + parseFloat(t.monto), 0);
-        const promedio = ingresos.length > 0 ? (sumaIngresos / ingresos.length).toFixed(2) : '0.00';
+        if (txtTotal) txtTotal.textContent = metricas.totalTickets;
 
         const txtPromedio = this.$('#txtValorMedio');
-        if (txtPromedio) txtPromedio.textContent = `$${promedio}`;
+        if (txtPromedio) txtPromedio.textContent = metricas.valorMedio;
     }
 
     getChartOptions() {

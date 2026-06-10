@@ -243,8 +243,11 @@ export class SociosTable {
         const searchInput = this.container.querySelector('.search-input');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                this.searchQuery = e.target.value;
-                this.updateTable();
+                clearTimeout(this._searchTimer);
+                this._searchTimer = setTimeout(() => {
+                    this.searchQuery = e.target.value;
+                    this.updateTable();
+                }, 300);
             });
         }
 
@@ -319,6 +322,11 @@ export class SociosTable {
         });
 
         const user = this.services.auth.getCurrentUser();
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--color-text-secondary); font-size: 14px;">No se encontraron socios</td></tr>';
+            return;
+        }
 
         tbody.innerHTML = filtered.map(item => {
             const s = item.socio;

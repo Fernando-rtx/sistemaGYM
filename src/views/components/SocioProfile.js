@@ -1,4 +1,6 @@
 import { Socio } from '../../js/models/Socio.js';
+import { getPlanes } from '../../js/utils/planSelector.js';
+import { PLAN_DIAS } from '../../js/utils/constants.js';
 
 export class SocioProfile {
     constructor(container, services, eventBus, onBack) {
@@ -315,12 +317,12 @@ export class SocioProfile {
                 <div style="padding: 10px 0;">
                     <p style="margin-bottom: 20px; font-size: 14px; color: var(--color-text-secondary);">Selecciona el plan para renovar la suscripción de <b>${this.socio.nombre}</b>.</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                        <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="30" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); position: relative;">
+                        <div class="plan-card-ns selected" data-plan="Mensual" data-precio="${precios.Mensual}" data-dias="${PLAN_DIAS.Mensual}" style="border: 2px solid var(--color-primary); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); position: relative;">
                             <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: var(--color-primary); font-size: 20px;">check_circle</span>
                             <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; font-weight: 900; color: var(--color-text-primary);">PLAN MENSUAL</div>
                             <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-primary);">$${precios.Mensual.toFixed(2)}</div>
                         </div>
-                        <div class="plan-card-ns" data-plan="Quincenal" data-precio="${precios.Quincenal}" data-dias="15" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; position: relative; opacity: 0.6;">
+                        <div class="plan-card-ns" data-plan="Quincenal" data-precio="${precios.Quincenal}" data-dias="${PLAN_DIAS.Quincenal}" style="border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: var(--border-radius-md); cursor: pointer; position: relative; opacity: 0.6;">
                             <span class="material-icons-round check-icon-ns" style="position: absolute; top: 12px; right: 12px; color: transparent; font-size: 20px;">check_circle</span>
                             <div class="plan-name-ns" style="font-size: 12px; margin-bottom: 4px; font-weight: 900; color: var(--color-text-secondary);">PLAN QUINCENAL</div>
                             <div class="plan-price-ns" style="font-size: 24px; font-weight: 900; color: var(--color-text-primary);">$${precios.Quincenal.toFixed(2)}</div>
@@ -355,7 +357,7 @@ export class SocioProfile {
             const updVenc = () => {
                 const start = rStart.value;
                 const sel = document.querySelector('.plan-card-ns.selected');
-                const dias = sel ? parseInt(sel.getAttribute('data-dias')) : 30;
+                    const dias = sel ? parseInt(sel.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
                 if (!start) return;
                 const d = new Date(start + "T00:00:00");
                 d.setDate(d.getDate() + dias);
@@ -398,7 +400,7 @@ export class SocioProfile {
                     const sel = document.querySelector('.plan-card-ns.selected');
                     const plan = sel ? sel.getAttribute('data-plan') : 'Mensual';
                     const price = sel ? parseFloat(sel.getAttribute('data-precio')) : 20.00;
-                    const dias = sel ? parseInt(sel.getAttribute('data-dias')) : 30;
+                const dias = sel ? parseInt(sel.getAttribute('data-dias')) : PLAN_DIAS.Mensual;
                     const startVal = rStart.value;
 
                     const dVenc = new Date(startVal + "T00:00:00");

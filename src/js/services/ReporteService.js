@@ -2,6 +2,10 @@ import { BaseService } from '../core/BaseService.js';
 import { getLastNMonths, getMonthRange } from '../utils/dateUtils.js';
 
 export class ReporteService extends BaseService {
+    setServices(services) {
+        this.services = services;
+    }
+
     async generarDatos() {
         const [socios, transacciones, settings] = await Promise.all([
             this.services.socio.getAll(),

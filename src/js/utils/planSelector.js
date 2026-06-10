@@ -1,4 +1,4 @@
-const PLANES = [
+export const PLANES = [
     { key: 'Diario', label: 'Diario', days: 1, icon: 'today' },
     { key: 'Quincenal', label: 'Quincenal', days: 15, icon: 'calendar_view_week' },
     { key: 'Mensual', label: 'Mensual', days: 30, icon: 'calendar_month' }
