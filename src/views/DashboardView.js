@@ -20,7 +20,6 @@ export class DashboardView extends BaseView {
     }
 
     async init() {
-        this.container.innerHTML = this.render();
         await this.loadDashboardData();
         this.subscribe('checkin:created', () => { this.loadDashboardData().catch(e => console.error(e)); });
         this.subscribe('socio:updated', () => { this.loadDashboardData().catch(e => console.error(e)); });
@@ -56,7 +55,6 @@ export class DashboardView extends BaseView {
             const diffDias = Math.ceil((fVenc - hoyPlano) / (1000 * 60 * 60 * 24));
             const textVencimiento = diffDias > 0 ? `Vence en ${diffDias} días` : (diffDias === 0 ? 'Vence hoy' : `Venció hace ${Math.abs(diffDias)} días`);
             
-            const badgeStyle = 'color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05);';
             const phoneClean = v.telefono ? v.telefono.replace(/[^0-9]/g, '') : '';
             const safeName = escapeHtml(v.nombre);
             const safeMembresia = escapeHtml(v.membresia);
@@ -65,128 +63,126 @@ export class DashboardView extends BaseView {
             const waLink = phoneClean ? `https://wa.me/${phoneClean}?text=${encodeURIComponent(waText)}` : '#';
             
             return `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.02); gap: 10px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="width: 44px; height: 44px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; flex-shrink: 0;">${escapeHtml(v.nombre.substring(0,2).toUpperCase())}</div>
+                <div class="dash-alert-item">
+                    <div class="dash-alert-left">
+                        <div class="dash-alert-avatar">${escapeHtml(v.nombre.substring(0,2).toUpperCase())}</div>
                         <div>
-                            <div style="font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">${safeName}</div>
-                            <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">${textVencimiento} · Plan ${safeMembresia}</div>
+                            <div class="dash-alert-name">${safeName}</div>
+                            <div class="dash-alert-meta">${textVencimiento} · Plan ${safeMembresia}</div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="${badgeStyle} font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; letter-spacing: 1px;">
+                    <div class="dash-alert-actions">
+                        <div class="dash-alert-badge">
                             <span style="font-size: 8px;">●</span> POR RENOVAR
                         </div>
                         <a href="${waLink}" target="${phoneClean ? '_blank' : '_self'}" title="${phoneClean ? 'Enviar WhatsApp' : 'Sin número'}" class="btn btn-outline" style="padding: 8px; border-radius: 8px; color: var(--color-text-primary); border-color: rgba(255,255,255,0.1); ${!phoneClean ? 'opacity: 0.3; pointer-events: none;' : ''}">
-                            <span class="material-icons-round" style="font-size: 18px;">chat</span>
+                            <span class="material-icons-round">chat</span>
                         </a>
                         <button class="btn btn-primary btn-renovar" data-socio-id="${safeId}" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px;">RENOVAR</button>
                     </div>
                 </div>
             `;
-        }).join('') : '<div style="padding: 40px; text-align: center; color: var(--color-text-secondary); font-size: 14px;">🎉 No hay alertas de renovación pendientes. Todo al día.</div>';
+        }).join('') : '<div class="dash-empty-state"><span class="material-icons-round">celebration</span><p>No hay alertas de renovación pendientes. Todo al día.</p></div>';
 
         const rachasHtml = rachas.length > 0 ? rachas.slice(0, 5).map((r, index) => `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="font-size: 20px; font-weight: 900; color: var(--color-primary); width: 24px; text-align: center;">${index + 1}</div>
+            <div class="dash-streak-item">
+                <div class="dash-streak-left">
+                    <div class="dash-streak-rank">${index + 1}</div>
                     <div>
-                        <div style="font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">${escapeHtml(r.nombre)}</div>
-                        <div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">Plan ${escapeHtml(socios.find(s=>s.id===r.socioId)?.membresia || '')}</div>
+                        <div class="dash-streak-name">${escapeHtml(r.nombre)}</div>
+                        <div class="dash-streak-plan">Plan ${escapeHtml(socios.find(s=>s.id===r.socioId)?.membresia || '')}</div>
                     </div>
                 </div>
-                <div style="color: var(--color-primary); font-weight: 800; font-size: 15px;">
-                    🔥 ${escapeHtml(String(r.racha))}
+                <div class="dash-streak-value">
+                    <span class="material-icons-round" style="font-size:16px;">local_fire_department</span> ${escapeHtml(String(r.racha))}
                 </div>
             </div>
-        `).join('') : '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Sin rachas. ¡Invita a tus socios a entrenar!</div>';
+        `).join('') : '<div class="dash-empty-state"><span class="material-icons-round">emoji_events</span><p>Sin rachas aún. ¡Motiva a tus socios a entrenar seguido!</p></div>';
 
         container.innerHTML = `
-            <div class="top-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+            <div class="top-row">
                 <!-- Panel de Control Principal -->
-                <div class="main-panel card" style="background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 3%, transparent) 0%, rgba(0,0,0,0) 100%); border: 1px solid color-mix(in srgb, var(--color-primary) 10%, transparent); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -50%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 5%, transparent) 0%, rgba(0,0,0,0) 70%); pointer-events: none;"></div>
+                <div class="dash-panel-control card">
+                    <div class="dash-panel-glow"></div>
                     
-                    <div style="padding: 24px; position: relative; z-index: 1;">
-                        <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span style="display: inline-block; width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 8px var(--color-primary);"></span>
-                            PANEL DE CONTROL · ${fechaHoyFormato}
-                        </div>
-                        <h1 style="color: var(--color-primary); font-size: 36px; font-weight: 900; margin: 0 0 16px 0; letter-spacing: -1px; text-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 20%, transparent);">${gymName.toUpperCase()}</h1>
-                        <p style="color: var(--color-text-secondary); font-size: 14px; line-height: 1.6; max-width: 450px; margin: 0;">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
+                    <div class="dash-panel-content">
+                        <div class="dash-panel-badge">PANEL DE CONTROL · ${fechaHoyFormato}</div>
+                        <h1 class="dash-panel-title">${gymName.toUpperCase()}</h1>
+                        <p class="dash-panel-desc">Resumen operativo del gimnasio. Atiende renovaciones, registra asistencias y mantén el ritmo en una sola vista.</p>
                     </div>
                     
-                    <div style="display: flex; gap: 32px; padding: 24px; border-top: 1px solid rgba(255,255,255,0.03); background: rgba(0,0,0,0.2); position: relative; z-index: 1; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 100px;">
-                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">CHECK-INS HOY</div>
-                            <div style="font-size: 28px; font-weight: 800; color: var(--color-primary);">${checkinsHoy.length}</div>
+                    <div class="dash-panel-stats">
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">CHECK-INS HOY</div>
+                            <div class="dash-stat-value accent">${checkinsHoy.length}</div>
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
-                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">SOCIOS TOTALES</div>
-                            <div style="font-size: 28px; font-weight: 800;">${socios.length}</div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">SOCIOS TOTALES</div>
+                            <div class="dash-stat-value">${socios.length}</div>
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
-                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">INGRESOS DEL MES</div>
-                            <div style="font-size: 28px; font-weight: 800;">$${Number(ingresosMes).toFixed(2)}</div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">INGRESOS DEL MES</div>
+                            <div class="dash-stat-value">$${Number(ingresosMes).toFixed(2)}</div>
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
-                            <div style="font-size: 10px; color: var(--color-text-secondary); font-weight: 800; letter-spacing: 1px; margin-bottom: 6px;">RACHA RÉCORD</div>
-                            <div style="font-size: 28px; font-weight: 800;">${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">RACHA RÉCORD</div>
+                            <div class="dash-stat-value">${rachaRecord} <span style="font-size:12px; font-weight:600; color:var(--color-text-secondary);">DÍAS</span></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Metric Cards 2x2 -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; align-content: start;">
-                    <div class="card" style="border-left: 4px solid var(--color-success); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">bolt</span> ACTIVOS</div>
-                        <div style="font-size: 36px; font-weight: 800; color: var(--color-success); margin: 8px 0 4px 0;">${activos}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">de ${socios.length} socios</div>
+                <div class="dash-metric-grid">
+                    <div class="card dash-metric-card success">
+                        <div class="dash-metric-header"><span class="material-icons-round">bolt</span> ACTIVOS</div>
+                        <div class="dash-metric-number green">${activos}</div>
+                        <div class="dash-metric-sub">de ${socios.length} socios</div>
                     </div>
-                    <div class="card" style="border-left: 4px solid #f59e0b; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">notifications</span> POR RENOVAR</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #f59e0b; margin: 8px 0 4px 0;">${allAlerts.length}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">≤ 6 días para vencer</div>
+                    <div class="card dash-metric-card warning">
+                        <div class="dash-metric-header"><span class="material-icons-round">notifications</span> POR RENOVAR</div>
+                        <div class="dash-metric-number amber">${allAlerts.length}</div>
+                        <div class="dash-metric-sub">≤ 6 días para vencer</div>
                     </div>
-                    <div class="card" style="border-left: 4px solid var(--color-danger); padding: 20px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">schedule</span> VENCIDOS</div>
-                        <div style="font-size: 36px; font-weight: 800; color: var(--color-danger); margin: 8px 0 4px 0;">${vencidos}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">requieren acción</div>
+                    <div class="card dash-metric-card danger">
+                        <div class="dash-metric-header"><span class="material-icons-round">schedule</span> VENCIDOS</div>
+                        <div class="dash-metric-number red">${vencidos}</div>
+                        <div class="dash-metric-sub">requieren acción</div>
                     </div>
-                    <div class="card" style="border-left: 4px solid #6b7280; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-size: 11px; font-weight: 800; letter-spacing: 1px;"><span class="material-icons-round" style="font-size:16px;">person_off</span> AUSENTES</div>
-                        <div style="font-size: 36px; font-weight: 800; color: #9ca3af; margin: 8px 0 4px 0;">${ausentes}</div>
-                        <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 500;">+5 días sin asistir</div>
+                    <div class="card dash-metric-card muted">
+                        <div class="dash-metric-header"><span class="material-icons-round">person_off</span> AUSENTES</div>
+                        <div class="dash-metric-number gray">${ausentes}</div>
+                        <div class="dash-metric-sub">+5 días sin asistir</div>
                     </div>
                 </div>
             </div>
 
             <!-- Bottom Row 2:1 -->
-            <div class="bottom-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+            <div class="bottom-row">
                 <!-- Alertas de Renovación -->
                 <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px;">ALERTAS DE RENOVACIÓN <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">${allAlerts.length} pendientes</span></div>
+                    <div class="dash-section-header">
+                        <div class="dash-section-title">ALERTAS DE RENOVACIÓN <span class="dash-section-count">${allAlerts.length} pendientes</span></div>
                         <button class="btn btn-outline" id="btnDashboardVerTodosSocios" style="font-size:11px; padding: 6px 12px; letter-spacing:1px; border-radius: 6px; font-weight: 700;">VER TODOS</button>
                     </div>
-                    <div class="alerts-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 520px; padding-right: 8px;">
+                    <div class="dash-alert-container">
                         ${alertasHtml}
                     </div>
                 </div>
 
                 <!-- Right Column: Asistencia y Rachas -->
-                <div style="display: flex; flex-direction: column; gap: 24px;">
-                    <div class="card" style="padding: 24px;">
-                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">ASISTENCIA SEMANAL <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">últimos 7 días</span></div>
-                        <div style="height: 180px; width: 100%;">
-                            ${checkinsHoy.length === 0
-                                ? '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--color-text-secondary);"><span class="material-icons-round" style="font-size: 36px; margin-bottom: 8px; opacity: 0.5;">today</span><div style="font-size: 14px;">No hay check-ins hoy</div></div>'
-                                : '<canvas id="weeklyChart"></canvas>'
-                            }
+                <div class="dash-right-col">
+                    <div class="card dash-card-hover" style="padding: 24px;">
+                        <div class="dash-section-header" style="margin-bottom: 24px;">
+                            <div class="dash-section-title">ASISTENCIA SEMANAL <span class="dash-section-count">últimos 7 días</span></div>
+                        </div>
+                        <div class="dash-chart-container">
+                            <canvas id="weeklyChart"></canvas>
                         </div>
                     </div>
-                    <div class="card" style="padding: 24px; flex: 1;">
-                        <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px;">TOP RACHAS <span style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-left: 8px;">consecutivos</span></div>
+                    <div class="card dash-card-hover" style="padding: 24px; flex: 1;">
+                        <div class="dash-section-header" style="margin-bottom: 24px;">
+                            <div class="dash-section-title">TOP RACHAS <span class="dash-section-count">consecutivos</span></div>
+                        </div>
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             ${rachasHtml}
                         </div>
