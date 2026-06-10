@@ -1,3 +1,11 @@
+-- Add missing columns to socios table
+ALTER TABLE public.socios ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+ALTER TABLE public.socios ADD COLUMN IF NOT EXISTS notas TEXT DEFAULT '';
+ALTER TABLE public.socios ADD COLUMN IF NOT EXISTS fecha_congelado DATE;
+ALTER TABLE public.socios ADD COLUMN IF NOT EXISTS dias_congelado INTEGER DEFAULT 0;
+ALTER TABLE public.socios ADD COLUMN IF NOT EXISTS foto_url TEXT;
+UPDATE public.socios SET activo = true WHERE activo IS NULL;
+
 CREATE TABLE IF NOT EXISTS public.usuarios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(100) UNIQUE NOT NULL,

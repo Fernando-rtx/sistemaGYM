@@ -23,7 +23,7 @@ export class InventarioService extends BaseService {
     }
 
     async update(id, changes) {
-        const allowed = ['nombre', 'precio', 'stock', 'costo', 'proveedor', 'categoria', 'descripcion'];
+        const allowed = ['nombre', 'precio', 'stock', 'icono', 'color'];
         const updateData = {};
         for (const key of allowed) {
             if (changes[key] !== undefined) updateData[key] = changes[key];
