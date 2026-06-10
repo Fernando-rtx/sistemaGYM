@@ -1,58 +1,45 @@
 import { supabase } from '../supabaseClient.js';
 import { Socio } from '../models/Socio.js';
+import { BaseService } from '../core/BaseService.js';
 
-export class SocioService {
+export class SocioService extends BaseService {
     constructor(eventBus) {
-        this.eventBus = eventBus;
+        super(eventBus);
     }
 
     async getAll() {
         const { data, error } = await supabase.from('socios').select('*').order('created_at', { ascending: false });
-        if (error) {
-            console.error(error);
-            return [];
-        }
-        
-        const hoyStr = new Date().toISOString().split('T')[0];
-        
-        const socios = [];
-        for (const s of data) {
-            let estadoReal = s.estado;
-            if (estadoReal === 'Activo' && s.fecha_vencimiento < hoyStr) {
-                estadoReal = 'Vencido';
-                await supabase.from('socios').update({ estado: 'Vencido' }).eq('id', s.id);
-            }
-            socios.push(Socio.fromSupabase({ ...s, estado: estadoReal }));
-        }
-        
-        return socios;
+        if (error) return this.handleError(error, []);
+        return data.map(s => Socio.fromSupabase(s));
     }
 
     async getById(id) {
         const { data, error } = await supabase.from('socios').select('*').eq('id', id).single();
         if (error || !data) return null;
-        
-        let estadoReal = data.estado;
-        const hoyStr = new Date().toISOString().split('T')[0];
-        if (estadoReal === 'Activo' && data.fecha_vencimiento < hoyStr) {
-            estadoReal = 'Vencido';
-            await supabase.from('socios').update({ estado: 'Vencido' }).eq('id', data.id);
+        return Socio.fromSupabase(data);
+    }
+
+    async sincronizarEstados() {
+        const hoyStr = this.today();
+        const { data, error } = await supabase.from('socios')
+            .select('id')
+            .eq('estado', 'Activo')
+            .lt('fecha_vencimiento', hoyStr);
+        if (error) {
+            this.logError('sincronizarEstados', error);
+            return;
         }
-        
-        return Socio.fromSupabase({ ...data, estado: estadoReal });
+        for (const s of data || []) {
+            await supabase.from('socios').update({ estado: 'Vencido' }).eq('id', s.id);
+        }
     }
 
     async create(socioData) {
         const socio = new Socio(socioData);
         const { data, error } = await supabase.from('socios').insert([socio.toSupabase()]).select().single();
-        if (error) {
-            console.error(error);
-            return null;
-        }
+        if (error) return this.handleError(error, null);
         const newSocio = Socio.fromSupabase(data);
-        if (this.eventBus) {
-            this.eventBus.emit('socio:created', newSocio);
-        }
+        this.emit('socio:created', newSocio);
         return newSocio;
     }
 
@@ -69,37 +56,16 @@ export class SocioService {
         if (changes.deuda !== undefined) updateData.deuda = changes.deuda;
 
         const { data, error } = await supabase.from('socios').update(updateData).eq('id', id).select().single();
-        if (error) {
-            console.error(error);
-            return null;
-        }
+        if (error) return this.handleError(error, null);
         const updatedSocio = Socio.fromSupabase(data);
-        if (this.eventBus) {
-            this.eventBus.emit('socio:updated', updatedSocio);
-        }
+        this.emit('socio:updated', updatedSocio);
         return updatedSocio;
     }
 
     async delete(id) {
-        const socio = await this.getById(id);
-        if (socio) {
-            const concepto = `Membresía ${socio.membresia} - ${socio.nombre}`;
-            const hoyStr = new Date().toISOString().split('T')[0];
-            await supabase.from('transacciones').delete().match({ 
-                concepto: concepto, 
-                fecha: hoyStr, 
-                monto: socio.precio 
-            });
-        }
-
         const { error } = await supabase.from('socios').delete().eq('id', id);
-        if (error) {
-            console.error(error);
-            return false;
-        }
-        if (this.eventBus) {
-            this.eventBus.emit('socio:deleted', id);
-        }
+        if (error) return this.handleError(error, false);
+        this.emit('socio:deleted', id);
         return true;
     }
 
@@ -108,7 +74,7 @@ export class SocioService {
         const limite = new Date();
         limite.setDate(hoy.getDate() + dias);
 
-        const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+        const hoyStr = this.today();
         const limiteStr = `${limite.getFullYear()}-${String(limite.getMonth() + 1).padStart(2, '0')}-${String(limite.getDate()).padStart(2, '0')}`;
 
         const { data, error } = await supabase.from('socios')
@@ -116,15 +82,15 @@ export class SocioService {
             .eq('estado', 'Activo')
             .gte('fecha_vencimiento', hoyStr)
             .lte('fecha_vencimiento', limiteStr);
-            
-        if (error) return [];
+
+        if (error) return this.handleError(error, []);
         return data.map(s => Socio.fromSupabase(s));
     }
 
     async getNuevosHoy() {
-        const hoyStr = new Date().toISOString().split('T')[0];
+        const hoyStr = this.today();
         const { count, error } = await supabase.from('socios').select('*', { count: 'exact', head: true }).eq('fecha_registro', hoyStr);
-        if (error) return 0;
+        if (error) return this.handleError(error, 0);
         return count;
     }
 }

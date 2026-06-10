@@ -1,9 +1,10 @@
 import { supabase } from '../supabaseClient.js';
 import { Settings } from '../models/Settings.js';
+import { BaseService } from '../core/BaseService.js';
 
-export class SettingsService {
+export class SettingsService extends BaseService {
     constructor(eventBus) {
-        this.eventBus = eventBus;
+        super(eventBus);
     }
 
     async get() {
@@ -24,19 +25,17 @@ export class SettingsService {
         });
 
         const updates = settings.toSupabase();
-        
+
         if (current.id) {
             const { error } = await supabase.from('ajustes').update(updates).eq('id', current.id);
-            if (error) console.error(error);
+            if (error) return this.handleError(error, null);
         } else {
             const { data, error } = await supabase.from('ajustes').insert([updates]).select().single();
-            if (error) console.error(error);
-            else settings.id = data.id;
+            if (error) return this.handleError(error, null);
+            settings.id = data.id;
         }
 
-        if (this.eventBus) {
-            this.eventBus.emit('settings:changed', settings);
-        }
+        this.emit('settings:changed', settings);
         return settings;
     }
 
@@ -46,7 +45,7 @@ export class SettingsService {
 
     async init() {
         const { data, error } = await supabase.from('ajustes').select('*').limit(1);
-        if (data && data.length === 0) {
+        if (!error && data && data.length === 0) {
             const defaults = Settings.defaults();
             await supabase.from('ajustes').insert([defaults.toSupabase()]);
         }

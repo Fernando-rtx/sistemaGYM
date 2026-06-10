@@ -1,29 +1,34 @@
 import { supabase } from '../supabaseClient.js';
+import { BaseService } from '../core/BaseService.js';
+import { parseMoney, safeInt } from '../utils/numberUtils.js';
 
-export class CorteCajaService {
+export class CorteCajaService extends BaseService {
     constructor(eventBus) {
-        this.eventBus = eventBus;
+        super(eventBus);
     }
 
     async guardarCorte(resumen) {
         const insertData = {
-            fecha: new Date().toISOString().split('T')[0],
-            ingresos: parseFloat(resumen.ingresos || 0),
-            salidas: parseFloat(resumen.salidas || 0),
-            total: parseFloat(resumen.total || 0),
-            num_transacciones: parseInt(resumen.numTransacciones || 0)
+            fecha: this.today(),
+            ingresos: parseMoney(resumen.ingresos),
+            salidas: parseMoney(resumen.salidas),
+            total: parseMoney(resumen.total),
+            num_transacciones: safeInt(resumen.numTransacciones)
         };
 
         const { data, error } = await supabase.from('cortes_caja').insert([insertData]).select().single();
-        if (error) {
-            console.error('Error saving cash register cut:', error);
-            return null;
-        }
+        if (error) return this.handleError(error, null);
 
-        if (this.eventBus) {
-            this.eventBus.emit('corte:created', data);
-        }
-        return data;
+        this.emit('corte:created', data);
+        return {
+            id: data.id,
+            fecha: data.fecha,
+            ingresos: parseMoney(data.ingresos),
+            salidas: parseMoney(data.salidas),
+            total: parseMoney(data.total),
+            numTransacciones: data.num_transacciones,
+            createdAt: data.created_at
+        };
     }
 
     async getHistorial() {
@@ -31,18 +36,15 @@ export class CorteCajaService {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(30);
-            
-        if (error) {
-            console.error('Error fetching cash register cuts:', error);
-            return [];
-        }
+
+        if (error) return this.handleError(error, []);
 
         return data.map(c => ({
             id: c.id,
             fecha: c.fecha,
-            ingresos: parseFloat(c.ingresos),
-            salidas: parseFloat(c.salidas),
-            total: parseFloat(c.total),
+            ingresos: parseMoney(c.ingresos),
+            salidas: parseMoney(c.salidas),
+            total: parseMoney(c.total),
             numTransacciones: c.num_transacciones,
             createdAt: c.created_at
         }));

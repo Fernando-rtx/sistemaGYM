@@ -2,6 +2,7 @@ import { EventBus } from './core/EventBus.js';
 import { Router } from './core/Router.js';
 import { ToastManager } from './core/ToastManager.js';
 import { ModalManager } from './core/ModalManager.js';
+import { ErrorHandler } from './core/ErrorHandler.js';
 
 import { AuthService } from './services/AuthService.js';
 import { SocioService } from './services/SocioService.js';
@@ -11,6 +12,8 @@ import { InventarioService } from './services/InventarioService.js';
 import { SettingsService } from './services/SettingsService.js';
 import { RenovacionService } from './services/RenovacionService.js';
 import { CorteCajaService } from './services/CorteCajaService.js';
+import { DashboardService } from './services/DashboardService.js';
+import { ReporteService } from './services/ReporteService.js';
 
 import { DashboardView } from '../views/DashboardView.js';
 import { SociosView } from '../views/SociosView.js';
@@ -24,6 +27,7 @@ import { Socio } from './models/Socio.js';
 // Setup Toast and Modal Managers
 const toastManager = new ToastManager();
 const modalManager = new ModalManager();
+const errorHandler = new ErrorHandler(toastManager);
 
 // Setup EventBus
 const eventBus = new EventBus();
@@ -40,8 +44,12 @@ const services = {
     inventario: new InventarioService(eventBus),
     settings: new SettingsService(eventBus),
     renovacion: new RenovacionService(eventBus),
-    corteCaja: new CorteCajaService(eventBus)
+    corteCaja: new CorteCajaService(eventBus),
+    dashboard: new DashboardService(eventBus),
+    reporte: new ReporteService(eventBus)
 };
+services.dashboard.services = services;
+services.reporte.services = services;
 
 // Router initialization
 let router = null;

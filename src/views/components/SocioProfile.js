@@ -483,6 +483,13 @@ export class SocioProfile {
         }
     }
 
+    destroy() {
+        this._cleanup?.();
+        this.socio = null;
+        this.checkins = [];
+        this.renewals = [];
+    }
+
     openQrModal() {
         const modalHtml = `
             <div class="modal-header">

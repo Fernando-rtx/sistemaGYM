@@ -425,7 +425,7 @@ export class VentasView extends BaseView {
         if (btnConfirm) {
             btnConfirm.addEventListener('click', async () => {
                 // Registrar corte de caja
-                await this.services.transaccion.guardarCorteCaja(caja);
+                await this.services.corteCaja.guardarCorte(caja);
 
                 this.services.toast.success('Caja cerrada exitosamente. Corte Z generado.');
                 cleanup();

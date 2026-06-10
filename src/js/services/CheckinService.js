@@ -1,44 +1,37 @@
 import { supabase } from '../supabaseClient.js';
 import { Checkin } from '../models/Checkin.js';
+import { BaseService } from '../core/BaseService.js';
+import { toDateStr } from '../utils/dateUtils.js';
 
-export class CheckinService {
+export class CheckinService extends BaseService {
     constructor(eventBus) {
-        this.eventBus = eventBus;
+        super(eventBus);
     }
 
     async getAll() {
         const { data, error } = await supabase.from('checkins').select(`*, socios(nombre)`).order('created_at', { ascending: false });
-        if (error) return [];
+        if (error) return this.handleError(error, []);
         return data.map(c => Checkin.fromSupabase(c));
     }
 
     async getHoy() {
-        const hoyStr = new Date().toISOString().split('T')[0];
+        const hoyStr = this.today();
         const { data, error } = await supabase.from('checkins').select(`*, socios(nombre)`).eq('fecha', hoyStr);
-        if (error) return [];
+        if (error) return this.handleError(error, []);
         return data.map(c => Checkin.fromSupabase(c));
     }
 
     async registrar(socioId, nombre) {
         const d = new Date();
-        const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const fecha = toDateStr(d);
         const hora = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-        const insertData = {
-            socio_id: socioId,
-            fecha,
-            hora
-        };
+        const insertData = { socio_id: socioId, fecha, hora };
         const { data, error } = await supabase.from('checkins').insert([insertData]).select().single();
-        if (error) {
-            console.error(error);
-            return null;
-        }
-        
+        if (error) return this.handleError(error, null);
+
         const newCheckin = Checkin.fromSupabase({ ...data, nombre_socio: nombre });
-        if (this.eventBus) {
-            this.eventBus.emit('checkin:created', newCheckin);
-        }
+        this.emit('checkin:created', newCheckin);
         return newCheckin;
     }
 
@@ -54,7 +47,7 @@ export class CheckinService {
         });
 
         const rachas = [];
-        const hoyStr = new Date().toISOString().split('T')[0];
+        const hoyStr = this.today();
 
         Object.keys(socioMap).forEach(socioId => {
             const { nombre, fechas } = socioMap[socioId];
@@ -66,7 +59,7 @@ export class CheckinService {
             for (let i = 0; i < sortedDates.length; i++) {
                 const expected = new Date(hoy);
                 expected.setDate(expected.getDate() - i);
-                const expectedStr = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
+                const expectedStr = toDateStr(expected);
 
                 if (sortedDates.includes(expectedStr)) {
                     racha++;
