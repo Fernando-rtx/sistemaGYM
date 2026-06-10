@@ -8,40 +8,43 @@ export class AuthService {
     }
 
     async login(username, password) {
-        // Try Supabase Auth first
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: username,
-                password
-            });
-            if (data?.user) {
-                const session = {
-                    id: data.user.id,
-                    username: data.user.email,
-                    nombre: data.user.user_metadata?.nombre || data.user.email,
-                    role: data.user.user_metadata?.role || 'Admin'
-                };
-                this._saveSession(session);
-                this._emit('auth:login', session);
-                return true;
-            }
-        } catch (e) {
-            // Fallback to local auth if Supabase Auth fails
-        }
-
-        // Legacy local auth fallback
+        // 1. Try local auth first (always works, no Supabase dependency)
         const user = this._matchLocalUser(username, password);
         if (user) {
             this._saveSession(user);
             this._emit('auth:login', user);
             return true;
         }
+
+        // 2. Try Supabase Auth (if configured and user exists there)
+        try {
+            if (supabase?.auth) {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: username,
+                    password
+                });
+                if (data?.user) {
+                    const session = {
+                        id: data.user.id,
+                        username: data.user.email,
+                        nombre: data.user.user_metadata?.nombre || data.user.email,
+                        role: data.user.user_metadata?.role || 'Admin'
+                    };
+                    this._saveSession(session);
+                    this._emit('auth:login', session);
+                    return true;
+                }
+            }
+        } catch (e) {
+            // Supabase not available, just use local auth
+        }
+
         return false;
     }
 
     logout() {
         try {
-            supabase.auth.signOut();
+            supabase?.auth?.signOut();
         } catch (e) { /* ignore */ }
         localStorage.removeItem(SESSION_KEY);
         this._emit('auth:logout');
