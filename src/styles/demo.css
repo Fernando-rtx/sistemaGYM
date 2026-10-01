@@ -1,0 +1,36 @@
+/* The original main.css and all six views define the visual identity. */
+.demo-label {
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    margin: -20px 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.demo-label span {
+    width: 6px;
+    height: 6px;
+    background: var(--color-primary);
+    border-radius: 50%;
+}
+.btn:focus-visible, .nav-btn:focus-visible, .user-profile:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+}
+@media (max-width: 768px) {
+    .topbar { height: auto; flex-shrink: 0; }
+    .main-content { min-width: 0; }
+}
+@media (max-width: 600px) {
+    .dash-panel-control { padding: 24px; }
+    .dash-panel-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px 12px;
+    }
+    .dash-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dash-metric-card { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}

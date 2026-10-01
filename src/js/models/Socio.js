@@ -1,0 +1,115 @@
+import { DIAS_POR_VENCER } from '../utils/constants.js';
+import { formatDate } from '../utils/dateUtils.js';
+
+export class Socio {
+    constructor({ id, nombre, telefono, edad, membresia, precio, fechaRegistro, fechaVencimiento, estado, deuda, notas, fecha_congelado, dias_congelado, foto_url, createdAt }) {
+        this.id = id;
+        this.nombre = nombre;
+        this.telefono = telefono || '';
+        this.edad = edad || null;
+        this.membresia = membresia;
+        this.precio = parseFloat(precio || 0);
+        this.fechaRegistro = fechaRegistro;
+        this.fechaVencimiento = fechaVencimiento;
+        this.estado = estado || 'Activo';
+        this.deuda = parseFloat(deuda || 0);
+        this.notas = notas || '';
+        this.fecha_congelado = fecha_congelado || null;
+        this.dias_congelado = dias_congelado || 0;
+        this.foto_url = foto_url || null;
+        this.createdAt = createdAt;
+    }
+
+    get estaCongelado() {
+        return this.estado === 'Congelado';
+    }
+
+    get estaVencido() {
+        if (!this.fechaVencimiento) return true;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fVenc = new Date(this.fechaVencimiento + "T00:00:00");
+        return fVenc < hoy;
+    }
+
+    get diasRestantes() {
+        if (!this.fechaVencimiento) return 0;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fVenc = new Date(this.fechaVencimiento + "T00:00:00");
+        return Math.ceil((fVenc - hoy) / (1000 * 60 * 60 * 24));
+    }
+
+    get estaPorVencer() {
+        const dias = this.diasRestantes;
+        return dias <= DIAS_POR_VENCER && dias >= 0;
+    }
+
+    get iniciales() {
+        if (!this.nombre) return '';
+        const parts = this.nombre.trim().split(/\s+/);
+        if (parts.length > 1) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return this.nombre.substring(0, 2).toUpperCase();
+    }
+
+    get telefonoLimpio() {
+        return this.telefono ? this.telefono.replace(/[^0-9]/g, '') : '';
+    }
+
+    static fromSupabase(row) {
+        return new Socio({
+            id: row.id,
+            nombre: row.nombre,
+            telefono: row.telefono,
+            edad: row.edad,
+            membresia: row.membresia,
+            precio: row.precio,
+            fechaRegistro: row.fecha_registro,
+            fechaVencimiento: row.fecha_vencimiento,
+            estado: row.estado,
+            deuda: row.deuda,
+            notas: row.notas,
+            fecha_congelado: row.fecha_congelado,
+            dias_congelado: row.dias_congelado,
+            foto_url: row.foto_url,
+            createdAt: row.created_at
+        });
+    }
+
+    toSupabase() {
+        const data = {
+            nombre: this.nombre,
+            telefono: this.telefono,
+            edad: this.edad,
+            membresia: this.membresia,
+            precio: this.precio,
+            fecha_registro: this.fechaRegistro,
+            fecha_vencimiento: this.fechaVencimiento,
+            estado: this.estado,
+            deuda: this.deuda,
+            notas: this.notas,
+            fecha_congelado: this.fecha_congelado,
+            dias_congelado: this.dias_congelado,
+            foto_url: this.foto_url
+        };
+        if (this.id) data.id = this.id;
+        return data;
+    }
+
+    static formatFecha(dateStr) {
+        return formatDate(dateStr);
+    }
+
+    static calcularVencimiento(plan) {
+        const d = new Date();
+        switch (plan) {
+            case 'Mensual': d.setDate(d.getDate() + 30); break;
+            case 'Quincenal': d.setDate(d.getDate() + 15); break;
+            case 'Diario': d.setDate(d.getDate() + 1); break;
+            default: d.setDate(d.getDate() + 30);
+        }
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+}
