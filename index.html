@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171a18">
+  <meta name="description" content="Demo interactiva de sistemaGYM. Adaptación de muestra, sin conexión a base de datos.">
+  <title>sistemaGYM — Demo interactiva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="rail">
+    <a class="wordmark" href="#inicio" aria-label="sistemaGYM inicio"><span class="mark">S<span>G</span></span><span class="wordmark-copy">SISTEMA<span>GYM</span></span></a>
+    <div class="rail-kicker">CENTRO DE MANDO</div>
+    <nav id="nav" aria-label="Secciones">
+      <button class="nav-link active" data-view="inicio"><i>◧</i><span>Resumen</span></button>
+      <button class="nav-link" data-view="socios"><i>♙</i><span>Socios</span><em id="navMembers">0</em></button>
+      <button class="nav-link" data-view="asistencia"><i>↗</i><span>Asistencia</span></button>
+      <button class="nav-link" data-view="ventas"><i>＋</i><span>Ventas</span></button>
+      <button class="nav-link" data-view="inventario"><i>▤</i><span>Inventario</span></button>
+    </nav>
+    <div class="rail-bottom"><div class="system-pulse"><span></span> SISTEMA DE DEMO</div><div class="rail-user"><div class="user-avatar">SG</div><div><b>Equipo del gym</b><small>Vista de muestra</small></div><span class="dots">•••</span></div></div>
+  </aside>
+  <main class="workspace">
+    <header class="topline"><div class="mobile-brand"><span class="mark">S<span>G</span></span> SISTEMAGYM</div><div class="crumb"><span>OPERACIONES</span><b>/</b><strong id="crumb">Resumen</strong></div><div class="top-right"><div class="live-label"><span></span> ABIERTO</div><div class="date-label" id="dateLabel"></div><button class="icon-button" title="Restablecer demo" aria-label="Restablecer datos de muestra" data-reset>↺</button></div></header>
+    <div id="app" class="stage"></div>
+    <footer class="demo-footer"><span>DEMO INTERACTIVA <i></i> DATOS FICTICIOS</span><span>ADAPTACIÓN WEB · SISTEMAGYM</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
